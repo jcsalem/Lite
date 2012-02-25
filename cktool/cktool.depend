@@ -1,0 +1,38 @@
+# depslib dependency file v1.0
+1330201363 source:d:\users\jim\documents\ck\cktool\main.cpp
+	<iostream>
+	<stdlib.h>
+	<getopt.h>
+	<string>
+	"../cklib/utils.h"
+	"../cklib/Color.h"
+	"../cklib/cklib.h"
+
+1330182828 d:\users\jim\documents\ck\cklib\utils.h
+	<stdlib.h>
+	<string>
+	<errno.h>
+
+1305861722 d:\users\jim\documents\ck\cklib\color.h
+
+1330194617 d:\users\jim\documents\ck\cklib\cklib.h
+	"utils.h"
+	"Color.h"
+	"LBuffer.h"
+	"utilsIP.h"
+	"utilsSocket.h"
+	<vector>
+
+1330193309 d:\users\jim\documents\ck\cklib\lbuffer.h
+	"utils.h"
+	"Color.h"
+
+1330191717 d:\users\jim\documents\ck\cklib\utilsip.h
+	"utils.h"
+	<winsock2.h>
+
+1329717366 d:\users\jim\documents\ck\cklib\utilssocket.h
+	"utils.h"
+	"utilsIP.h"
+	<winsock2.h>
+
