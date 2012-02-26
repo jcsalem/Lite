@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1330201363 source:d:\users\jim\documents\ck\cktool\main.cpp
+1330223790 source:d:\users\jim\documents\ck\cktool\main.cpp
 	<iostream>
 	<stdlib.h>
 	<getopt.h>
@@ -15,7 +15,7 @@
 
 1305861722 d:\users\jim\documents\ck\cklib\color.h
 
-1330217407 d:\users\jim\documents\ck\cklib\cklib.h
+1330224013 d:\users\jim\documents\ck\cklib\cklib.h
 	"utils.h"
 	"Color.h"
 	"LBuffer.h"

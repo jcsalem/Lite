@@ -51,12 +51,12 @@
 	"Color.h"
 	<vector>
 
-1330219553 source:d:\users\jim\documents\ck\cklib\cklib.cpp
+1330225924 source:d:\users\jim\documents\ck\cklib\cklib.cpp
 	"cklib.h"
 	"KiNET.h"
 	<iostream>
 
-1330217407 d:\users\jim\documents\ck\cklib\cklib.h
+1330225411 d:\users\jim\documents\ck\cklib\cklib.h
 	"utils.h"
 	"Color.h"
 	"LBuffer.h"
@@ -68,6 +68,6 @@
 	"utils.h"
 	"utilsIP.h"
 
-1330219984 d:\users\jim\documents\ck\cklib\kinet.h
+1330222220 d:\users\jim\documents\ck\cklib\kinet.h
 	"utils.h"
 
