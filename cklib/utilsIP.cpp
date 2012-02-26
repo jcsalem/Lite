@@ -69,7 +69,7 @@ bool IPAddr::IsValid() const
 
 string IPAddr::GetString() const
     {
-    char buffer[5];
+    char buffer[25];
     string ret;
     itoa((iIP >> 24) & 0xFF, buffer, 10);
     ret += string(buffer) + ".";
@@ -78,8 +78,7 @@ string IPAddr::GetString() const
     itoa((iIP >>  8) & 0xFF, buffer, 10);
     ret += string(buffer) + ".";
     itoa((iIP      ) & 0xFF, buffer, 10);
-    ret += string(buffer) + ".";
-    return ret;
+     return ret;
     }
 //-----------------------------------------------------
 // SockAddr

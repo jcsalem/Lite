@@ -31,7 +31,7 @@
 1329717562 source:d:\users\jim\documents\ck\cklib\utilssocket.cpp
 	"utilsSocket.h"
 
-1329717366 d:\users\jim\documents\ck\cklib\utilssocket.h
+1330216999 d:\users\jim\documents\ck\cklib\utilssocket.h
 	"utils.h"
 	"utilsIP.h"
 	<winsock2.h>
@@ -40,18 +40,23 @@
 	"utils.h"
 	<winsock2.h>
 
-1330192865 source:d:\users\jim\documents\ck\cklib\lbuffer.cpp
+1330214772 source:d:\users\jim\documents\ck\cklib\lbuffer.cpp
+	"utils.h"
 	"LBuffer.h"
 	"Color.h"
+	<vector>
 
-1330193309 d:\users\jim\documents\ck\cklib\lbuffer.h
+1330217055 d:\users\jim\documents\ck\cklib\lbuffer.h
 	"utils.h"
 	"Color.h"
+	<vector>
 
-1330194693 source:d:\users\jim\documents\ck\cklib\cklib.cpp
+1330219553 source:d:\users\jim\documents\ck\cklib\cklib.cpp
 	"cklib.h"
+	"KiNET.h"
+	<iostream>
 
-1330194617 d:\users\jim\documents\ck\cklib\cklib.h
+1330217407 d:\users\jim\documents\ck\cklib\cklib.h
 	"utils.h"
 	"Color.h"
 	"LBuffer.h"
@@ -59,7 +64,10 @@
 	"utilsSocket.h"
 	<vector>
 
-1330191767 source:d:\users\jim\documents\ck\cklib\utilsip.cpp
+1330218665 source:d:\users\jim\documents\ck\cklib\utilsip.cpp
 	"utils.h"
 	"utilsIP.h"
+
+1330219984 d:\users\jim\documents\ck\cklib\kinet.h
+	"utils.h"
 

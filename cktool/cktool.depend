@@ -15,7 +15,7 @@
 
 1305861722 d:\users\jim\documents\ck\cklib\color.h
 
-1330194617 d:\users\jim\documents\ck\cklib\cklib.h
+1330217407 d:\users\jim\documents\ck\cklib\cklib.h
 	"utils.h"
 	"Color.h"
 	"LBuffer.h"
@@ -23,15 +23,16 @@
 	"utilsSocket.h"
 	<vector>
 
-1330193309 d:\users\jim\documents\ck\cklib\lbuffer.h
+1330217055 d:\users\jim\documents\ck\cklib\lbuffer.h
 	"utils.h"
 	"Color.h"
+	<vector>
 
 1330191717 d:\users\jim\documents\ck\cklib\utilsip.h
 	"utils.h"
 	<winsock2.h>
 
-1329717366 d:\users\jim\documents\ck\cklib\utilssocket.h
+1330216999 d:\users\jim\documents\ck\cklib\utilssocket.h
 	"utils.h"
 	"utilsIP.h"
 	<winsock2.h>

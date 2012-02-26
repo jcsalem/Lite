@@ -36,6 +36,7 @@
 		</Build>
 		<Unit filename="Color.cpp" />
 		<Unit filename="Color.h" />
+		<Unit filename="KiNET.h" />
 		<Unit filename="LBuffer.cpp" />
 		<Unit filename="LBuffer.h" />
 		<Unit filename="Lobj.cpp" />

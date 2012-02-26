@@ -35,7 +35,9 @@ class Socket
 		virtual			~Socket();
 
 		// Status
-		string			GetError()	const	{return iLastError;}
+		bool            IsOpen() const   {return iIsOpen;}
+		bool            HasError()  const   {return !iLastError.empty();}
+		string			GetLastError()	const	{return iLastError;}
 
     protected:
 		Socket();

@@ -1,16 +1,16 @@
+#include "utils.h"
 #include "LBuffer.h"
 #include "Color.h"
+#include <vector>
 
 void LBuffer::Alloc(int count)
 {
-    RGBColor* newBuffer = new RGBColor[count];
+    iBuffer.resize(count);
+}
 
-    if (iBuffer)
-    {
-        for (int i = 0; i < iCount; ++i)
-            newBuffer[i]= iBuffer[i];
-        delete []iBuffer;
-    }
-    iCount = count;
-    iBuffer = newBuffer;
+void LBuffer::SetAll(const RGBColor& rgb)
+{
+    int len = iBuffer.size();
+    for (int i = 0; i < len; ++i)
+        iBuffer[i] = rgb;
 }
