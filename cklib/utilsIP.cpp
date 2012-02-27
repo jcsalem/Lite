@@ -78,7 +78,8 @@ string IPAddr::GetString() const
     itoa((iIP >>  8) & 0xFF, buffer, 10);
     ret += string(buffer) + ".";
     itoa((iIP      ) & 0xFF, buffer, 10);
-     return ret;
+    ret += string(buffer);
+    return ret;
     }
 //-----------------------------------------------------
 // SockAddr

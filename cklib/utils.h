@@ -24,6 +24,7 @@ typedef const string&       csref;
 string IntToHex(int val, bool noprefix = false);
 string IntToStr(int val);
 inline bool IsWhitespace(char c) {return c == ' ' || c == '\n' || c == '\r' || c == '\t';}
+string TrimWhitespace(csref s);
 
 bool strEQ(csref a, csref b); // Caseless string compare
 

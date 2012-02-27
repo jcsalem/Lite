@@ -1,35 +1,21 @@
-#include <iostream>
-#include <stdlib.h>
-#include <getopt.h>
-#include <string>
 #include "../cklib/utils.h"
 #include "../cklib/Color.h"
 #include "../cklib/cklib.h"
+#include "../cklib/ckcli.h"
+#include <iostream>
+#include <getopt.h>
 
-//----------------------------------------------------------------------------
-// Globals
-//----------------------------------------------------------------------------
-
-string gIP;
-string gPortList = "1r,2";
-int gLightsPerFixture = 50;
-
+CKcli gCLI;
 //----------------------------------------------------------------------------
 // Option Parsing
 //----------------------------------------------------------------------------
 
-void Usage(int argc, char** argv)
+void Usage(const char* progname)
     {
-    string progname;
-    if (argc > 0)
-        progname = argv[0];
-    cerr << "Usage: " << progname << " --ip ipaddr --port portlist --count count"
+    cerr << "Usage: " << progname << " --pds pdsinfo1 [--pds pdsinfo2 ...]"
             << " command" << endl;
     cerr << "Where:" << endl;
-    cerr << "  ipaddr is the power supply IP address (no default)" << endl;
-    cerr << "  portlist is a comma separated list of fixture ports. Follow the port number " << endl;
-    cerr << "          with an 'r' if you want it reversed. (default is 1r,2)" << endl;
-    cerr << "  count is the number of LEDs per port (default is 50)" << endl;
+    cerr << CKcli::gPDSInfoDoc << endl;
     cerr << "  command is one of: " << endl;
     cerr << "    clear " << endl;
     cerr << "    all r g b" << endl;
@@ -37,27 +23,17 @@ void Usage(int argc, char** argv)
     cerr << "    set idx r g b" << endl;
     exit (EXIT_FAILURE);
     }
+
 struct option longOpts[] =
     {
-        {"ip",      required_argument,  0, 'i'},
-        {"port",     required_argument,  0, 'p'},
-        {"count",     required_argument,  0, 'c'},
+        CKCLI_PDSINFO_OPTIONS,
         {"help",    no_argument,        0, 'h'},
         {0,0,0,0}
     };
 
-void ParseArgsCheckArg(const char* param, int argc, char** argv)
-{
-    if (!optarg)
-    {
-        cerr << "Missing argument for --" << param << ". Was -" << param << " used instead?" << endl;
-        Usage(argc, argv);
-    }
-}
 
-string ParseArgs(int argc, char** argv)
+void ParseArgs(const char* progname, int argc, char** argv)
 {
-    bool hasError = false;
     optind = 0; // avoid warning
 
     while (true)
@@ -66,114 +42,64 @@ string ParseArgs(int argc, char** argv)
         char c = getopt_long (argc, argv, "", longOpts, &optIndex);
         if (c == -1) break; // Done parsing
 
-        switch (c)
+        if (! gCLI.ParseOptions(c, progname, argc, argv))
         {
-        case '?':
-            // Error message already issues
-            hasError = true;
-            break;
-        case 'i':
-            ParseArgsCheckArg("ip", argc, argv);
-            gIP = optarg;
-            break;
-        case 'p':
-            ParseArgsCheckArg("port", argc, argv);
-            gPortList = optarg;
-            break;
-        case 'c':
-            ParseArgsCheckArg("count", argc, argv);
-            gLightsPerFixture = atoi(optarg);
-            break;
-        case 'h':
-            Usage(argc, argv);
-        default:
-            cerr << "Internal error - unknown option: " << c << endl;
-            hasError = true;
+        switch (c)
+            {
+            case 'h':
+                Usage(progname);
+            default:
+                cerr << "Internal error - unknown option: " << c << endl;
+                Usage(progname);
+            }
         }
     }
-    if (optind == argc || hasError)
-        Usage(argc, argv);
-
-    return string(argv[optind++]);
+    if (gCLI.HasError())
+    {
+        cerr << gCLI.GetLastError() << endl;
+        Usage(progname);
+    }
+    if (gCLI.Buffer.GetCount() == 0)
+    {
+        cerr << "You must specify at least one CK device" << endl;
+        Usage(progname);
+    }
 }
 
-void ValidateNumArgs(csref command, int numArgs, int argc, char** argv)
+void ValidateNumArgs(csref command, int numArgs, const char* progname, int argc, char** argv)
     {
         if (argc == optind + numArgs)
             // Everything is correct
             return;
         cerr << command << " expected " << numArgs << " parameters but got " << argc - optind << endl;
-        Usage(argc, argv);
+        Usage(progname);
     }
 
 int main(int argc, char** argv)
 {
+    const char* progname = "cktool";
+    if (argc > 0 && argv != NULL && argv[0] != NULL)
+        progname = argv[0];
+
     // Parse arguments
-    string command = ParseArgs(argc, argv);
-    if (gIP.empty())
-    {
-        cerr << argv[0] << ": Must specify at least one IP address of a CK device" << endl;
-        Usage(argc, argv);
-    }
+    ParseArgs(progname, argc, argv);
 
-    // Sanity check arguments
-    IPAddr ip(gIP);
-    if (! ip.IsValid())
-    {
-        cerr << argv[0] << ": The IP address was invalid (" << gIP << ")" << endl;
-        exit(EXIT_FAILURE);
-    }
-
-    vector<int> portlist;
-    vector<bool> reverselist;
-    if (gPortList == "1")       {portlist.push_back(1); reverselist.push_back(false);}
-    else if (gPortList == "1r") {portlist.push_back(1); reverselist.push_back(true);}
-    else if (gPortList == "2")  {portlist.push_back(2); reverselist.push_back(false);}
-    else if (gPortList == "2r") {portlist.push_back(2); reverselist.push_back(true);}
-    else if (gPortList == "1,2")
-    {
-        portlist.push_back(1); reverselist.push_back(false);
-        portlist.push_back(2); reverselist.push_back(false);
-    }
-    else if (gPortList == "1r,2")
-    {
-        portlist.push_back(1); reverselist.push_back(true);
-        portlist.push_back(2); reverselist.push_back(false);
-    }
-    else if (gPortList == "1,2r")
-    {
-        portlist.push_back(1); reverselist.push_back(false);
-        portlist.push_back(2); reverselist.push_back(true);
-    }
-    else if (gPortList == "1r,2r")
-    {
-        portlist.push_back(1); reverselist.push_back(true);
-        portlist.push_back(2); reverselist.push_back(true);
-    }
-    else
-    {
-        cerr << argv[0] << ": Bad port list.  It should be 1, 2, 1r, 2r, etc." << endl;
-        Usage(argc, argv);
-    }
-
-    if (gLightsPerFixture <= 0 || gLightsPerFixture > 256)
-    {
-        cerr << argv[0] << ": --count must be between 1 and 256" << endl;
-        exit(EXIT_FAILURE);
-    }
-
-    // Parse commands
+    // Parse command
+    if (optind == argc)
+        // No command argument
+        Usage(progname);
+    string command = argv[optind++];
     int idx = -1;
     RGBColor color;
     if (command == "clear")
     {
-        ValidateNumArgs(command, 0, argc, argv);
+        ValidateNumArgs(command, 0, progname, argc, argv);
         color = BLACK;
 
     }
     else if (command == "set")
     {
-        ValidateNumArgs(command, 4, argc, argv);
+        ValidateNumArgs(command, 4, progname, argc, argv);
         idx   = atoi(argv[optind++]);
         int r = atoi(argv[optind++]);
         int g = atoi(argv[optind++]);
@@ -182,7 +108,7 @@ int main(int argc, char** argv)
     }
     else if (command == "all" || command == "rotate")
     {
-        ValidateNumArgs(command, 3, argc, argv);
+        ValidateNumArgs(command, 3, progname, argc, argv);
         int r = atoi(argv[optind++]);
         int g = atoi(argv[optind++]);
         int b = atoi(argv[optind++]);
@@ -191,40 +117,34 @@ int main(int argc, char** argv)
     else
     {
         cerr << argv[0] << ": Unknown command \"" << command << "\"" << endl;
-        Usage(argc, argv);
+        Usage(progname);
     }
 
-    cout << "Success: " << command << "  Color: " << color.r << " " << color.g << " " << color.b << endl;
-    cout << "IP: " << gIP << "  Ports: " << gPortList << "  Count: " << gLightsPerFixture << endl;
+    cout << "Running: " << command << "  Color: " << color.r << " " << color.g << " " << color.b << endl;
+    cout << gCLI.GetDescription() << endl;
 
-    // Create CKDevice and Buffer
-    CKbuffer buffer;
-    for (int i = 0; i < (int) portlist.size(); ++i)
-    {
-        CKdevice dev(gIP, portlist[i], gLightsPerFixture);
-        buffer.AddDevice(dev, reverselist[i]);
-    }
-
+    // Execute the command
     if (command == "rotate")
     {
         while (true)
-            for (int i = 0; i < buffer.GetCount(); ++i)
+            for (int i = 0; i < gCLI.Buffer.GetCount(); ++i)
             {
-                buffer.Clear();
-                buffer.SetRGB(i,color);
-                buffer.Update();
+                gCLI.Buffer.Clear();
+                gCLI.Buffer.SetRGB(i,color);
+                gCLI.Buffer.Update();
                 Sleep(50);
             }
     }
+    // Everything other than rotate
     if (idx == -1)
-        buffer.SetAll(color);
+        gCLI.Buffer.SetAll(color);
     else
-        buffer.SetRGB(idx, color);
-    buffer.Update();
+        gCLI.Buffer.SetRGB(idx, color);
+    gCLI.Buffer.Update();
 
-    if (buffer.HasError())
+    if (gCLI.Buffer.HasError())
     {
-        cerr << "Error updating CK device: " << buffer.GetLastError() << endl;
+        cerr << "Error updating CK device: " << gCLI.GetLastError() << endl;
         exit(EXIT_FAILURE);
     }
 

@@ -5,5 +5,8 @@
 		<Project filename="cktool/cktool.cbp" active="1">
 			<Depends filename="cklib/cklib.cbp" />
 		</Project>
+		<Project filename="ckfirefly/ckfirefly.cbp">
+			<Depends filename="cklib/cklib.cbp" />
+		</Project>
 	</Workspace>
 </CodeBlocks_workspace_file>

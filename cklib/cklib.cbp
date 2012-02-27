@@ -41,6 +41,8 @@
 		<Unit filename="LBuffer.h" />
 		<Unit filename="Lobj.cpp" />
 		<Unit filename="Lobj.h" />
+		<Unit filename="ckcli.cpp" />
+		<Unit filename="ckcli.h" />
 		<Unit filename="cklib.cpp" />
 		<Unit filename="cklib.h" />
 		<Unit filename="utils.cpp" />

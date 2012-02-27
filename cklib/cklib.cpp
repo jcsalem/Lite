@@ -48,14 +48,72 @@ int CopyColorsToBuffer(char* buffer, int maxlen, vector<RGBColor>::const_iterato
 // CKdevice
 //---------------------------------------------------------------------
 
+CKdevice::CKdevice(csref devstrArg) : iPort(1), iCount(50), iLayout(CK::kNormal)
+{
+    string devstr = TrimWhitespace(devstrArg);
+    size_t len = devstr.length();
+    if (len == 0)
+    {
+        iLastError = "Empty device string";
+        return;
+    }
+
+    // Count
+    size_t parenpos = devstr.find('(');
+    if (parenpos != string::npos)
+    {
+        if (devstr.find(')') != len - 1)
+        {
+            iLastError = "Device string has mismatched parentheses";
+            return;
+        }
+        iCount = atoi(devstr.substr(parenpos, len - parenpos - 2).c_str());
+        if (iCount <= 0 || iCount > 256)
+        {
+            iLastError = "Device count must be between 1 and 256";
+            return;
+        }
+        devstr = devstr.substr(0, parenpos);
+        len = parenpos;
+    }
+
+    // Port
+    size_t atpos = devstr.find('@');
+    if (atpos != string::npos)
+    {
+        if (! isdigit(devstr[atpos+1]))
+        {
+            iLastError = "Device port must be a number";
+            return;
+        }
+
+        if (tolower(devstr[len-1]) == 'r')
+        {
+            iLayout = CK::kReverse;
+        }
+        iPort = atoi(devstr.substr(atpos + 1, len - atpos - 1).c_str());
+        devstr = devstr.substr(0,atpos);
+        len = atpos;
+    }
+
+    iIP = IPAddr(devstr);
+    if (! iIP.IsValid())
+    {
+        iLastError = "The IP address was invalid " + devstr;
+        return;
+    }
+}
+
 string CKdevice::GetDescription() const
 {
     string r;
-    r += "CK PDS @ ";
+    r += "PDS:";
     r += iIP.GetString();
-    r += " Port ";
+    r += "@";
     r += IntToStr(iPort);
-    r += " (";
+    if (iLayout == CK::kReverse)
+        r += "R";
+    r += "(";
     r += IntToStr(iCount);
     r += ")";
     return r;
@@ -90,15 +148,53 @@ bool CKdevice::Write(const char* buffer, int len)
 //---------------------------------------------------------------------
 // CKduffer
 //---------------------------------------------------------------------
+bool CKbuffer::HasError() const
+{
+    if (!iLastError.empty()) return true;
+    for (DevIter_t i = iDevices.begin(); i != iDevices.end(); ++i)
+        if (i->HasError()) return true;
+    return false;
+}
 
-bool CKbuffer::AddDevice(const CKdevice& dev, bool reverseOrder)
+string CKbuffer::GetLastError() const
+{
+    if (!iLastError.empty()) return iLastError;
+    for (DevIter_t i = iDevices.begin(); i != iDevices.end(); ++i)
+        if (i->HasError()) return i->GetLastError();
+    return string();
+}
+
+string CKbuffer::GetDescription() const
+{
+    string str = "CKbuffer: " + IntToStr(GetCount()) + " total lights [";
+    for (DevIter_t i = iDevices.begin(); i != iDevices.end(); ++i)
+    {
+        if (i != iDevices.begin())
+            str += ", ";
+        str += i->GetDescription();
+    }
+    str += "]";
+    return str;
+}
+
+bool CKbuffer::AddDevice(const CKdevice& dev)
     {
     int oldCount = GetCount();
     iDevices.push_back(dev);
-    iReverseFlag.push_back(reverseOrder);
     Alloc(oldCount + dev.GetCount());
     return !dev.HasError();
     }
+
+bool CKbuffer::AddDevice(csref devstr)
+{
+    CKdevice dev(devstr);
+    if (dev.HasError())
+    {
+        iLastError = "Invalid device string: '" + devstr + "': " + dev.GetLastError();
+        return false;
+    }
+    return AddDevice(dev);
+}
 
 bool CKbuffer::Update()
     {
@@ -118,7 +214,7 @@ bool CKbuffer::Update()
         // Force a millisecond delay. Otherwise, if we are going to the next port on the same PDS, we could lose data.
         if (i) Sleep(1);
         int len = iDevices[i].GetCount();
-        int dataLen = CopyColorsToBuffer(dataPtr, maxLen-hdrLen, bufIter, len, iReverseFlag[i]);
+        int dataLen = CopyColorsToBuffer(dataPtr, maxLen-hdrLen, bufIter, len, iDevices[i].GetLayout() == CK::kReverse);
         *header = KiNETportOut(); // Initialize header
         //*header = KiNETdmxOut(); // Initialize header
         header->port = iDevices[i].GetPort();

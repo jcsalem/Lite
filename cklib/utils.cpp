@@ -11,6 +11,22 @@
 #endif //WIN32
 
 // String Functions
+string TrimWhitespace(csref str)
+{
+    int len = str.length();
+    int spos, epos;
+    for (spos = 0; spos < len; ++spos)
+    {
+        if (!IsWhitespace(str[spos])) break;
+    }
+    for (epos = len - 1; epos > spos; --epos)
+        if (!IsWhitespace(str[epos])) break;
+
+    if (spos >= epos) return "";
+    return str.substr(spos, epos - spos + 1);
+}
+
+
 string IntToStr(int val)
     {
     char buffer[32]; // good enough for 64 bit ints
