@@ -1,14 +1,20 @@
 // Top level firefly code
 
-#include "../cklib/utils.h"
-#include "../cklib/Color.h"
-#include "../cklib/cklib.h"
-#include "../cklib/ckcli.h"
-#include "../cklib/Lobj.h"
+#include "utils.h"
+#include "utilsTime.h"
+#include "Color.h"
+#include "cklib.h"
+#include "ckcli.h"
+#include "Lobj.h"
+#include "utilsRandom.h"
 #include <iostream>
 #include <getopt.h>
+#include <stdio.h>
 
 CKcli gCLI;
+
+// Fwd decls
+void SetupNextCycle(Lobj* lobj, Milli_t startTime);
 
 //----------------------------------------------------------------
 // Argument Parsing
@@ -92,31 +98,29 @@ void TestLights()
 //----------------------------------------------------------------
 // Firefly utilities
 //----------------------------------------------------------------
+Milli_t gTime;
 
-#if 0
 // fwd decls
 void FireflyMove(void);
 void FireflyClip(void);
 Lobj* FireflyAlloc(void);
 
 const short kMaxFireflies = 5;
-const short kMillisPerFrame = 16;
-Buffer gBuffer;
-unsigned long gTime;
+//const short kMillisPerFrame = 16;
 
 static const short gMaxColor = 128;
 short RandomCVal(void) {
-  return max(random(gMaxColor), random(gMaxColor));
+  return max(Random(gMaxColor), Random(gMaxColor));
 }
 
 Lobj* FireflyAlloc(void) {
   Lobj* lobj = Lobj::Alloc();
   if (! lobj) return NULL;
-  lobj->pos = random(Buffer::Width * Lobj::kPosIncr);
+  lobj->pos = Random(gCLI.Buffer.GetCount() * Lobj::kPosIncr);
   short maxSpeed = Lobj::kPosIncr/12;
   short minSpeed = (Lobj::kPosIncr+63)/64;
-  lobj->speed = random(maxSpeed-minSpeed) + minSpeed;
-  lobj->velocity = random(lobj->speed + 1) - (lobj->speed / 2);
+  lobj->speed = Random(maxSpeed-minSpeed) + minSpeed;
+  lobj->velocity = Random(lobj->speed + 1) - (lobj->speed / 2);
   lobj->maxColor.r = RandomCVal();
   lobj->maxColor.g = RandomCVal();
   lobj->maxColor.b = RandomCVal();
@@ -128,10 +132,10 @@ Lobj* FireflyAlloc(void) {
 void FireflyMoveOne(Lobj* lobj) {
 #if 0
   lobj->pos += lobj->velocity;
-  short delta = random(2 * lobj->speed + 1) - lobj->speed;
+  short delta = Random(2 * lobj->speed + 1) - lobj->speed;
   lobj->velocity = lobj->velocity + delta;
 #else
-  short delta = random(2 * lobj->speed + 1) - lobj->speed;
+  short delta = Random(2 * lobj->speed + 1) - lobj->speed;
   lobj->pos += delta + lobj->velocity;
   lobj->velocity = delta;
 #endif
@@ -145,7 +149,7 @@ void FireflyClip(void) {
   for (short i = 0; i < Lobj::GetNum();) {
     Lobj* lobj = Lobj::GetNth(i);
     short bufpos = lobj->pos / Lobj::kPosIncr;
-    if (bufpos <= -2 || bufpos >= Buffer::Width + 1)
+    if (bufpos <= -2 || bufpos >= gCLI.Buffer.GetCount() + 1)
      Lobj::Free(lobj);
     else
      ++i;
@@ -164,17 +168,17 @@ short gFFSleepMax = 3000;
 short gFFSleepFactor = 3;
 
 short SmallRandInRange(short minval, short maxval, short factor) {
-  factor = max(factor, 1);
+  factor = max(factor, (short) 1);
   short val = 32767;
   for (int i = 0; i < factor; ++i)
-    val = min(val, random(maxval - minval) + minval);
+    val = min(val, (short) (Random(maxval - minval) + minval));
   return val;
 }
 
-void SetupNextCycle(Lobj* lobj, unsigned long startTime) {
-  short attackDur = (random(150) + 0);
-  short holdDur = (random(attackDur) + random(attackDur) + attackDur * 2);
-  short releaseDur = min(random(200), random(200)) + 100;
+void SetupNextCycle(Lobj* lobj, Milli_t startTime) {
+  short attackDur = (Random(150) + 0);
+  short holdDur = (Random(attackDur) + Random(attackDur) + attackDur * 2);
+  short releaseDur = min(Random(200), Random(200)) + 100;
   attackDur *= gFFattack;
   holdDur *= gFFhold;
   releaseDur *= gFFrelease;
@@ -186,9 +190,10 @@ void SetupNextCycle(Lobj* lobj, unsigned long startTime) {
   lobj->startNext = lobj->startSleep + sleepDur;
 }
 
-void RampColor(Lobj* lobj, unsigned long startTime, unsigned long endTime, bool reverse) {
-  unsigned long startDiff = gTime - startTime;
-  unsigned long totalDiff = endTime - startTime;
+void RampColor(Lobj* lobj, Milli_t startTime, Milli_t endTime, bool reverse) {
+  Milli_t startDiff = gTime - startTime;
+  Milli_t totalDiff = endTime - startTime;
+  if (totalDiff == 0) return;
   // Scale down so we don't overflow a short
   while (totalDiff > 127) {
       startDiff >>= 2;
@@ -198,6 +203,8 @@ void RampColor(Lobj* lobj, unsigned long startTime, unsigned long endTime, bool 
   lobj->color = lobj->maxColor;
   lobj->color *= startDiff;
   lobj->color /= totalDiff;
+
+  //cout << "current=" << gTime << "  start=" << startTime << "  end=" << endTime << " startDiff=" << startDiff << " totalDiff=" << totalDiff << endl;
 }
 
 void FireflyDimOne(Lobj* lobj) {
@@ -219,30 +226,29 @@ void FireflyDim(void) {
   Lobj::Map(FireflyDimOne);
 }
 
-#endif
-
 void FireflyLoop()
 {
     while (true)
     {
-        gTime = millis();
+        gTime = Milliseconds();
         FireflyMove();
         FireflyClip();
         // Maybe allocate
         short num = Lobj::GetNum();
-        if (num == 0 || (num < kMaxFireflies && num < Lobj::GetMaxNum() && random(10) == 0))
+        if (num == 0 || (num < kMaxFireflies && num < Lobj::GetMaxNum() && Random(10) == 0))
           FireflyAlloc();
         FireflyDim();
         // Render
-        gBuffer.Clear();
-        Lobj::RenderAll(&gBuffer);
-        StripRender(gBuffer);
-        StripUpdate();
+        gCLI.Buffer.Clear();
+        Lobj::RenderAll(&gCLI.Buffer);
+        gCLI.Buffer.Update();
         // Delay (should be based on clock)
-        unsigned long curTime = millis();
-        short delayAmount = curTime - gTime;
-        if (delayAmount > 0)
-          delay(delayAmount);
+        //Sleep(10);
+
+        //Millis_t curTime = Milliseconds();
+        //short delayAmount = curTime - gTime;
+        //if (delayAmount > 0)
+        //  delay(delayAmount);
     }
 }
 

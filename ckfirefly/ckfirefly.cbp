@@ -32,6 +32,7 @@
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
+			<Add directory="..\cklib" />
 		</Compiler>
 		<Linker>
 			<Add option="..\cklib\libcklib.a -static-libgcc -static-libstdc++ -lws2_32" />

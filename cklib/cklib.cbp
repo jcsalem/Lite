@@ -49,8 +49,12 @@
 		<Unit filename="utils.h" />
 		<Unit filename="utilsIP.cpp" />
 		<Unit filename="utilsIP.h" />
+		<Unit filename="utilsRandom.cpp" />
+		<Unit filename="utilsRandom.h" />
 		<Unit filename="utilsSocket.cpp" />
 		<Unit filename="utilsSocket.h" />
+		<Unit filename="utilsTime.cpp" />
+		<Unit filename="utilsTime.h" />
 		<Extensions>
 			<DoxyBlocks>
 				<comment_style block="0" line="0" />

@@ -2,7 +2,7 @@
 #include "Color.h"
 #include "LBuffer.h"
 
-bool gAntiAlias = 0;
+bool gAntiAlias = true;
 
 #define MAX_OBJS 10
 Lobj gAllLobjs[MAX_OBJS];
