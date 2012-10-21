@@ -254,7 +254,7 @@ void FireflyLoop()
 
 int main(int argc, char** argv)
 {
-    const char* progname = "cktool";
+    const char* progname = "ckfirefly";
     if (argc > 0 && argv != NULL && argv[0] != NULL)
         progname = argv[0];
 
