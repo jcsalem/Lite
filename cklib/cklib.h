@@ -63,6 +63,7 @@ private:
     string          iLastError;
 };
 
+class CKxmldoc; // fwd decl of generic xml doc
 class CKbuffer : public LBuffer
 {
 public:
@@ -74,6 +75,13 @@ public:
     string  GetLastError() const;
     string  GetDescription() const;
     bool    Update();
+
+    // Alternative creation methods
+    static bool    CreateFromArglist(CKbuffer* buffer, int* argc, char** argv);
+    static const char*    kArglistArgs;
+    static const char*    kArglistDoc;
+    static bool    CreateFromXML(CKbuffer* buffer, const CKxmldoc& xmldoc);
+
 private:
     typedef vector<CKdevice>::const_iterator  DevIter_t;
     vector<CKdevice>    iDevices;

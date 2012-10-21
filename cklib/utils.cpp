@@ -26,6 +26,10 @@ string TrimWhitespace(csref str)
     return str.substr(spos, epos - spos + 1);
 }
 
+bool strEQ(csref a, csref b)
+{
+    return strcasecmp(a.c_str(), b.c_str()) == 0;
+}
 
 string IntToStr(int val)
     {
