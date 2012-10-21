@@ -29,4 +29,4 @@ private:
     CKcli& operator=(const CKcli&);
 };
 
-#endif // _ARGPARSE_H
+#endif
