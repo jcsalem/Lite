@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_workspace_file>
 	<Workspace title="Workspace">
-		<Project filename="cklib/cklib.cbp" />
+		<Project filename="cklib/cklib.cbp" active="1" />
 		<Project filename="cktool/cktool.cbp">
 			<Depends filename="cklib/cklib.cbp" />
 		</Project>
-		<Project filename="ckfirefly/ckfirefly.cbp" active="1">
+		<Project filename="ckfirefly/ckfirefly.cbp">
 			<Depends filename="cklib/cklib.cbp" />
 		</Project>
 	</Workspace>

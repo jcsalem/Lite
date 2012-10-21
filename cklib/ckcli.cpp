@@ -40,8 +40,8 @@ bool CKcli::ParseOptions(const char opt, const char* progname, int argc, char** 
 
 const char* CKbuffer::kArglistArgs = " --pds pdsinfo1 [--pds pdsinfo2 ...]";
 const char* CKbuffer::kArglistDoc =
-    "  pdsinfo describes the PDS IP and fixture port in the format IP/port\n"
-    "    For example, 172.24.22.51@1  or  172.24.22.51@2r.  'r' means reverse the order of those lights\n";
+    "  pdsinfo describes the PDS IP and fixture port in the format IP/port(count)\n"
+    "    For example, 172.24.22.51/1  or  172.24.22.51/2r(50).  'r' means reverse the order of those lights\n";
 
 
 static void ShiftArgv(char** argv, int amount)

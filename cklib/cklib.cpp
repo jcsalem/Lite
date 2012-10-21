@@ -78,7 +78,7 @@ CKdevice::CKdevice(csref devstrArg) : iPort(1), iCount(50), iLayout(CK::kNormal)
     }
 
     // Port
-    size_t atpos = devstr.find('@');
+    size_t atpos = devstr.find('/');
     if (atpos != string::npos)
     {
         if (! isdigit(devstr[atpos+1]))

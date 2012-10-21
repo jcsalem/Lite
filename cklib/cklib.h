@@ -20,15 +20,15 @@ namespace CK
 };
 
 // String representation of a CK device
-//   IP@port(count)
+//   IP/port(count)
 //  Port may be followed by r or R if it should be reversed.
 //  Port defaults to 1.
 //  Count defaulta to 50.
 // Examples:
 //  172.24.22.51
-//  172.24.22.51@1
-//  172.24.22.51@1r
-//  172.24.22.51@2R(25)
+//  172.24.22.51/1
+//  172.24.22.51/1r
+//  172.24.22.51/2R(25)
 //  172.24.22.51(25)
 
 
