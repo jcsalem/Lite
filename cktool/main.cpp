@@ -1,21 +1,23 @@
 #include "../cklib/utils.h"
 #include "../cklib/Color.h"
 #include "../cklib/cklib.h"
-#include "../cklib/ckcli.h"
 #include <iostream>
 #include <getopt.h>
 
-CKcli gCLI;
+// The CK light buffer
+CKbuffer gCKbuffer;
+
 //----------------------------------------------------------------------------
 // Option Parsing
 //----------------------------------------------------------------------------
 
-void Usage(const char* progname)
+void Usage(const char* progname, csref msg = "")
     {
-    cerr << "Usage: " << progname << " --pds pdsinfo1 [--pds pdsinfo2 ...]"
+    if (! msg.empty()) cerr << msg << endl;
+    cerr << "Usage: " << progname << CKbuffer::kArglistArgs
             << " command" << endl;
     cerr << "Where:" << endl;
-    cerr << CKcli::gPDSInfoDoc << endl;
+    cerr << CKbuffer::kArglistDoc << endl;
     cerr << "  command is one of: " << endl;
     cerr << "    clear " << endl;
     cerr << "    all r g b" << endl;
@@ -26,24 +28,29 @@ void Usage(const char* progname)
 
 struct option longOpts[] =
     {
-        CKCLI_PDSINFO_OPTIONS,
         {"help",    no_argument,        0, 'h'},
         {0,0,0,0}
     };
 
 
-void ParseArgs(const char* progname, int argc, char** argv)
+void ParseArgs(const char* progname, int* argc, char** argv)
 {
+    // Parse device arguments
+    bool success = CKbuffer::CreateFromArglist(&gCKbuffer, argc, argv);
+    if (! success)
+        Usage(progname, gCKbuffer.GetLastError());
+    if (gCKbuffer.GetCount() == 0)
+        Usage(progname, "You must supply at least one --pds argument.");
+
+
     optind = 0; // avoid warning
 
     while (true)
     {
         int optIndex;
-        char c = getopt_long (argc, argv, "", longOpts, &optIndex);
+        char c = getopt_long (*argc, argv, "", longOpts, &optIndex);
         if (c == -1) break; // Done parsing
 
-        if (! gCLI.ParseOptions(c, progname, argc, argv))
-        {
         switch (c)
             {
             case 'h':
@@ -52,17 +59,6 @@ void ParseArgs(const char* progname, int argc, char** argv)
                 cerr << "Internal error - unknown option: " << c << endl;
                 Usage(progname);
             }
-        }
-    }
-    if (gCLI.HasError())
-    {
-        cerr << gCLI.GetLastError() << endl;
-        Usage(progname);
-    }
-    if (gCLI.Buffer.GetCount() == 0)
-    {
-        cerr << "You must specify at least one CK device" << endl;
-        Usage(progname);
     }
 }
 
@@ -82,7 +78,7 @@ int main(int argc, char** argv)
         progname = argv[0];
 
     // Parse arguments
-    ParseArgs(progname, argc, argv);
+    ParseArgs(progname, &argc, argv);
 
     // Parse command
     if (optind == argc)
@@ -121,30 +117,30 @@ int main(int argc, char** argv)
     }
 
     cout << "Running: " << command << "  Color: " << color.r << " " << color.g << " " << color.b << endl;
-    cout << gCLI.GetDescription() << endl;
+    cout << gCKbuffer.GetDescription() << endl;
 
     // Execute the command
     if (command == "rotate")
     {
         while (true)
-            for (int i = 0; i < gCLI.Buffer.GetCount(); ++i)
+            for (int i = 0; i < gCKbuffer.GetCount(); ++i)
             {
-                gCLI.Buffer.Clear();
-                gCLI.Buffer.SetRGB(i,color);
-                gCLI.Buffer.Update();
+                gCKbuffer.Clear();
+                gCKbuffer.SetRGB(i,color);
+                gCKbuffer.Update();
                 Sleep(50);
             }
     }
     // Everything other than rotate
     if (idx == -1)
-        gCLI.Buffer.SetAll(color);
+        gCKbuffer.SetAll(color);
     else
-        gCLI.Buffer.SetRGB(idx, color);
-    gCLI.Buffer.Update();
+        gCKbuffer.SetRGB(idx, color);
+    gCKbuffer.Update();
 
-    if (gCLI.Buffer.HasError())
+    if (gCKbuffer.HasError())
     {
-        cerr << "Error updating CK device: " << gCLI.GetLastError() << endl;
+        cerr << "Error updating CK device: " << gCKbuffer.GetLastError() << endl;
         exit(EXIT_FAILURE);
     }
 
