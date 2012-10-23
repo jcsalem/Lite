@@ -4,14 +4,13 @@
 #include "utilsTime.h"
 #include "Color.h"
 #include "cklib.h"
-#include "ckcli.h"
 #include "Lobj.h"
 #include "utilsRandom.h"
 #include <iostream>
 #include <getopt.h>
 #include <stdio.h>
 
-CKcli gCLI;
+CKbuffer gCKbuffer;
 
 // Fwd decls
 void SetupNextCycle(Lobj* lobj, Milli_t startTime);
@@ -19,34 +18,39 @@ void SetupNextCycle(Lobj* lobj, Milli_t startTime);
 //----------------------------------------------------------------
 // Argument Parsing
 //----------------------------------------------------------------
-void Usage(const char* progname)
+void Usage(const char* progname, csref msg = "")
     {
-    cerr << "Usage: " << progname << " --pds pdsinfo1 [--pds pdsinfo2 ...]" << endl;
+    if (! msg.empty()) cerr << msg << endl;
+    cerr << "Usage: " << progname << CKbuffer::kArglistArgs << endl;
     cerr << "Where:" << endl;
-    cerr << CKcli::gPDSInfoDoc << endl;
+    cerr << CKbuffer::kArglistDoc << endl;
     exit (EXIT_FAILURE);
     }
 
 struct option longOpts[] =
     {
-        CKCLI_PDSINFO_OPTIONS,
         {"help",    no_argument,        0, 'h'},
         {0,0,0,0}
     };
 
 
-void ParseArgs(const char* progname, int argc, char** argv)
+void ParseArgs(const char* progname, int* argc, char** argv)
 {
+   // Parse device arguments
+    bool success = CKbuffer::CreateFromArglist(&gCKbuffer, argc, argv);
+    if (! success)
+        Usage(progname, gCKbuffer.GetLastError());
+    if (gCKbuffer.GetCount() == 0)
+        Usage(progname, "You must supply at least one --pds argument.");
+
+    // Parse remaining
     optind = 0; // avoid warning
 
     while (true)
     {
         int optIndex;
-        char c = getopt_long (argc, argv, "", longOpts, &optIndex);
+        char c = getopt_long (*argc, argv, "", longOpts, &optIndex);
         if (c == -1) break; // Done parsing
-
-        if (! gCLI.ParseOptions(c, progname, argc, argv))
-        {
         switch (c)
             {
             case 'h':
@@ -55,14 +59,13 @@ void ParseArgs(const char* progname, int argc, char** argv)
                 cerr << "Internal error - unknown option: " << c << endl;
                 Usage(progname);
             }
-        }
     }
-    if (gCLI.HasError())
+    if (gCKbuffer.HasError())
     {
-        cerr << gCLI.GetLastError() << endl;
+        cerr << gCKbuffer.GetLastError() << endl;
         Usage(progname);
     }
-    if (gCLI.Buffer.GetCount() == 0)
+    if (gCKbuffer.GetCount() == 0)
     {
         cerr << "You must specify at least one CK device" << endl;
         Usage(progname);
@@ -74,25 +77,25 @@ void ParseArgs(const char* progname, int argc, char** argv)
 
 void TestLights()
 {
-    int count = gCLI.Buffer.GetCount();
+    int count = gCKbuffer.GetCount();
 
     for (int i = count-1; i >= 0; --i)
     {
-        gCLI.Buffer.Clear();
+        gCKbuffer.Clear();
         for (int j = 0; j < count; ++j)
         {
             RGBColor c = WHITE;
             c *= j;
             c /= count;
             int pos = (i + j) % count;
-            gCLI.Buffer.SetRGB(pos, c);
+            gCKbuffer.SetRGB(pos, c);
         }
-        gCLI.Buffer.Update();
+        gCKbuffer.Update();
         Sleep(10);
     }
     Sleep(250);
-    gCLI.Buffer.Clear();
-    gCLI.Buffer.Update();
+    gCKbuffer.Clear();
+    gCKbuffer.Update();
 }
 
 //----------------------------------------------------------------
@@ -116,8 +119,13 @@ short RandomCVal(void) {
 Lobj* FireflyAlloc(void) {
   Lobj* lobj = Lobj::Alloc();
   if (! lobj) return NULL;
-  lobj->pos = Random(gCLI.Buffer.GetCount() * Lobj::kPosIncr);
-  short maxSpeed = Lobj::kPosIncr/12;
+  lobj->pos = Random(gCKbuffer.GetCount() * Lobj::kPosIncr);
+//  static short lastpos = 0;
+//  lobj->pos = lastpos * Lobj::kPosIncr;
+//  lastpos += 3;
+//  if (lastpos >= gCKbuffer.GetCount()) lastpos = lastpos - gCKbuffer.GetCount();
+//  cout << lobj->pos << endl;
+  short maxSpeed = Lobj::kPosIncr/21;
   short minSpeed = (Lobj::kPosIncr+63)/64;
   lobj->speed = Random(maxSpeed-minSpeed) + minSpeed;
   lobj->velocity = Random(lobj->speed + 1) - (lobj->speed / 2);
@@ -149,7 +157,7 @@ void FireflyClip(void) {
   for (short i = 0; i < Lobj::GetNum();) {
     Lobj* lobj = Lobj::GetNth(i);
     short bufpos = lobj->pos / Lobj::kPosIncr;
-    if (bufpos <= -2 || bufpos >= gCLI.Buffer.GetCount() + 1)
+    if (bufpos <= -2 || bufpos >= gCKbuffer.GetCount() + 1)
      Lobj::Free(lobj);
     else
      ++i;
@@ -239,11 +247,11 @@ void FireflyLoop()
           FireflyAlloc();
         FireflyDim();
         // Render
-        gCLI.Buffer.Clear();
-        Lobj::RenderAll(&gCLI.Buffer);
-        gCLI.Buffer.Update();
+        gCKbuffer.Clear();
+        Lobj::RenderAll(&gCKbuffer);
+        gCKbuffer.Update();
         // Delay (should be based on clock)
-        //Sleep(10);
+        Sleep(10);
 
         //Millis_t curTime = Milliseconds();
         //short delayAmount = curTime - gTime;
@@ -259,7 +267,7 @@ int main(int argc, char** argv)
         progname = argv[0];
 
     // Parse arguments
-    ParseArgs(progname, argc, argv);
+    ParseArgs(progname, &argc, argv);
 
     // Parse command
     if (optind != argc)
