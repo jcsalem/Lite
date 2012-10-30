@@ -37,9 +37,9 @@ int CopyColorsToBuffer(char* buffer, int maxlen, vector<RGBColor>::const_iterato
     for (int i = 0; i < clen; ++i)
     {
         if (i != 0) citer += incr;
-        *buffer++ = citer->r;
-        *buffer++ = citer->g;
-        *buffer++ = citer->b;
+        *buffer++ = citer->rAsChar();
+        *buffer++ = citer->gAsChar();
+        *buffer++ = citer->bAsChar();
     }
     return bytesNeeded;
 }
@@ -109,7 +109,7 @@ string CKdevice::GetDescription() const
     string r;
     r += "PDS:";
     r += iIP.GetString();
-    r += "@";
+    r += "/";
     r += IntToStr(iPort);
     if (iLayout == CK::kReverse)
         r += "R";

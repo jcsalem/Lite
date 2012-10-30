@@ -85,8 +85,7 @@ void TestLights()
         for (int j = 0; j < count; ++j)
         {
             RGBColor c = WHITE;
-            c *= j;
-            c /= count;
+            c *= ((float) j) / count;
             int pos = (i + j) % count;
             gCKbuffer.SetRGB(pos, c);
         }
@@ -111,15 +110,15 @@ Lobj* FireflyAlloc(void);
 const short kMaxFireflies = 5;
 //const short kMillisPerFrame = 16;
 
-static const short gMaxColor = 128;
-short RandomCVal(void) {
-  return max(Random(gMaxColor), Random(gMaxColor));
+static const float gMaxColor = 1.0;
+float RandomCVal(void) {
+  return max(RandomFloat(gMaxColor), RandomFloat(gMaxColor));
 }
 
 Lobj* FireflyAlloc(void) {
   Lobj* lobj = Lobj::Alloc();
   if (! lobj) return NULL;
-  lobj->pos = Random(gCKbuffer.GetCount() * Lobj::kPosIncr);
+  lobj->pos = RandomInt(gCKbuffer.GetCount() * Lobj::kPosIncr);
 //  static short lastpos = 0;
 //  lobj->pos = lastpos * Lobj::kPosIncr;
 //  lastpos += 3;
@@ -127,8 +126,8 @@ Lobj* FireflyAlloc(void) {
 //  cout << lobj->pos << endl;
   short maxSpeed = Lobj::kPosIncr/21;
   short minSpeed = (Lobj::kPosIncr+63)/64;
-  lobj->speed = Random(maxSpeed-minSpeed) + minSpeed;
-  lobj->velocity = Random(lobj->speed + 1) - (lobj->speed / 2);
+  lobj->speed = RandomInt(maxSpeed-minSpeed) + minSpeed;
+  lobj->velocity = RandomInt(lobj->speed + 1) - (lobj->speed / 2);
   lobj->maxColor.r = RandomCVal();
   lobj->maxColor.g = RandomCVal();
   lobj->maxColor.b = RandomCVal();
@@ -140,10 +139,10 @@ Lobj* FireflyAlloc(void) {
 void FireflyMoveOne(Lobj* lobj) {
 #if 0
   lobj->pos += lobj->velocity;
-  short delta = Random(2 * lobj->speed + 1) - lobj->speed;
+  short delta = RandomInt(2 * lobj->speed + 1) - lobj->speed;
   lobj->velocity = lobj->velocity + delta;
 #else
-  short delta = Random(2 * lobj->speed + 1) - lobj->speed;
+  short delta = RandomInt(2 * lobj->speed + 1) - lobj->speed;
   lobj->pos += delta + lobj->velocity;
   lobj->velocity = delta;
 #endif
@@ -179,14 +178,14 @@ short SmallRandInRange(short minval, short maxval, short factor) {
   factor = max(factor, (short) 1);
   short val = 32767;
   for (int i = 0; i < factor; ++i)
-    val = min(val, (short) (Random(maxval - minval) + minval));
+    val = min(val, (short) (RandomInt(maxval - minval) + minval));
   return val;
 }
 
 void SetupNextCycle(Lobj* lobj, Milli_t startTime) {
-  short attackDur = (Random(150) + 0);
-  short holdDur = (Random(attackDur) + Random(attackDur) + attackDur * 2);
-  short releaseDur = min(Random(200), Random(200)) + 100;
+  short attackDur = (RandomInt(150) + 0);
+  short holdDur = (RandomInt(attackDur) + RandomInt(attackDur) + attackDur * 2);
+  short releaseDur = min(RandomInt(200), RandomInt(200)) + 100;
   attackDur *= gFFattack;
   holdDur *= gFFhold;
   releaseDur *= gFFrelease;
@@ -243,7 +242,7 @@ void FireflyLoop()
         FireflyClip();
         // Maybe allocate
         short num = Lobj::GetNum();
-        if (num == 0 || (num < kMaxFireflies && num < Lobj::GetMaxNum() && Random(10) == 0))
+        if (num == 0 || (num < kMaxFireflies && num < Lobj::GetMaxNum() && RandomInt(10) == 0))
           FireflyAlloc();
         FireflyDim();
         // Render

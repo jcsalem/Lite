@@ -5,22 +5,37 @@
 // Random Utilities
 //------------------------------------------------
 
-#ifndef __AVR__
+// Returns a random number scaled from 0 to 0.99999
+float GetNormalizedRand()
+    {
+    int rr = rand();
+    return (float)rr / ((float)RAND_MAX + 1);
+    }
+
 // POSIX version
-int32 Random(int32 max)
+int32 RandomInt(int32 max)
 {
-    return Random(0, max);
+    return RandomInt(0, max);
 }
 
-int32 Random (int32 min, int32 max)
+int32 RandomInt (int32 min, int32 max)
 	{
-    int rr = rand();
-    // normalize to between 0 and 0.999999
-	double r = (double)rr / ((double)RAND_MAX + 1);
-	double range = max - min + 1;
-	r = r * range;
+	float r = GetNormalizedRand();
+	float range = max - min + 1;
+	r = r * range + 0.5;
 	unsigned int ru = static_cast<unsigned int>(r);	// remove fractional part
 	int ri = static_cast<int>(ru + min);
 	return ri;
 	}
-#endif
+
+float RandomFloat(float limit)
+{
+    return GetNormalizedRand() * limit;
+}
+
+float RandomFloat (float min, float limit)
+{
+    float r = GetNormalizedRand();
+    r = r * (limit - min) + min;
+    return r;
+}

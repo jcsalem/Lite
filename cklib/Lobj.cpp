@@ -1,6 +1,7 @@
 #include "Lobj.h"
 #include "Color.h"
 #include "LBuffer.h"
+#include <math.h>
 
 bool gAntiAlias = true;
 
@@ -23,29 +24,27 @@ void Lobj::Render(LBuffer* buffer) const {
     if (bpos < 0 || bpos >= buffer->GetCount()) return;
     buffer->AddRGB(bpos, color);
   } else {
-  short tpos = pos + kPosIncr;  // Add one unit to address problem of rounding a negative number
-  short epos = tpos / kPosIncr;
-  short bpos = epos - 1;
-  short rem  = tpos % kPosIncr;
-  RGBColor tcolor;
-  if (rem != 0 && epos >= 0 && epos < buffer->GetCount()) {
-      tcolor = color;
-      tcolor *= rem;
-      tcolor.r /= kPosIncr;
-      tcolor.g /= kPosIncr;
-      tcolor.b /= kPosIncr;
-      buffer->AddRGB(epos, tcolor);
+    float fpos = (float) pos / (float) kPosIncr;
+    float floorpos = floor(fpos);
+    // High-level clip (avoid aliasing at extreme values)
+    if (floorpos <= -1.0 || floorpos >= (float) buffer->GetCount()) return;
 
+    float efrac = fpos - floorpos;
+    float bfrac = 1.0 - efrac;
+    short bpos = floorpos;
+    short epos = bpos + 1;
+
+    RGBColor tcolor;
+    if (bfrac > 0 && bpos >= 0 && bpos < buffer->GetCount()) {
+      tcolor = color;
+      tcolor *= bfrac;
+      buffer->AddRGB(bpos, tcolor);
      }
 
-  rem = kPosIncr - rem - 1;
-  if (rem != 0 && bpos >= 0 && bpos < buffer->GetCount()) {
+    if (efrac > 0 && epos >= 0 && epos < buffer->GetCount()) {
       tcolor = color;
-      tcolor *= rem;
-      tcolor.r /= kPosIncr;
-      tcolor.g /= kPosIncr;
-      tcolor.b /= kPosIncr;
-      buffer->AddRGB(bpos, tcolor);
+      tcolor *= efrac;
+      buffer->AddRGB(epos, tcolor);
     }
   }
 }

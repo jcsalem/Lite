@@ -4,13 +4,13 @@
 #define _UTILSRANDOM_H
 
 #include "utils.h"
-#ifdef __AVR__
-// Arduino already has this function
-#include "WProgram.h"
-#define Random random
-#else
-int32 Random (int32 min, int32 max);
-int32 Random (int32 max);
-#endif
+
+// These return a random value from min through max
+int32 RandomInt (int32 min, int32 max);
+int32 RandomInt (int32 max);
+
+// These return a random float from min up to but not including limit
+float RandomFloat(float min, float limit);
+float RandomFloat(float limit);
 
 #endif // _UTILSRANDOM_H

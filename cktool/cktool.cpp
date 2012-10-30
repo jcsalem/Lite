@@ -23,6 +23,7 @@ void Usage(const char* progname, csref msg = "")
     cerr << "    all r g b" << endl;
     cerr << "    rotate r g b" << endl;
     cerr << "    set idx r g b" << endl;
+    cerr << " r/g/b are floating point colors scaled from 0.0 to 1.0" << endl;
     exit (EXIT_FAILURE);
     }
 
@@ -97,17 +98,17 @@ int main(int argc, char** argv)
     {
         ValidateNumArgs(command, 4, progname, argc, argv);
         idx   = atoi(argv[optind++]);
-        int r = atoi(argv[optind++]);
-        int g = atoi(argv[optind++]);
-        int b = atoi(argv[optind++]);
+        float r = atof(argv[optind++]);
+        float g = atof(argv[optind++]);
+        float b = atof(argv[optind++]);
         color = RGBColor(r,g,b);
     }
     else if (command == "all" || command == "rotate")
     {
         ValidateNumArgs(command, 3, progname, argc, argv);
-        int r = atoi(argv[optind++]);
-        int g = atoi(argv[optind++]);
-        int b = atoi(argv[optind++]);
+        float r = atof(argv[optind++]);
+        float g = atof(argv[optind++]);
+        float b = atof(argv[optind++]);
         color = RGBColor(r,g,b);
     }
     else
