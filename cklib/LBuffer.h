@@ -16,7 +16,8 @@ class LBuffer
     void Clear(void) {SetAll(BLACK);}
     void SetRGB(int idx, const RGBColor& rgb)   {if (idx >= 0 && idx < (int) iBuffer.size()) iBuffer[idx] = rgb;}
     void AddRGB(int idx, const RGBColor& rgb)   {SetRGB(idx, GetRGB(idx) + rgb);}
-    void SetAll(const RGBColor& rgb);
+    void SetColor(int idx, const Color& color);
+    void SetAll(const Color& color);
 
     typedef vector<RGBColor>::const_iterator const_iterator;
     typedef vector<RGBColor>::iterator       iterator;

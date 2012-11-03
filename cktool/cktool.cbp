@@ -38,7 +38,7 @@
 		<Linker>
 			<Add option="..\cklib\libcklib.a -static-libgcc -static-libstdc++ -lws2_32" />
 		</Linker>
-		<Unit filename="main.cpp" />
+		<Unit filename="cktool.cpp" />
 		<Extensions>
 			<code_completion />
 			<envvars />

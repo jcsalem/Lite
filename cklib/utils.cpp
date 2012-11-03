@@ -31,6 +31,13 @@ bool strEQ(csref a, csref b)
     return strcasecmp(a.c_str(), b.c_str()) == 0;
 }
 
+bool strStartsWith(csref str, csref matchString)
+{
+    if (matchString.empty()) return true;
+    if (matchString.length() > str.length()) return false;
+    return strncasecmp(str.c_str(), matchString.c_str(), matchString.length()) == 0;
+}
+
 string IntToStr(int val)
     {
     char buffer[32]; // good enough for 64 bit ints

@@ -6,6 +6,8 @@
 
 // The CK light buffer
 CKbuffer gCKbuffer;
+// Time in seconds before existing
+int gRunTime = 0;
 
 //----------------------------------------------------------------------------
 // Option Parsing
@@ -20,16 +22,17 @@ void Usage(const char* progname, csref msg = "")
     cerr << CKbuffer::kArglistDoc << endl;
     cerr << "  command is one of: " << endl;
     cerr << "    clear " << endl;
-    cerr << "    all r g b" << endl;
-    cerr << "    rotate r g b" << endl;
-    cerr << "    set idx r g b" << endl;
-    cerr << " r/g/b are floating point colors scaled from 0.0 to 1.0" << endl;
+    cerr << "    all color" << endl;
+    cerr << "    rotate color" << endl;
+    cerr << "    set idx color" << endl;
+    cerr << " <color> is \"r,g,b\" or \"HSV(h,s,v)\" or etc.  All components are scaled from 0.0 to 1.0" << endl;
     exit (EXIT_FAILURE);
     }
 
 struct option longOpts[] =
     {
         {"help",    no_argument,        0, 'h'},
+        {"time",    required_argument,  0, 't'},
         {0,0,0,0}
     };
 
@@ -56,6 +59,11 @@ void ParseArgs(const char* progname, int* argc, char** argv)
             {
             case 'h':
                 Usage(progname);
+            case 't':
+                gRunTime = atoi(optarg);
+                if (gRunTime <= 0)
+                    Usage(progname, "--time argument must be positive. Was " + string(optarg));
+                break;
             default:
                 cerr << "Internal error - unknown option: " << c << endl;
                 Usage(progname);
@@ -86,30 +94,49 @@ int main(int argc, char** argv)
         // No command argument
         Usage(progname);
     string command = argv[optind++];
-    int idx = -1;
-    RGBColor color;
+    string errmsg;
+    int idx = -1;  // if -1 all colors should be set
+    Color* color;
+    Color* color2;
+    bool doWash   = false;
+    bool doRotate = false;
+
     if (command == "clear")
     {
         ValidateNumArgs(command, 0, progname, argc, argv);
-        color = BLACK;
-
+        color = new BLACK;
     }
     else if (command == "set")
     {
-        ValidateNumArgs(command, 4, progname, argc, argv);
+        ValidateNumArgs(command, 2, progname, argc, argv);
         idx   = atoi(argv[optind++]);
-        float r = atof(argv[optind++]);
-        float g = atof(argv[optind++]);
-        float b = atof(argv[optind++]);
-        color = RGBColor(r,g,b);
+        color = Color::AllocFromString(argv[optind++], &errmsg);
     }
-    else if (command == "all" || command == "rotate")
+    else if (command == "all")
     {
-        ValidateNumArgs(command, 3, progname, argc, argv);
-        float r = atof(argv[optind++]);
-        float g = atof(argv[optind++]);
-        float b = atof(argv[optind++]);
-        color = RGBColor(r,g,b);
+        ValidateNumArgs(command, 1, progname, argc, argv);
+        color = Color::AllocFromString(argv[optind++], &errmsg);
+    }
+    else if (command == "rotate")
+    {
+        ValidateNumArgs(command, 1, progname, argc, argv);
+        color = Color::AllocFromString(argv[optind++], &errmsg);
+        doRotate = true;
+    }
+    else if (command == "wash")
+    {
+        ValidateNumArgs(command, 2, progname, argc, argv);
+        color = Color::AllocFromString(argv[optind++], &errmsg);
+        color2 = color ? Color::AllocFromString(argv[optind++], &errmsg) : NULL;
+        doWash = true;
+    }
+    else if (command == "rotwash")
+    {
+        ValidateNumArgs(command, 2, progname, argc, argv);
+        color = Color::AllocFromString(argv[optind++], &errmsg);
+        color2 = color ? Color::AllocFromString(argv[optind++], &errmsg) : NULL;
+        doWash = true;
+        doRotate = true;
     }
     else
     {
@@ -117,26 +144,25 @@ int main(int argc, char** argv)
         Usage(progname);
     }
 
-    cout << "Running: " << command << "  Color: " << color.r << " " << color.g << " " << color.b << endl;
+    // Validate the colors
+    if (! color) Usage(progname, errmsg);
+    if (doWash && !color2) Usage(progname, errmsg);
+
+    // Print summary
+    // $$$$ Add time, specify color in type-specific format, specify wash color
+    RGBColor rgb(*color);
+
+    cout << "Running: " << command << "  Color: " << rgb.r << " " << rgb.g << " " << rgb.b << endl;
     cout << gCKbuffer.GetDescription() << endl;
 
-    // Execute the command
-    if (command == "rotate")
-    {
-        while (true)
-            for (int i = 0; i < gCKbuffer.GetCount(); ++i)
-            {
-                gCKbuffer.Clear();
-                gCKbuffer.SetRGB(i,color);
-                gCKbuffer.Update();
-                Sleep(50);
-            }
-    }
-    // Everything other than rotate
+    // Set and update the lights
+    if (doWash) {
+        // $$$$
+    } else
     if (idx == -1)
-        gCKbuffer.SetAll(color);
+        gCKbuffer.SetAll(*color);
     else
-        gCKbuffer.SetRGB(idx, color);
+        gCKbuffer.SetColor(idx, *color);
     gCKbuffer.Update();
 
     if (gCKbuffer.HasError())
@@ -144,6 +170,12 @@ int main(int argc, char** argv)
         cerr << "Error updating CK device: " << gCKbuffer.GetLastError() << endl;
         exit(EXIT_FAILURE);
     }
+
+    // Handle rotation and/or timedelay
+    if (doRotate) {
+        // $$$
+    } else
+        Sleep(gRunTime * 1000);
 
     exit(EXIT_SUCCESS);
 }
