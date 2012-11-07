@@ -3,6 +3,7 @@
 #include "utilsRandom.h"
 #include <string>
 #include <math.h>
+#include <stdio.h>
 
 //--------------------------------------------------------------------------
 // Utilities
@@ -162,6 +163,12 @@ RGBColor::RGBColor(const Color& color) : Color() {
 
 bool RGBColor::FromString(csref str, RGBColor* rgb, string* errmsg, bool ignoreRangeErrors) {
     return ParseColorComponents(str, &(rgb->r), &(rgb->g), &(rgb->b), errmsg, ignoreRangeErrors);
+}
+
+string RGBColor::ToString() const {
+    char buffer[50];
+    sprintf(buffer, "RGB(%f,%f,%f)", r, g, b);
+    return string(buffer);
 }
 
 // Operators
@@ -362,6 +369,12 @@ HSVColor::HSVColor(const Color& color) : Color() {
 
 bool HSVColor::FromString(csref str, HSVColor* hsv, string* errmsg, bool ignoreRangeErrors) {
     return ParseColorComponents(str, &(hsv->h), &(hsv->s), &(hsv->v), errmsg, ignoreRangeErrors);
+}
+
+string HSVColor::ToString() const {
+    char buffer[50];
+    sprintf(buffer, "HSV(%.3f,%.3f,%.3f)", h, s, v);
+    return string(buffer);
 }
 
 HSVColor   HSVColor::operator*(const float& m) const {

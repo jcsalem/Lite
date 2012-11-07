@@ -19,6 +19,9 @@ public:
     // RGB components are from 0 to 1 and separated by spaces or commas.
     static Color* AllocFromString(csref str, string* errmsg = NULL, bool ignoreRangeErrors = false);
 
+    // Descriptiom
+    virtual string ToString() const {return "unknown_color";}
+
     // Default conversion functions can be overridden
     // These return the components as 8-bit chars from 0 to 255
     virtual char rAsChar(void) const;
@@ -56,6 +59,8 @@ public:
     virtual char gAsChar(void) const;
     virtual char bAsChar(void) const;
     virtual void ToRGBColor(RGBColor* colorptr) const {*colorptr = *this;}
+    virtual string ToString() const;
+
   };
 
 class HSVColor : public Color
@@ -80,6 +85,7 @@ public:
     float s;  // 0.0 to 1.0; 0 is always gray. >= 1 is always fully saturated
     float v;  // 0.0 to 1.0; 0 is always black. >= 1 is always the max for that color
     virtual void ToRGBColor(RGBColor*) const;
+    virtual string ToString() const;
 private:
     void SetFromRGB(const RGBColor& rgb);
   };
@@ -93,6 +99,8 @@ public:
     HSVColor GetColor(float index) const; // returns a color from within the range (0 <= range <= 1)
     HSVColor c1;
     HSVColor c2;
+    string GetDescription() const;
+
 };
 
 // Standard color names
