@@ -2,23 +2,22 @@
 <CodeBlocks_project_file>
 	<FileVersion major="1" minor="6" />
 	<Project>
-		<Option title="ckfirefly" />
+		<Option title="ckinfo" />
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="Debug">
-				<Option output="bin\Debug\ckfirefly" prefix_auto="1" extension_auto="1" />
+				<Option output="bin\Debug\ckinfo" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj\Debug\" />
 				<Option external_deps="..\cklib\bin\Debug\libcklib.a;" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="--pds 172.24.22.51@1r --pds 172.24.22.51@2" />
 				<Compiler>
 					<Add option="-g" />
 				</Compiler>
 			</Target>
 			<Target title="Release">
-				<Option output="bin\Release\ckfirefly" prefix_auto="1" extension_auto="1" />
+				<Option output="bin\Release\ckinfo" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj\Release\" />
 				<Option external_deps="..\cklib\bin\Release\libcklib.a;" />
 				<Option type="1" />
@@ -33,12 +32,12 @@
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
-			<Add directory="..\cklib" />
+			<Add option="-fexceptions" />
 		</Compiler>
 		<Linker>
 			<Add option="..\cklib\bin\$(TARGET_NAME)\libcklib.a -static-libgcc -static-libstdc++ -lws2_32" />
 		</Linker>
-		<Unit filename="ckfirefly.cpp" />
+		<Unit filename="ckinfo.cpp" />
 		<Extensions>
 			<code_completion />
 			<envvars />

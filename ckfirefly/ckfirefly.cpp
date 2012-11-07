@@ -115,6 +115,14 @@ float RandomCVal(void) {
   return max(RandomFloat(gMaxColor), RandomFloat(gMaxColor));
 }
 
+RGBColor RandomColor(void) {
+    RGBColor rgb;
+    rgb.r = max(RandomFloat(0.5, 1.0), RandomFloat(0.5, 1.0));
+    rgb.g = RandomFloat (0.0, 0.4);
+    rgb.b = RandomFloat (0.0, 0.1);
+    return rgb;
+}
+
 Lobj* FireflyAlloc(void) {
   Lobj* lobj = Lobj::Alloc();
   if (! lobj) return NULL;
@@ -128,18 +136,21 @@ Lobj* FireflyAlloc(void) {
   short minSpeed = (Lobj::kPosIncr+63)/64;
   lobj->speed = RandomInt(maxSpeed-minSpeed) + minSpeed;
   lobj->velocity = RandomInt(lobj->speed + 1) - (lobj->speed / 2);
+  lobj->maxColor = RandomColor();
+#if 0
   lobj->maxColor.r = RandomCVal();
   lobj->maxColor.g = RandomCVal();
   lobj->maxColor.b = RandomCVal();
+#endif
   lobj->color = lobj->maxColor;
   SetupNextCycle(lobj, gTime);
   return lobj;
 }
 
 void FireflyMoveOne(Lobj* lobj) {
-#if 0
+#if 1
   lobj->pos += lobj->velocity;
-  short delta = RandomInt(2 * lobj->speed + 1) - lobj->speed;
+  short delta = RandomInt(lobj->speed + 1) - (lobj->speed+1)/2;
   lobj->velocity = lobj->velocity + delta;
 #else
   short delta = RandomInt(2 * lobj->speed + 1) - lobj->speed;
@@ -250,7 +261,7 @@ void FireflyLoop()
         Lobj::RenderAll(&gCKbuffer);
         gCKbuffer.Update();
         // Delay (should be based on clock)
-        Sleep(10);
+        Sleep(40);
 
         //Millis_t curTime = Milliseconds();
         //short delayAmount = curTime - gTime;
