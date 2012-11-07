@@ -7,11 +7,6 @@
 //---------------------------------------------------------------------
 // KiNET utilities
 //---------------------------------------------------------------------
-int KiNETportOut::GetSize()
-{
-    return sizeof (KiNETportOut);
-}
-
 int KiNETdmxOut::GetSize()
 {
     // Need to work around C++'s need to pad bytes
@@ -139,6 +134,7 @@ bool CKdevice::Write(const char* buffer, int len)
     {
         iLastError = "Error writing to socket for " + GetDescription() + ": " + iSocket.GetLastError();
         cerr << iLastError << endl;
+        iSocket.Close(); // Close the socket in the hopes the next write will reopen and fix everything.
         return false;
     }
 

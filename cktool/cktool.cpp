@@ -8,6 +8,7 @@
 CKbuffer gCKbuffer;
 // Time in seconds before existing
 int gRunTime = 0;
+bool gVerbose = false;
 
 //----------------------------------------------------------------------------
 // Option Parsing
@@ -17,6 +18,7 @@ void Usage(const char* progname, csref msg = "")
     {
     if (! msg.empty()) cerr << msg << endl;
     cerr << "Usage: " << progname << CKbuffer::kArglistArgs
+            << " [--time numsecs] [--verbose]"
             << " command" << endl;
     cerr << "Where:" << endl;
     cerr << CKbuffer::kArglistDoc << endl;
@@ -33,6 +35,7 @@ struct option longOpts[] =
     {
         {"help",    no_argument,        0, 'h'},
         {"time",    required_argument,  0, 't'},
+        {"verbose", no_argument,        0, 'v'},
         {0,0,0,0}
     };
 
@@ -59,6 +62,10 @@ void ParseArgs(const char* progname, int* argc, char** argv)
             {
             case 'h':
                 Usage(progname);
+                break;
+            case 'v':
+                gVerbose = true;
+                break;
             case 't':
                 gRunTime = atoi(optarg);
                 if (gRunTime <= 0)
@@ -120,6 +127,7 @@ int main(int argc, char** argv)
     else if (command == "rotate")
     {
         ValidateNumArgs(command, 1, progname, argc, argv);
+        idx = 0;
         color = Color::AllocFromString(argv[optind++], &errmsg);
         doRotate = true;
     }
@@ -149,15 +157,27 @@ int main(int argc, char** argv)
     if (doWash && !color2) Usage(progname, errmsg);
 
     // Print summary
-    // $$$$ Add time, specify color in type-specific format, specify wash color
-    RGBColor rgb(*color);
-
-    cout << "Running: " << command << "  Color: " << rgb.r << " " << rgb.g << " " << rgb.b << endl;
-    cout << gCKbuffer.GetDescription() << endl;
+    if (gVerbose) {
+        cout << "Cmd: " << command << "   Color: " << color->ToString();
+        if (doWash)
+            cout << " Color2: " << color2->ToString();
+        if (idx != -1)
+            cout << "  Index: " << idx;
+        if (gRunTime != 0)
+            cout << "  Time: " << gRunTime << " seconds";
+        cout << endl;
+        cout << gCKbuffer.GetDescription() << endl;
+    }
 
     // Set and update the lights
     if (doWash) {
-        // $$$$
+        HSVColorRange range(*color, *color2);
+        int numLights = gCKbuffer.GetCount();;
+        float stepSize = 1.0f / numLights;
+        for (int i = 0; i < numLights; ++i) {
+            HSVColor col = range.GetColor(i * stepSize);
+            gCKbuffer.SetColor(i, col);
+        }
     } else
     if (idx == -1)
         gCKbuffer.SetAll(*color);
@@ -173,7 +193,11 @@ int main(int argc, char** argv)
 
     // Handle rotation and/or timedelay
     if (doRotate) {
-        // $$$
+        while (true) {
+            Sleep(25);
+            gCKbuffer.Rotate();
+            gCKbuffer.Update();
+        }
     } else
         Sleep(gRunTime * 1000);
 

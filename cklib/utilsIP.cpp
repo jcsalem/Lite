@@ -9,7 +9,7 @@
 //-----------------------------------------------------
 
 // Converting from an IP address to a string
-static const uint32 kBadIP = 0xFFFFFFFFul;
+static const uint32 kBadIP = 0xFFFFFFFEul;
 
 static uint32 IPFromString(const char* str)
 	{
@@ -64,7 +64,7 @@ void IPAddr::Init(const char* addr)
 
 bool IPAddr::IsValid() const
     {
-    return iIP != kBadIP && iIP != 0;
+    return iIP != kBadIP;
     }
 
 string IPAddr::GetString() const
@@ -85,11 +85,29 @@ string IPAddr::GetString() const
 // SockAddr
 //-----------------------------------------------------
 
+
+SockAddr::SockAddr(const sockaddr* sa, int len) {
+    if (sa && sa->sa_family == AF_INET && len >= (int) sizeof(sockaddr_in))
+        *this = SockAddr(*((sockaddr_in*) sa));
+    else
+        *this = SockAddr(kBadIP, 0);
+    }
+
+SockAddr::SockAddr(const sockaddr_in& sa) {
+    if (sa.sin_family == AF_INET) {
+        iAddr = IPAddr(ntohl(sa.sin_addr.S_un.S_addr));
+        iPort = ntohs(sa.sin_port);
+        iStruct = sa;
+    } else {
+        *this = SockAddr(kBadIP, 0);
+    }
+}
+
 void SockAddr::InitStruct()
     {
     memset(&iStruct, 0, sizeof(iStruct));
-    iStruct.sin_addr.s_addr = htonl(iAddr.GetIP());
     iStruct.sin_family      = AF_INET;
+    iStruct.sin_addr.s_addr = htonl(iAddr.GetIP());
     iStruct.sin_port        = htons(iPort);
     }
 

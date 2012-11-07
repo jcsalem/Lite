@@ -38,6 +38,18 @@ bool strStartsWith(csref str, csref matchString)
     return strncasecmp(str.c_str(), matchString.c_str(), matchString.length()) == 0;
 }
 
+string strReplace(csref str, csref match, csref subst) {
+    string retval;
+    size_t startpos = 0;
+    size_t pos;
+    while ((pos = str.find(match, startpos)) != string::npos) {
+        retval += str.substr(startpos, pos - startpos) + subst;
+        startpos = pos + match.length();
+    }
+    retval += str.substr(startpos);
+    return retval;
+}
+
 string IntToStr(int val)
     {
     char buffer[32]; // good enough for 64 bit ints

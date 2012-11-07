@@ -116,34 +116,31 @@ void Socket::Reset()
 	iLastError = "";
 	}
 
+bool Socket::setsockopt_bool(int level, int optname, bool value) {
+    int bvalue = value ? 1 : 0;
+    int retval = setsockopt(iSocket, level, optname, (char*) &bvalue, sizeof (int));
+    if (retval == 0) return true;
+    iLastError = "setsockopt error: " + SocketErrorString();
+    return false;
+}
+
 //--------------------------------------------------------------------------
-// SocketUDPClient
+// SocketUDP
 //--------------------------------------------------------------------------
 
-SocketUDPClient::SocketUDPClient()
-	: Socket()
-	{
-	}
+SocketUDP::SocketUDP() : Socket() {}
 
-SocketUDPClient::SocketUDPClient (const IPAddr& addr, int port)
-	: Socket()
-	{
+SocketUDP::SocketUDP (const IPAddr& addr, int port)
+	: Socket() {
 	SetSockAddr(addr, port);
-	}
+}
 
-SocketUDPClient::SocketUDPClient(const SockAddr& sa)
-	: Socket()
-	{
+SocketUDP::SocketUDP(const SockAddr& sa)
+	: Socket() {
 	SetSockAddr(sa);
-	}
+}
 
-bool SocketUDPClient::SetSockAddr(const IPAddr& addr, int port)
-	{
-	return SetSockAddr(SockAddr(addr, port));
-	}
-
-bool SocketUDPClient::SetSockAddr(const SockAddr& sa)
-	{
+bool SocketUDP::SetSockAddr(const SockAddr& sa) {
 	if (! sa.IsValid())
 		{
 		if (iIsOpen) Close();
@@ -167,10 +164,10 @@ bool SocketUDPClient::SetSockAddr(const SockAddr& sa)
         iIsOpen = true;
         }
     return true;
-	}
+}
 
 //--------------------------------------------------
-// Writing
+// SocketUDPClient
 //--------------------------------------------------
 
 bool SocketUDPClient::Write(const char* source, int len)
@@ -220,7 +217,7 @@ bool SocketUDPClient::MultiWrite(const Buffer* buffers, int count)
 		}
 
 	// Write the data
-	unsigned long bytesWritten;
+	unsigned long bytesWritten = 0;
 	if (WSASendTo(iSocket, bufs, bufsIdx, &bytesWritten, 0, iSockAddr.GetStruct(), iSockAddr.GetStructSize(), NULL, NULL) == SOCKET_ERROR)
         {
         // Unknown error
@@ -243,4 +240,101 @@ bool SocketUDPClient::MultiWrite(const Buffer* buffers, int count)
 		}
 	return true;
 	}
+
+bool SocketUDPClient::Read(char* buffer, int buflen, int* bytesRead) {
+    if (! iIsOpen)
+        {
+        iLastError = "Socket wasn't open";
+        return false;
+        }
+    int numRead = recv(iSocket, buffer, buflen, 0);
+    if (numRead == SOCKET_ERROR) {
+        if (bytesRead) *bytesRead = 0;
+        iLastError = "Error reading from socket: " + SocketErrorString();
+        return false;
+    }
+    if (bytesRead) *bytesRead = numRead;
+    return true;
+}
+
+bool SocketUDPClient::HasData(int timeoutInMS) {
+    if (! iIsOpen)
+        {
+        iLastError = "Socket wasn't open";
+        return false;
+        }
+    // Setup fd_set
+    fd_set fdset;
+    FD_ZERO(&fdset);
+    FD_SET(iSocket, &fdset);
+    // Set up timeval
+    struct timeval tv;
+    struct timeval* tvarg = &tv;
+    if (timeoutInMS == kInfinite)
+        tvarg = NULL;
+    else {
+        tv.tv_sec = timeoutInMS / 1000;
+        tv.tv_usec = timeoutInMS % 1000;
+    }
+
+    int status = select(iSocket+1, &fdset, NULL, NULL, tvarg);
+    switch (status) {
+        case SOCKET_ERROR:
+            iLastError = "Error waiting for data to be available: " + SocketErrorString();
+            return false;
+        case 0: // Timeout
+            return false;
+        default: // data ready to be received
+            return true;
+    }
+}
+
+//--------------------------------------------------
+// SocketUDPServer
+//--------------------------------------------------
+
+SocketUDPServer::SocketUDPServer(const SockAddr& sa) : SocketUDP() {
+    SetSockAddr(sa);
+}
+SocketUDPServer::SocketUDPServer(const IPAddr& ip, int port) : SocketUDP() {
+    SetSockAddr(SockAddr(ip, port));
+}
+SocketUDPServer::SocketUDPServer(int port) : SocketUDP() {
+    SetSockAddr(SockAddr(INADDR_ANY, port));
+}
+
+bool SocketUDPServer::SetSockAddr(const SockAddr& sa) {
+    if (! SocketUDP::SetSockAddr(sa))
+        return false;
+    if (bind(iSocket, iSockAddr.GetStruct(), iSockAddr.GetStructSize())) {
+        iLastError = "Error binding socket to " + iSockAddr.GetString() + ": " + SocketErrorString();
+        return false;
+    } else
+        return true;
+}
+
+bool SocketUDPServer::Read(char* buffer, int buflen, int* bytesRead) {
+    if (! iIsOpen)
+        {
+        iLastError = "Socket wasn't open";
+        return false;
+        }
+    struct sockaddr_in rsa;
+    int rsa_len = sizeof(rsa);
+    memset(&rsa, 0, rsa_len);
+    int numRead = recvfrom(iSocket, buffer, buflen, 0, (sockaddr*) &rsa, &rsa_len);
+    if (numRead == SOCKET_ERROR) {
+        if (bytesRead) *bytesRead = 0;
+        iLastError = "Error reading from socket: " + SocketErrorString();
+        return false;
+    }
+    if (bytesRead) *bytesRead = numRead;
+    iLastSockAddr = SockAddr(rsa);
+    if (iLastSockAddr.IsValid())
+        return true;
+    else {
+        iLastError = "recvfrom didn't retrieve a valid sockaddr";
+        return false;
+    }
+}
 

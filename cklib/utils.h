@@ -26,6 +26,8 @@ string TrimWhitespace(csref s);
 
 bool strEQ(csref a, csref b); // Caseless string compare
 bool strStartsWith(csref str, csref matchString); // Caseless compare to beginning of string
+// Replace all occurances of the match string with substitute
+string strReplace(csref str, csref match, csref substitute);
 
 // Numeric conversions
 string IntToHex(int val, bool noprefix = false);

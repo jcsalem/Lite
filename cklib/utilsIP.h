@@ -36,6 +36,8 @@ class SockAddr
     public:
         SockAddr(const IPAddr& addr, int port) {iAddr = addr; iPort = port; InitStruct();}
         SockAddr() : iAddr(IPAddr()), iPort(0) {InitStruct();}
+        SockAddr(const sockaddr* sa, int len);
+        SockAddr(const sockaddr_in& saddr);
 
         // Accessors
         IPAddr                  GetIPAddr()         const   {return iAddr;}

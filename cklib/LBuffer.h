@@ -18,6 +18,7 @@ class LBuffer
     void AddRGB(int idx, const RGBColor& rgb)   {SetRGB(idx, GetRGB(idx) + rgb);}
     void SetColor(int idx, const Color& color);
     void SetAll(const Color& color);
+    void Rotate(int inc = 1);
 
     typedef vector<RGBColor>::const_iterator const_iterator;
     typedef vector<RGBColor>::iterator       iterator;
