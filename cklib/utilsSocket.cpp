@@ -274,7 +274,7 @@ bool SocketUDPClient::HasData(int timeoutInMS) {
         tvarg = NULL;
     else {
         tv.tv_sec = timeoutInMS / 1000;
-        tv.tv_usec = timeoutInMS % 1000;
+        tv.tv_usec = (timeoutInMS % 1000) * 1000;
     }
 
     int status = select(iSocket+1, &fdset, NULL, NULL, tvarg);
