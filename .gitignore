@@ -4,4 +4,6 @@
 *.exe
 *.depend
 *.layout
+*.o
 obj/
+bin/

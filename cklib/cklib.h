@@ -17,8 +17,6 @@ namespace CK
     // Mapping of the lights into the CKbuffer;
     typedef enum {kNormal, kReverse} Layout_t;
     extern const string kPDSinfoHelp;  // A help string describing the PDSInfo
-    const int kDefaultPollTimeout =  250; // default timeout in MS
-    const int kDefaultCountTimeout = 1500; // default timeout in MS
 };
 
 // String representation of a CK device
@@ -33,22 +31,6 @@ namespace CK
 //  172.24.22.51/2R(25)
 //  172.24.22.51(25)
 
-// Getting information about the connected CK devices
-
-// This class parses the pollReply info into an easy-to-access info structure
-struct CKinfo {
-    CKinfo() {Clear();}
-    CKinfo(const char* pollReplyBuffer, int replyLength) {SetFromPollReply(pollReplyBuffer, replyLength);}
-    bool SetFromPollReply(const char* pollReplyBuffer, int replyLength, string* errmsg = NULL);
-    void Clear();
-    uint32  ipaddr;
-    string  macaddr;
-    uint16  numports;
-    uint32  serial;
-    uint32  universe;
-    string  info;
-    string  name;
-};
 
 class CKdevice
 {
@@ -57,7 +39,6 @@ public:
     CKdevice(csref devstr);
     bool        HasError()          const {return !iLastError.empty();}
     string      GetLastError()      const {return iLastError;}
-    string      GetPath()           const;
     string      GetDescription()    const;
     IPAddr      GetIP()             const {return iIP;}
     int         GetPort()           const {return iPort;}
@@ -81,9 +62,6 @@ private:
     SocketUDPClient iSocket;
     string          iLastError;
 };
-
-vector<CKinfo>      CKpollForInfo   (string* errmsg = NULL, int timeoutInMS = CK::kDefaultPollTimeout);
-vector<CKdevice>    CKpollForDevices(string* errmsg = NULL, int timeoutInMS = CK::kDefaultCountTimeout);
 
 class CKxmldoc; // fwd decl of generic xml doc
 class CKbuffer : public LBuffer
