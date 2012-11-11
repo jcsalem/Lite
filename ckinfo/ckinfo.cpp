@@ -2,7 +2,7 @@
 
 #include "../cklib/utils.h"
 #include "../cklib/utilsSocket.h"
-#include "../cklib/KiNET.h"
+#include "../cklib/cklib.h"
 #include <iostream>
 #include <getopt.h>
 
@@ -46,51 +46,13 @@ void ParseArgs(const char* progname, int* argc, char** argv)
     }
 }
 
-const char* bufferToString (string* outString, const char* startptr, const char* endptr)
-// Reads a null-terminated string from the buffer.  If the buffer ends before the null, then the rest of the string is returned.
-// endptr points to the last character in the string + 1
-// Returns a point to the next character (or to endptr if that's reached)
-{
-    for (const char* i = startptr; i != endptr; ++i) {
-        if (*i == 0) {
-            *outString = string(startptr);
-            return (i+1);
-        }
-    }
-    *outString = string(startptr, endptr - startptr);
-    return endptr;
-}
-
-bool DisplayDevice(const char* buffer, int len) {
-    if (len < KiNETpollReply::GetSize() + 2) {
-        cerr << "Response to CK poll was too short (" << len << " bytes)" << endl;
-        return false;
-    }
-    KiNETpollReply* pollReply = (KiNETpollReply*) buffer;
-    const char* strptr = buffer + KiNETpollReply::GetSize();
-    const char* strend = buffer + len;
-
-    IPAddr ip(pollReply->ip);
-    string macAddr;
-    for (int i = 0; i < 6; ++i) {
-        if (i != 0) macAddr += ":";
-        macAddr += IntToHex(pollReply->mac[i]);
-    }
-    int numPorts    = pollReply->numPorts; // This is a little uncertain
-    int serial      = pollReply->serial;
-    int universe    = pollReply->universe;
-
-    string devInfo, name;
-    strptr = bufferToString(&devInfo, strptr, strend);
-    bufferToString(&name, strptr, strend);
-    devInfo = strReplace(devInfo, "\n", "\n ");
-
-    // Now display it
-    cout << "CK Device @ " << ip.GetString() << "  [MAC: " << macAddr << "]" << endl;
-    cout << "Universe: " << universe << " NumPorts: " << numPorts << "   Serial: " << serial << endl;
-    cout << " Name: " << name << endl;
-    cout << " " << devInfo << endl;
-    return true;
+void DisplayDevice(const CKinfo& devInfo) {
+    cout << "CK Device @ " << IPAddr(devInfo.ipaddr).GetString() << "  [MAC: " << devInfo.macaddr << "]"  << "   Serial: " << devInfo.serial << endl;
+    cout << "Universe: " << devInfo.universe << " NumPorts: " << devInfo.numports<< endl;
+    cout << " Name: " << devInfo.name << endl;
+    string info = devInfo.info;
+    info = strReplace(info, "\n", "\n ");
+    cout << " " << info << endl;
 }
 
 int main(int argc, char** argv)
@@ -106,33 +68,29 @@ int main(int argc, char** argv)
         // Error if any more arguments
         Usage(progname);
 
-    // Create the client socket for the polling request
-    SockAddr outSA(INADDR_BROADCAST, KiNETudpPort); //use broadcast address
-    SocketUDPClient outsock(outSA);
-    outsock.setsockopt_bool(SOL_SOCKET, SO_BROADCAST, true);
-
-    // Broadcast the poll request
-    KiNETpoll pollPacket;
-    outsock.Write((char*) &pollPacket, pollPacket.GetSize());
-    if (outsock.HasError()) {
-        cerr << "Error writing polling packet: " << outsock.GetLastError() << endl;
+    string errmsg;
+    vector<CKinfo> infos = CKpollForInfo(&errmsg, 2000);
+    for (size_t i = 0; i < infos.size(); ++i) {
+        DisplayDevice(infos[i]);
+    }
+    if (! errmsg.empty()) {
+        cerr << "CKpollForInfo: " << errmsg << endl;
         exit(EXIT_FAILURE);
     }
 
-    // Wait for a response
-    const int buflen = 1000;
-    char buffer[buflen];
-    int bytesRead = 0;
-
-    while (outsock.Read(buffer, buflen, &bytesRead)) {
-        DisplayDevice(buffer, bytesRead);
+    if (infos.size() == 0 )
+        cout << "No CK devices detected" << endl;
+    else {
+        vector<CKdevice> devices = CKpollForDevices(infos, &errmsg);
+        cout << "Devices: " << endl;
+        for (size_t i = 0; i < devices.size(); ++i) {
+            cout << " " << devices[i].GetDescription() << endl;
+        }
+        if (! errmsg.empty()) {
+            cerr << "CKpollForDevices: " << errmsg << endl;
+            exit(EXIT_FAILURE);
+        }
     }
-    {
-        cerr << "Error reading poll response: " << outsock.GetLastError() << endl;
-        exit(EXIT_FAILURE);
-    }
-
-    outsock.Close();
 
     exit(EXIT_SUCCESS);
 }

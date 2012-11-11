@@ -36,8 +36,8 @@ typedef enum {
   KTYPE_PORTOUT_SYNC    = 0x0109,
   // KTYPE_??           = 0x0201,  // seems to be a discovery packet
   // KTYPE_??           = 0x0203,  // get dmx address?
-  // KTYPE_GET_NUM       = 0x0207
-  // KTYPE_GET_NUM_REPLY = 0x0208   // Returns the number of ports and lights on each port
+  KTYPE_GET_COUNT       = 0x0207,
+  KTYPE_GET_COUNT_REPLY = 0x0208   // Returns the number of ports and lights on each port
 } KTYPE_t;
 
 struct KiNETheader
@@ -102,7 +102,7 @@ struct KiNETpollReply : public KiNETheader
 {
     KiNETpollReply() : KiNETheader(KTYPE_POLL_REPLY) {char* ptr = (char*) this + sizeof(KiNETheader); size_t len = sizeof(KiNETpollReply) - sizeof(KiNETheader); memset(ptr, 0, len);}
     static int GetSize() {return sizeof(KiNETpollReply);}
-    uint32    ip;
+    uint32    ip;       // In network order
     uint8     mac[6];  // MAC address
     uint16    numPorts;  // Not totally sure what this field is
     uint32    serial;  // The node serial #
@@ -113,7 +113,36 @@ struct KiNETpollReply : public KiNETheader
     // 2) PDS name: a null terminated string
 };
 
-// Change a PDS's IP
+// Poll for what KiNet devices are out there
+struct KiNETgetCount : public KiNETheader
+    {
+    KiNETgetCount() : KiNETheader(KTYPE_GET_COUNT) {zero = 0; unknown = 0x1001;}
+    static int GetSize() {return sizeof(KiNETgetCount);}
+    uint16  zero;
+    uint16  unknown; // This could be a receive buffer length?
+    };
+
+// The reply to the above poll packet (this is sent by the PDS)
+struct KiNETgetCountReply : public KiNETheader
+{
+    KiNETgetCountReply() : KiNETheader(KTYPE_GET_COUNT_REPLY) {char* ptr = (char*) this + sizeof(KiNETheader); size_t len = sizeof(KiNETpollReply) - sizeof(KiNETheader); memset(ptr, 0, len);}
+    static int GetSize() {return sizeof(KiNETgetCountReply);}
+    typedef enum {kStart = 0x0101, kEnd = 0x0001, kData = 0x0102 } replyType_t;
+    uint16  replyType;
+    uint16  zero;
+    // For kStart and kEnd this is followed by a uint32 zero
+    // For kData this is followed by the next structure for each port
+};
+
+struct KiNETgetCountData {
+    uint8   portnum;
+    uint8   unknown1; // 0x02
+    uint8   unknown2; // 0x04
+    uint8   zero;
+    uint32  count;
+};
+
+// Change a PDS's IP (old protocol)
 struct KiNETsetIP : public KiNETheader
 {
     KiNETsetIP() : KiNETheader(KTYPE_SET_IP) {magic2 = KiNETmagic2; magic3 = 0x6705;}
