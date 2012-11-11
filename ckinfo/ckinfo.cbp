@@ -37,6 +37,9 @@
 		<Linker>
 			<Add option="..\cklib\bin\$(TARGET_NAME)\libcklib.a -static-libgcc -static-libstdc++ -lws2_32" />
 		</Linker>
+		<ExtraCommands>
+			<Add after="cp bin/$(TARGET_NAME)/$(TARGET_OUTPUT_BASENAME).exe ../bin/$(TARGET_OUTPUT_BASENAME).exe" />
+		</ExtraCommands>
 		<Unit filename="ckinfo.cpp" />
 		<Extensions>
 			<code_completion />
