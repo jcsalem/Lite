@@ -105,12 +105,21 @@ public:
 
 // Standard color names
 
-#define BLACK RGBColor(0,0,0)
-#define RED   RGBColor(1,0,0)
-#define GREEN RGBColor(0,1,0)
-#define BLUE  RGBColor(0,0,1)
-#define WHITE RGBColor(1,1,1)
+#define BLACK   RGBColor(  0,  0,  0)
+#define WHITE   RGBColor(1.0,1.0,1.0)
+#define GRAY    RGBColor(.25,.25,.25)
+//Brown needs help
+#define BROWN   RGBColor(.60,.20,.05)
 
-#define GRAY  RGBColor(.25,.25,.25)
+#define RED     RGBColor(1.0,  0,  0)
+#define GREEN   RGBColor(  0,1.0,  0)
+#define BLUE    RGBColor(  0,  0,1.0)
+
+#define YELLOW  RGBColor(1.0,1.0,  0)
+#define MAGENTA RGBColor(1.0,  0,1.0)
+#define CYAN    RGBColor(  0,1.0,1.0)
+
+#define ORANGE  RGBColor(1.0,.33,  0)
+#define PURPLE  RGBColor(.63,.13,.94)
 
 #endif

@@ -130,9 +130,38 @@ char Color::bAsChar(void) const {
     return rgb.bAsChar();
 }
 
+struct NameToColor_t {string name; RGBColor color;} gNameToColor[] = {
+    {"white",   WHITE},
+    {"black",   BLACK},
+    {"gray",    GRAY},
+    {"red",     RED},
+    {"green",   GREEN},
+    {"blue",    BLUE},
+    {"yellow",  YELLOW},
+    {"magenta", MAGENTA},
+    {"cyan",    CYAN},
+    {"orange",  ORANGE},
+    {"purple",  PURPLE},
+    {"brown",   BROWN},
+    };
+
+bool ParseNamedColor(csref str, float* r, float* g, float* b) {
+    int num = sizeof(gNameToColor) / sizeof(struct NameToColor_t);
+    for (int i = 0; i < num; ++i) {
+        if (strEQ(str, gNameToColor[i].name)) {
+            *r = gNameToColor[i].color.r;
+            *g = gNameToColor[i].color.g;
+            *b = gNameToColor[i].color.b;
+            return true;
+        }
+    }
+    return false;
+}
+
 Color* Color::AllocFromString(csref strarg, string* errmsg, bool ignoreRangeErrors) {
     string str = TrimWhitespace(strarg);
     float a, b, c;
+    RGBColor rgb;
     if (strStartsWith(str, "RGB")) {
         str = CheckAndRemoveParens(str.substr(3), errmsg);
         if (str.empty()) return false;
@@ -147,6 +176,8 @@ Color* Color::AllocFromString(csref strarg, string* errmsg, bool ignoreRangeErro
             return new HSVColor(a,b,c);
         else
             return NULL;
+    } else if (ParseNamedColor(str, &a, &b, &c)) {
+        return new RGBColor(a,b,c);
     } else if (ParseColorComponents(str, &a, &b, &c, errmsg, ignoreRangeErrors))
         return new RGBColor(a,b,c);
     else

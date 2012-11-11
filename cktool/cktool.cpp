@@ -27,7 +27,7 @@ void Usage(const char* progname, csref msg = "")
     cerr << "    all color" << endl;
     cerr << "    rotate color" << endl;
     cerr << "    set idx color" << endl;
-    cerr << " <color> is \"r,g,b\" or \"HSV(h,s,v)\" or etc.  All components are scaled from 0.0 to 1.0" << endl;
+    cerr << " <color> is \"r,g,b\" or \"HSV(h,s,v)\" or a named color, etc.  All components are scaled from 0.0 to 1.0" << endl;
     exit (EXIT_FAILURE);
     }
 
