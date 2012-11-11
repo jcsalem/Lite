@@ -1,14 +1,16 @@
 #include "../cklib/utils.h"
 #include "../cklib/Color.h"
 #include "../cklib/cklib.h"
+#include "../cklib/utilsTime.h"
 #include <iostream>
 #include <getopt.h>
 
 // The CK light buffer
 CKbuffer gCKbuffer;
 // Time in seconds before existing
-int gRunTime = 0;
-bool gVerbose = false;
+float gRunTime      = 0;
+float gRotateRate   = 1;
+bool  gVerbose      = false;
 
 //----------------------------------------------------------------------------
 // Option Parsing
@@ -18,15 +20,19 @@ void Usage(const char* progname, csref msg = "")
     {
     if (! msg.empty()) cerr << msg << endl;
     cerr << "Usage: " << progname << CKbuffer::kArglistArgs
-            << " [--time numsecs] [--verbose]"
+            << " [--time numsecs] [--rate rateval] [--verbose]"
             << " command" << endl;
     cerr << "Where:" << endl;
     cerr << CKbuffer::kArglistDoc << endl;
+    cerr << "  numsecs is the time the command should run for in seconds " << endl;
+    cerr << "  rateval is the relative speed for the rotate and rotwash commands (default value is 1.0)" << endl;
     cerr << "  command is one of: " << endl;
     cerr << "    clear " << endl;
     cerr << "    all color" << endl;
     cerr << "    rotate color" << endl;
+    cerr << "    rotwash color1 color2" << endl;
     cerr << "    set idx color" << endl;
+    cerr << "    wash color1 color2" << endl;
     cerr << " <color> is \"r,g,b\" or \"HSV(h,s,v)\" or a named color, etc.  All components are scaled from 0.0 to 1.0" << endl;
     exit (EXIT_FAILURE);
     }
@@ -35,6 +41,7 @@ struct option longOpts[] =
     {
         {"help",    no_argument,        0, 'h'},
         {"time",    required_argument,  0, 't'},
+        {"rate",    required_argument,  0, 'r'},
         {"verbose", no_argument,        0, 'v'},
         {0,0,0,0}
     };
@@ -56,6 +63,7 @@ void ParseArgs(const char* progname, int* argc, char** argv)
     {
         int optIndex;
         char c = getopt_long (*argc, argv, "", longOpts, &optIndex);
+
         if (c == -1) break; // Done parsing
 
         switch (c)
@@ -66,8 +74,13 @@ void ParseArgs(const char* progname, int* argc, char** argv)
             case 'v':
                 gVerbose = true;
                 break;
+            case 'r':
+                gRotateRate = atof(optarg);
+                if (gRotateRate <= 0)
+                    Usage(progname, "--rate argument must be positive. Was " + string(optarg));
+                break;
             case 't':
-                gRunTime = atoi(optarg);
+                gRunTime = atof(optarg);
                 if (gRunTime <= 0)
                     Usage(progname, "--time argument must be positive. Was " + string(optarg));
                 break;
@@ -106,7 +119,7 @@ int main(int argc, char** argv)
     Color* color;
     Color* color2;
     bool doWash   = false;
-    bool doRotate = false;
+    float defaultRotateDelay = 0;
 
     if (command == "clear")
     {
@@ -129,7 +142,7 @@ int main(int argc, char** argv)
         ValidateNumArgs(command, 1, progname, argc, argv);
         idx = 0;
         color = Color::AllocFromString(argv[optind++], &errmsg);
-        doRotate = true;
+        defaultRotateDelay = 50;
     }
     else if (command == "wash")
     {
@@ -144,7 +157,7 @@ int main(int argc, char** argv)
         color = Color::AllocFromString(argv[optind++], &errmsg);
         color2 = color ? Color::AllocFromString(argv[optind++], &errmsg) : NULL;
         doWash = true;
-        doRotate = true;
+        defaultRotateDelay = 25;
     }
     else
     {
@@ -165,6 +178,8 @@ int main(int argc, char** argv)
             cout << "  Index: " << idx;
         if (gRunTime != 0)
             cout << "  Time: " << gRunTime << " seconds";
+        if (defaultRotateDelay != 0 && gRotateRate != 1)
+            cout << "  Rate: " << gRotateRate;
         cout << endl;
         cout << gCKbuffer.GetDescription() << endl;
     }
@@ -192,14 +207,17 @@ int main(int argc, char** argv)
     }
 
     // Handle rotation and/or timedelay
-    if (doRotate) {
+    Milli_t duration = gRunTime * 1000;
+    if (defaultRotateDelay != 0) {
+        Milli_t startTime = Milliseconds();
+        Milli_t sleepBetween = defaultRotateDelay / gRotateRate;
         while (true) {
-            Sleep(25);
             gCKbuffer.Rotate();
             gCKbuffer.Update();
+            SleepMilli(sleepBetween);
+            if (duration > 0 && MillisecondsDiff(Milliseconds(),  startTime) > (Milli_t) gRunTime * 1000) break;
         }
     } else
-        Sleep(gRunTime * 1000);
-
+        SleepMilli(duration);
     exit(EXIT_SUCCESS);
 }

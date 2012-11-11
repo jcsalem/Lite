@@ -41,6 +41,14 @@ Milli_t Milliseconds()
     }
 }
 
+void SleepMilli(Milli_t millis) {
+    Sleep(millis);
+}
+
+void SleepSec(int secs) {
+    Sleep(secs * 1000);
+}
+
 #elif defined(__AVR__)
 #include "WProgram.h"
 // Arduino
@@ -50,12 +58,21 @@ Milli_t Milliseconds()
 }
 
 #else
+#include <unistd.h>
 // POSIX version
 const Milli_t kClocksToMillis = 1000 / CLOCKS_PER_SEC;
 Milli_t Milliseconds()
 {
      Milli_t c = clock();
      return c * kClocksToMillis;
+}
+
+void SleepMilli(Milli_t millis) {
+    usleep(millis * 1000);
+}
+
+void SleepSec(int secs) {
+    usleep(secs * 1000000);
 }
 
 #endif
