@@ -12,7 +12,8 @@
 #include <stdio.h>
 
 // Configuration
-Milli_t     gFrameDuration = 25;    // duration of each frame of animation (in MS)
+Milli_t     gFrameDuration  = 40;    // duration of each frame of animation (in MS)
+float       gRate           = 1.0;  // Higher means faster
 
 // Fwd decls
 void SetupNextCycle(Lobj* lobj, Milli_t startTime);
@@ -23,15 +24,17 @@ void SetupNextCycle(Lobj* lobj, Milli_t startTime);
 void Usage(const char* progname, csref msg = "")
     {
     if (! msg.empty()) cerr << msg << endl;
-    cerr << "Usage: " << progname << CK::kStdOptionsArgs << endl;
+    cerr << "Usage: " << progname << CK::kStdOptionsArgs << " [--rate rateval]" << endl;
     cerr << "Where:" << endl;
     cerr << CK::kStdOptionsArgsDoc << endl;
+    cerr << "  rateval is the relative speed (default value is 1.0)" << endl;
     exit (EXIT_FAILURE);
     }
 
 struct option longOpts[] =
     {
         {"help",    no_argument,        0, 'h'},
+        {"rate",    required_argument,  0, 'r'},
         {0,0,0,0}
     };
 
@@ -56,6 +59,11 @@ void ParseArgs(const char* progname, int* argc, char** argv)
             {
             case 'h':
                 Usage(progname);
+            case 'r':
+                gRate = atof(optarg);
+                if (gRate <= 0)
+                    Usage(progname, "--rate argument must be positive. Was " + string(optarg));
+                break;
             default:
                 cerr << "Internal error - unknown option: " << c << endl;
                 Usage(progname);
@@ -242,8 +250,10 @@ const float gTimePerFrame = 25;
 
 void FireflyLoop()
 {
-    while (true)
-    {
+    Milli_t startTime = Milliseconds();
+    Milli_t runTimeMilli = CK::gRunTime * 1000 + .5;
+
+    while (true) {
         gTime = Milliseconds();
         FireflyMove();
         FireflyClip();
@@ -256,13 +266,16 @@ void FireflyLoop()
         CK::gOutputBuffer->Clear();
         Lobj::RenderAll(CK::gOutputBuffer);
         CK::gOutputBuffer->Update();
-        // Delay (should be based on clock)
-        Sleep(40);
-
-        //Millis_t curTime = Milliseconds();
-        //short delayAmount = curTime - gTime;
-        //if (delayAmount > 0)
-        //  delay(delayAmount);
+        // Exit if out of time, else delay until next frame
+        Milli_t currentTime = Milliseconds();
+        if (runTimeMilli != 0 && runTimeMilli < MillisecondsDiff(currentTime, startTime))
+            break;
+        else {
+            Milli_t elapsedSinceFrameStart = MillisecondsDiff(currentTime, gTime);
+            Milli_t frameDuration = gFrameDuration / gRate;
+            if (frameDuration > elapsedSinceFrameStart)
+                SleepMilli(frameDuration - elapsedSinceFrameStart);
+        }
     }
 }
 
@@ -283,7 +296,7 @@ int main(int argc, char** argv)
     }
 
     // Test everything
-    TestLights();
+    // TestLights();
 
     FireflyLoop();
 }
