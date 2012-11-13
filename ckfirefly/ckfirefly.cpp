@@ -6,11 +6,13 @@
 #include "cklib.h"
 #include "Lobj.h"
 #include "utilsRandom.h"
+#include "stdOptions.h"
 #include <iostream>
 #include <getopt.h>
 #include <stdio.h>
 
-CKbuffer gCKbuffer;
+// Configuration
+Milli_t     gFrameDuration = 25;    // duration of each frame of animation (in MS)
 
 // Fwd decls
 void SetupNextCycle(Lobj* lobj, Milli_t startTime);
@@ -21,9 +23,9 @@ void SetupNextCycle(Lobj* lobj, Milli_t startTime);
 void Usage(const char* progname, csref msg = "")
     {
     if (! msg.empty()) cerr << msg << endl;
-    cerr << "Usage: " << progname << CKbuffer::kArglistArgs << endl;
+    cerr << "Usage: " << progname << CK::kStdOptionsArgs << endl;
     cerr << "Where:" << endl;
-    cerr << CKbuffer::kArglistDoc << endl;
+    cerr << CK::kStdOptionsArgsDoc << endl;
     exit (EXIT_FAILURE);
     }
 
@@ -36,12 +38,11 @@ struct option longOpts[] =
 
 void ParseArgs(const char* progname, int* argc, char** argv)
 {
-   // Parse device arguments
-    bool success = CKbuffer::CreateFromArglist(&gCKbuffer, argc, argv);
+    // Parse stamdard options
+    string errmsg;
+    bool success = CK::StdOptionsParse(argc, argv, &errmsg);
     if (! success)
-        Usage(progname, gCKbuffer.GetLastError());
-    if (gCKbuffer.GetCount() == 0)
-        Usage(progname, "You must supply at least one --pds argument.");
+        Usage(progname, errmsg);
 
     // Parse remaining
     optind = 0; // avoid warning
@@ -60,16 +61,6 @@ void ParseArgs(const char* progname, int* argc, char** argv)
                 Usage(progname);
             }
     }
-    if (gCKbuffer.HasError())
-    {
-        cerr << gCKbuffer.GetLastError() << endl;
-        Usage(progname);
-    }
-    if (gCKbuffer.GetCount() == 0)
-    {
-        cerr << "You must specify at least one CK device" << endl;
-        Usage(progname);
-    }
 }
 //----------------------------------------------------------------
 // Light Testing
@@ -77,24 +68,24 @@ void ParseArgs(const char* progname, int* argc, char** argv)
 
 void TestLights()
 {
-    int count = gCKbuffer.GetCount();
+    int count = CK::gOutputBuffer->GetCount();
 
     for (int i = count-1; i >= 0; --i)
     {
-        gCKbuffer.Clear();
+        CK::gOutputBuffer->Clear();
         for (int j = 0; j < count; ++j)
         {
             RGBColor c = WHITE;
             c *= ((float) j) / count;
             int pos = (i + j) % count;
-            gCKbuffer.SetRGB(pos, c);
+            CK::gOutputBuffer->SetRGB(pos, c);
         }
-        gCKbuffer.Update();
+        CK::gOutputBuffer->Update();
         Sleep(10);
     }
     Sleep(250);
-    gCKbuffer.Clear();
-    gCKbuffer.Update();
+    CK::gOutputBuffer->Clear();
+    CK::gOutputBuffer->Update();
 }
 
 //----------------------------------------------------------------
@@ -117,31 +108,33 @@ float RandomCVal(void) {
 
 RGBColor RandomColor(void) {
     RGBColor rgb;
+#if 0
     rgb.r = max(RandomFloat(0.5, 1.0), RandomFloat(0.5, 1.0));
     rgb.g = RandomFloat (0.0, 0.4);
     rgb.b = RandomFloat (0.0, 0.1);
+#else
+    rgb.r = RandomCVal();
+    rgb.g = RandomCVal();
+    rgb.b = RandomCVal();
+#endif
+
     return rgb;
 }
 
 Lobj* FireflyAlloc(void) {
   Lobj* lobj = Lobj::Alloc();
   if (! lobj) return NULL;
-  lobj->pos = RandomInt(gCKbuffer.GetCount() * Lobj::kPosIncr);
+  lobj->pos = RandomInt(CK::gOutputBuffer->GetCount() * Lobj::kPosIncr);
 //  static short lastpos = 0;
 //  lobj->pos = lastpos * Lobj::kPosIncr;
 //  lastpos += 3;
-//  if (lastpos >= gCKbuffer.GetCount()) lastpos = lastpos - gCKbuffer.GetCount();
+//  if (lastpos >= CK::gOutputBuffer->GetCount()) lastpos = lastpos - CK::gOutputBuffer->GetCount();
 //  cout << lobj->pos << endl;
   short maxSpeed = Lobj::kPosIncr/21;
   short minSpeed = (Lobj::kPosIncr+63)/64;
   lobj->speed = RandomInt(maxSpeed-minSpeed) + minSpeed;
   lobj->velocity = RandomInt(lobj->speed + 1) - (lobj->speed / 2);
   lobj->maxColor = RandomColor();
-#if 0
-  lobj->maxColor.r = RandomCVal();
-  lobj->maxColor.g = RandomCVal();
-  lobj->maxColor.b = RandomCVal();
-#endif
   lobj->color = lobj->maxColor;
   SetupNextCycle(lobj, gTime);
   return lobj;
@@ -167,7 +160,7 @@ void FireflyClip(void) {
   for (short i = 0; i < Lobj::GetNum();) {
     Lobj* lobj = Lobj::GetNth(i);
     short bufpos = lobj->pos / Lobj::kPosIncr;
-    if (bufpos <= -2 || bufpos >= gCKbuffer.GetCount() + 1)
+    if (bufpos <= -2 || bufpos >= CK::gOutputBuffer->GetCount() + 1)
      Lobj::Free(lobj);
     else
      ++i;
@@ -244,6 +237,9 @@ void FireflyDim(void) {
   Lobj::Map(FireflyDimOne);
 }
 
+// The time for each frame (in milliseconds
+const float gTimePerFrame = 25;
+
 void FireflyLoop()
 {
     while (true)
@@ -257,9 +253,9 @@ void FireflyLoop()
           FireflyAlloc();
         FireflyDim();
         // Render
-        gCKbuffer.Clear();
-        Lobj::RenderAll(&gCKbuffer);
-        gCKbuffer.Update();
+        CK::gOutputBuffer->Clear();
+        Lobj::RenderAll(CK::gOutputBuffer);
+        CK::gOutputBuffer->Update();
         // Delay (should be based on clock)
         Sleep(40);
 

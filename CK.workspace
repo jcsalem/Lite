@@ -2,10 +2,10 @@
 <CodeBlocks_workspace_file>
 	<Workspace title="Workspace">
 		<Project filename="cklib/cklib.cbp" />
-		<Project filename="cktool/cktool.cbp" active="1">
+		<Project filename="cktool/cktool.cbp">
 			<Depends filename="cklib/cklib.cbp" />
 		</Project>
-		<Project filename="ckfirefly/ckfirefly.cbp">
+		<Project filename="ckfirefly/ckfirefly.cbp" active="1">
 			<Depends filename="cklib/cklib.cbp" />
 		</Project>
 		<Project filename="ckinfo/ckinfo.cbp">

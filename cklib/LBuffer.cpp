@@ -28,3 +28,12 @@ void LBuffer::Rotate(int incr) {
     if (incr < 0) incr = GetCount() + incr;
     rotate(iBuffer.begin(), iBuffer.begin() + incr, iBuffer.end());
 }
+
+// Default info about LBuffer
+string LBuffer::GetPath() const {
+    return "unknown";
+}
+
+string LBuffer::GetDescription() const {
+    return "LBuffer::" + GetPath();
+}

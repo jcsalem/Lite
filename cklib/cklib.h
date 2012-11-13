@@ -18,7 +18,7 @@ namespace CK
     typedef enum {kNormal, kReverse} Layout_t;
     extern const string kPDSinfoHelp;  // A help string describing the PDSInfo
     const int kDefaultPollTimeout =  250; // default timeout in MS
-}
+};
 
 // String representation of a CK device
 //   IP/port(count)
@@ -52,27 +52,32 @@ struct CKinfo {
 class CKdevice
 {
 public:
-    CKdevice(const IPAddr& ip, int port = 1, int count = 50) : iIP(ip), iPort(port), iCount(count), iLayout(CK::kNormal) {}
+    CKdevice(const IPAddr& ip, int universe = 0, int port = 1, int count = 50) : iIP(ip), iUniverse(universe), iPort(port), iCount(count), iLayout(CK::kNormal) {}
     CKdevice(csref devstr);
     bool        HasError()          const {return !iLastError.empty();}
     string      GetLastError()      const {return iLastError;}
     string      GetPath()           const;
     string      GetDescription()    const;
+    bool        Update();
+
+    // Specific to this device
     IPAddr      GetIP()             const {return iIP;}
     int         GetPort()           const {return iPort;}
+    int         GetUniverse()       const {return iUniverse;}
     int         GetCount()          const {return iCount;}
     CK::Layout_t GetLayout()        const {return iLayout;}
     void        SetLayout(CK::Layout_t layout)  {iLayout = layout;}
 
-    bool        Write(const char* buffer, int len);
+    // Writes a KiNET UDP packet to this device
+    bool            Write(const char* buffer, int len);
 
     // Copying (copy everything but socket and error)
-    CKdevice(const CKdevice& dev) : iIP(dev.iIP), iPort(dev.iPort), iCount(dev.iCount), iLayout(dev.iLayout) {}
-    void operator=(const CKdevice& dev) {iSocket.Close(); iLastError.clear(); iIP = dev.iIP; iPort = dev.iPort; iCount = dev.iCount; iLayout = dev.iLayout;}
-
+    CKdevice(const CKdevice& dev) : iIP(dev.iIP), iUniverse(dev.iUniverse), iPort(dev.iPort), iCount(dev.iCount), iLayout(dev.iLayout) {}
+    CKdevice& operator=(const CKdevice& dev) {iSocket.Close(); iLastError.clear(); iIP = dev.iIP; iPort = dev.iPort; iUniverse = dev.iUniverse; iCount = dev.iCount; iLayout = dev.iLayout; return *this;}
 private:
     // These describe the device
     IPAddr          iIP;
+    int             iUniverse;  // The device's universe setting
     int             iPort;      // This is the fixure port NOT the udp port which is hard-coded
     int             iCount;     // Number of lights controlled
     CK::Layout_t    iLayout;   //
@@ -91,23 +96,25 @@ class CKbuffer : public LBuffer
 public:
     CKbuffer() : LBuffer() {}
     CKbuffer(const CKdevice& dev) : LBuffer() {AddDevice(dev);}
+    virtual ~CKbuffer() {}
     bool    AddDevice(const CKdevice& dev);
     bool    AddDevice(csref desc);
-    bool    HasError() const;
-    string  GetLastError() const;
-    string  GetDescription() const;
-    bool    Update();
+
+    virtual bool    HasError()       const;
+    virtual string  GetLastError()   const;
+    virtual string  GetDescription() const;
+    virtual bool    Update();
 
     // Alternative creation methods
     static bool    CreateFromArglist(CKbuffer* buffer, int* argc, char** argv);
-    static const char*    kArglistArgs;
-    static const char*    kArglistDoc;
     static bool    CreateFromXML(CKbuffer* buffer, const CKxmldoc& xmldoc);
 
 private:
     typedef vector<CKdevice>::const_iterator  DevIter_t;
     vector<CKdevice>    iDevices;
-    string              iLastError;
+    // Don't allow copying
+    CKbuffer(const CKbuffer&);
+    CKbuffer& operator=(const CKbuffer&);
 };
 
 #endif // __CKLIB_H

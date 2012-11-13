@@ -2,15 +2,11 @@
 #include "../cklib/Color.h"
 #include "../cklib/cklib.h"
 #include "../cklib/utilsTime.h"
+#include "../cklib/stdOptions.h"
 #include <iostream>
 #include <getopt.h>
 
-// The CK light buffer
-CKbuffer gCKbuffer;
-// Time in seconds before existing
-float gRunTime      = 0;
-float gRotateRate   = 1;
-bool  gVerbose      = false;
+float gRotateRate   = 1;    // Relative rotation rate
 
 //----------------------------------------------------------------------------
 // Option Parsing
@@ -19,11 +15,11 @@ bool  gVerbose      = false;
 void Usage(const char* progname, csref msg = "")
     {
     if (! msg.empty()) cerr << msg << endl;
-    cerr << "Usage: " << progname << CKbuffer::kArglistArgs
-            << " [--time numsecs] [--rate rateval] [--verbose]"
-            << " command" << endl;
+    cerr << "Usage: " << progname << CK::kStdOptionsArgs
+            << " [--rate rateval]"
+            << " command args" << endl;
     cerr << "Where:" << endl;
-    cerr << CKbuffer::kArglistDoc << endl;
+    cerr << CK::kStdOptionsArgsDoc << endl;
     cerr << "  numsecs is the time the command should run for in seconds " << endl;
     cerr << "  rateval is the relative speed for the rotate and rotwash commands (default value is 1.0)" << endl;
     cerr << "  command is one of: " << endl;
@@ -33,29 +29,25 @@ void Usage(const char* progname, csref msg = "")
     cerr << "    rotwash color1 color2" << endl;
     cerr << "    set idx color" << endl;
     cerr << "    wash color1 color2" << endl;
-    cerr << " <color> is \"r,g,b\" or \"HSV(h,s,v)\" or a named color, etc.  All components are scaled from 0.0 to 1.0" << endl;
+    cerr << "  color is \"r,g,b\" or \"HSV(h,s,v)\" or a named color, etc.  All components are scaled from 0.0 to 1.0" << endl;
     exit (EXIT_FAILURE);
     }
 
 struct option longOpts[] =
     {
         {"help",    no_argument,        0, 'h'},
-        {"time",    required_argument,  0, 't'},
         {"rate",    required_argument,  0, 'r'},
-        {"verbose", no_argument,        0, 'v'},
         {0,0,0,0}
     };
 
 
 void ParseArgs(const char* progname, int* argc, char** argv)
 {
-    // Parse device arguments
-    bool success = CKbuffer::CreateFromArglist(&gCKbuffer, argc, argv);
+    // Parse stamdard options
+    string errmsg;
+    bool success = CK::StdOptionsParse(argc, argv, &errmsg);
     if (! success)
-        Usage(progname, gCKbuffer.GetLastError());
-    if (gCKbuffer.GetCount() == 0)
-        Usage(progname, "You must supply at least one --pds argument.");
-
+        Usage(progname, errmsg);
 
     optind = 0; // avoid warning
 
@@ -71,18 +63,10 @@ void ParseArgs(const char* progname, int* argc, char** argv)
             case 'h':
                 Usage(progname);
                 break;
-            case 'v':
-                gVerbose = true;
-                break;
             case 'r':
                 gRotateRate = atof(optarg);
                 if (gRotateRate <= 0)
                     Usage(progname, "--rate argument must be positive. Was " + string(optarg));
-                break;
-            case 't':
-                gRunTime = atof(optarg);
-                if (gRunTime <= 0)
-                    Usage(progname, "--time argument must be positive. Was " + string(optarg));
                 break;
             default:
                 cerr << "Internal error - unknown option: " << c << endl;
@@ -170,52 +154,51 @@ int main(int argc, char** argv)
     if (doWash && !color2) Usage(progname, errmsg);
 
     // Print summary
-    if (gVerbose) {
+    if (CK::gVerbose) {
         cout << "Cmd: " << command << "   Color: " << color->ToString();
         if (doWash)
             cout << " Color2: " << color2->ToString();
         if (idx != -1)
             cout << "  Index: " << idx;
-        if (gRunTime != 0)
-            cout << "  Time: " << gRunTime << " seconds";
+        if (CK::gRunTime != 0)
+            cout << "  Time: " << CK::gRunTime << " seconds";
         if (defaultRotateDelay != 0 && gRotateRate != 1)
             cout << "  Rate: " << gRotateRate;
         cout << endl;
-        cout << gCKbuffer.GetDescription() << endl;
     }
 
     // Set and update the lights
     if (doWash) {
         HSVColorRange range(*color, *color2);
-        int numLights = gCKbuffer.GetCount();;
+        int numLights = CK::gOutputBuffer->GetCount();;
         float stepSize = 1.0f / numLights;
         for (int i = 0; i < numLights; ++i) {
             HSVColor col = range.GetColor(i * stepSize);
-            gCKbuffer.SetColor(i, col);
+            CK::gOutputBuffer->SetColor(i, col);
         }
     } else
     if (idx == -1)
-        gCKbuffer.SetAll(*color);
+        CK::gOutputBuffer->SetAll(*color);
     else
-        gCKbuffer.SetColor(idx, *color);
-    gCKbuffer.Update();
+        CK::gOutputBuffer->SetColor(idx, *color);
+    CK::gOutputBuffer->Update();
 
-    if (gCKbuffer.HasError())
-    {
-        cerr << "Error updating CK device: " << gCKbuffer.GetLastError() << endl;
-        exit(EXIT_FAILURE);
-    }
-
-    // Handle rotation and/or timedelay
-    Milli_t duration = gRunTime * 1000;
+     // Handle rotation and/or timedelay
+    Milli_t duration = CK::gRunTime * 1000;
     if (defaultRotateDelay != 0) {
         Milli_t startTime = Milliseconds();
         Milli_t sleepBetween = defaultRotateDelay / gRotateRate;
         while (true) {
-            gCKbuffer.Rotate();
-            gCKbuffer.Update();
+            CK::gOutputBuffer->Rotate();
+            CK::gOutputBuffer->Update();
+            if (CK::gOutputBuffer->HasError()) {
+                cerr << "Update error: " << CK::gOutputBuffer->GetLastError() << endl;
+                exit(EXIT_FAILURE);
+            }
+
             SleepMilli(sleepBetween);
-            if (duration > 0 && MillisecondsDiff(Milliseconds(),  startTime) > (Milli_t) gRunTime * 1000) break;
+            if (duration > 0 && MillisecondsDiff(Milliseconds(),  startTime) > (Milli_t) CK::gRunTime * 1000) break;
+
         }
     } else
         SleepMilli(duration);

@@ -97,7 +97,7 @@ bool CKinfo::SetFromPollReply(const char* buffer, int buflen, string* errmsg) {
 // CKdevice
 //---------------------------------------------------------------------
 
-CKdevice::CKdevice(csref devstrArg) : iPort(1), iCount(50), iLayout(CK::kNormal)
+CKdevice::CKdevice(csref devstrArg) : iUniverse(0), iPort(1), iCount(50), iLayout(CK::kNormal)
 {
     string devstr = TrimWhitespace(devstrArg);
     size_t len = devstr.length();
@@ -207,7 +207,7 @@ bool CKdevice::Write(const char* buffer, int len)
 //---------------------------------------------------------------------
 bool CKbuffer::HasError() const
 {
-    if (!iLastError.empty()) return true;
+    if (LBuffer::HasError()) return true;
     for (DevIter_t i = iDevices.begin(); i != iDevices.end(); ++i)
         if (i->HasError()) return true;
     return false;
@@ -215,7 +215,7 @@ bool CKbuffer::HasError() const
 
 string CKbuffer::GetLastError() const
 {
-    if (!iLastError.empty()) return iLastError;
+    if (LBuffer::HasError()) return LBuffer::GetLastError();
     for (DevIter_t i = iDevices.begin(); i != iDevices.end(); ++i)
         if (i->HasError()) return i->GetLastError();
     return string();
@@ -275,6 +275,7 @@ bool CKbuffer::Update()
         *header = KiNETportOut(); // Initialize header
         //*header = KiNETdmxOut(); // Initialize header
         header->port = iDevices[i].GetPort();
+        header->universe = iDevices[i].GetUniverse();
         //cout << "Port is " << iDevices[i].GetPort() << endl;
         header->len = dataLen;
         if (! iDevices[i].Write(outbuf, hdrLen+dataLen))
@@ -370,10 +371,11 @@ vector<CKdevice> CKpollForDevices(const vector<CKinfo>& infos, string* errmsg) {
                     KiNETgetCountData* countDataPtr = (KiNETgetCountData*) (buffer + KiNETgetCountReply::GetSize());
                     KiNETgetCountData* countDataEnd = (KiNETgetCountData*) (buffer + bytesRead);
                     while (countDataPtr < countDataEnd) {
+                        int universe = info.universe;
                         int port = countDataPtr->portnum;
                         int count = countDataPtr->count;
                         if (port >= 1 && port <= info.numports && count > 0) {
-                            CKdevice dev(ipaddr, port, count);
+                            CKdevice dev(ipaddr, universe, port, count);
                             devices.push_back(dev);
                         }
                         ++countDataPtr;

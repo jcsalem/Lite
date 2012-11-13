@@ -44,6 +44,7 @@
 		<Unit filename="ckarglist.cpp" />
 		<Unit filename="cklib.cpp" />
 		<Unit filename="cklib.h" />
+		<Unit filename="stdOptions.h" />
 		<Unit filename="utils.cpp" />
 		<Unit filename="utils.h" />
 		<Unit filename="utilsFile.cpp" />
