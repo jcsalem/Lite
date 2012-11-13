@@ -8,6 +8,9 @@
 #include "stdarg.h"
 #include "windef.h"
 #include "winbase.h"
+#else
+// Mac Linux
+#include <sstream>
 #endif //WIN32
 
 // String Functions
@@ -52,13 +55,20 @@ string strReplace(csref str, csref match, csref subst) {
 
 string IntToStr(int val)
     {
+#ifdef WIN32
     char buffer[32]; // good enough for 64 bit ints
     itoa(val, buffer, 10);
     return string(buffer);
+#else
+    // Runs everywhere
+    stringstream ss;
+    ss << val;
+    return ss.str();
+#endif
     }
 
-string IntToHex(int val, bool noprefix)
-    {
+string IntToHex(int val, bool noprefix) {
+#ifdef WIN32
     char buffer[32]; // good enough for 64 bit ints
     char* bptr = buffer;
     if (! noprefix)
@@ -73,7 +83,18 @@ string IntToHex(int val, bool noprefix)
         }
     itoa(val, bptr, 16);
     return string(buffer);
+#else
+    // Runs everywhere
+    stringstream ss;
+    if (noprefix) {
+        if (val < 0) {ss << "-"; val = -val;}
+        ss << "0x";
     }
+    ss << hex << val;
+    return ss.str();
+#endif
+}
+
 
 // Error functions
 #ifdef WIN32

@@ -2,6 +2,7 @@
 //
 #include "cklib.h"
 #include "KiNET.h"
+#include "utilsTime.h"
 #include <iostream>
 #include <stdio.h>
 
@@ -273,7 +274,7 @@ bool CKbuffer::Update()
     for (int i = 0; i < numDevs; ++i)
     {
         // Force a millisecond delay. Otherwise, if we are going to the next port on the same PDS, we could lose data.
-        if (i) Sleep(1);
+        if (i) SleepMilli(1);
         int len = iDevices[i].GetCount();
         int dataLen = CopyColorsToBuffer(dataPtr, maxLen-hdrLen, bufIter, len, iDevices[i].GetLayout() == CK::kReverse);
         *header = KiNETportOut(); // Initialize header

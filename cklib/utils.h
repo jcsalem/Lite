@@ -11,12 +11,14 @@
 using namespace std;
 
 // Standard Data Types
-typedef	unsigned	long	uint32;
-typedef				long	int32;
+typedef	unsigned	int 	uint32;
+typedef				int 	int32;
 typedef	unsigned	short	uint16;
 typedef				short	int16;
 typedef	unsigned	char	uint8;
 typedef				char	int8;
+
+//Note long is 4 bytes on Windows, 8 bytes on Mac
 
 typedef const string&       csref;
 
