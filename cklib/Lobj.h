@@ -10,17 +10,14 @@ extern bool gAntiAlias; // 1 to enable
 
 class Lobj {
   public:
-    // Globals
-    static const short kPosIncr = 64;
-
-    // Constructor
+     // Constructor
     Lobj() : pos(0), color(BLACK), speed(0) {}
     // Variables
-    short    pos;
+    float    pos;
     RGBColor maxColor;
     RGBColor color;
-    short    speed;
-    short    velocity;
+    float    speed;     // maximum speed
+    float    velocity;  // current velocity
 
     // Dimming data
     unsigned long startAttack;

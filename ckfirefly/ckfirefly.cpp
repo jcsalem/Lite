@@ -13,7 +13,7 @@
 
 // Configuration
 Milli_t     gFrameDuration  = 40;    // duration of each frame of animation (in MS)
-float       gRate           = 1.0;  // Higher means faster
+float       gSpeed          = 1.0;  // Higher means faster
 
 // Fwd decls
 void SetupNextCycle(Lobj* lobj, Milli_t startTime);
@@ -24,17 +24,17 @@ void SetupNextCycle(Lobj* lobj, Milli_t startTime);
 void Usage(const char* progname, csref msg = "")
     {
     if (! msg.empty()) cerr << msg << endl;
-    cerr << "Usage: " << progname << CK::kStdOptionsArgs << " [--rate rateval]" << endl;
+    cerr << "Usage: " << progname << CK::kStdOptionsArgs << " [--speed speedval]" << endl;
     cerr << "Where:" << endl;
     cerr << CK::kStdOptionsArgsDoc << endl;
-    cerr << "  rateval is the relative speed (default value is 1.0)" << endl;
+    cerr << "  speedval is the relative speed (default value is 1.0)" << endl;
     exit (EXIT_FAILURE);
     }
 
 struct option longOpts[] =
     {
         {"help",    no_argument,        0, 'h'},
-        {"rate",    required_argument,  0, 'r'},
+        {"speed",   required_argument,  0, 's'},
         {0,0,0,0}
     };
 
@@ -59,10 +59,10 @@ void ParseArgs(const char* progname, int* argc, char** argv)
             {
             case 'h':
                 Usage(progname);
-            case 'r':
-                gRate = atof(optarg);
-                if (gRate <= 0)
-                    Usage(progname, "--rate argument must be positive. Was " + string(optarg));
+            case 's':
+                gSpeed = atof(optarg);
+                if (gSpeed < 0)
+                    Usage(progname, "--speed argument must be positive. Was " + string(optarg));
                 break;
             default:
                 cerr << "Internal error - unknown option: " << c << endl;
@@ -101,47 +101,75 @@ void TestLights()
 //----------------------------------------------------------------
 Milli_t gTime;
 
+int MaxFireflies () {
+    return max(1, CK::gOutputBuffer->GetCount() / 20);
+}
+
 // fwd decls
 void FireflyMove(void);
 void FireflyClip(void);
 Lobj* FireflyAlloc(void);
 
-const short kMaxFireflies = 5;
-//const short kMillisPerFrame = 16;
-
-static const float gMaxColor = 1.0;
-float RandomCVal(void) {
-  return max(RandomFloat(gMaxColor), RandomFloat(gMaxColor));
+float RandomMax(int num, float mmin = 0.0, float mmax = 1.0) {
+    float retval = RandomFloat(mmin, mmax);
+    for (int i = 1; i < num; ++i)
+        retval = max(RandomFloat(mmin, mmax), retval);
+    return retval;
 }
+
+float RandomMin(int num, float mmin = 0.0, float mmax = 1.0) {
+    float retval = RandomFloat(mmin, mmax);
+    for (int i = 1; i < num; ++i)
+        retval = min(RandomFloat(mmin, mmax), retval);
+    return retval;
+}
+
+float RandomBell(float bnum, float mmin = 0.0, float mmax = 1.0) {
+    int num = bnum;
+    float retval = 0.0;
+    for (int i = 0; i < num; ++i)
+        retval += RandomFloat(mmin, mmax);
+    if (bnum != num)
+        retval += (bnum - num) * RandomFloat(mmin, mmax);
+    return retval / bnum;
+}
+
+typedef enum {kCrngDefault = 0, kCrngBrightHSV = 1, kCrngRandomRGB = 2, kCrngHalloween = 3} ColorRNG_t;
+ColorRNG_t gColorRNGmode = kCrngDefault;
 
 RGBColor RandomColor(void) {
     RGBColor rgb;
-#if 0
-    rgb.r = max(RandomFloat(0.5, 1.0), RandomFloat(0.5, 1.0));
-    rgb.g = RandomFloat (0.0, 0.4);
-    rgb.b = RandomFloat (0.0, 0.1);
-#else
-    rgb.r = RandomCVal();
-    rgb.g = RandomCVal();
-    rgb.b = RandomCVal();
-#endif
+    HSVColor hsv;
+    switch (gColorRNGmode) {
+        case kCrngRandomRGB:
+            rgb.r = RandomMax(2);
+            rgb.g = RandomMax(2);
+            rgb.b = RandomMax(2);
+            return rgb;
+        case kCrngHalloween:
+            rgb.r = RandomMax(2, 0.5, 1.0);
+            rgb.g = RandomFloat (0.0, 0.4);
+            rgb.b = RandomFloat (0.0, 0.1);
+            return rgb;
+        case kCrngBrightHSV:
+        default:
+            hsv.h = RandomFloat(1.0);
+            hsv.s = RandomMax(2);
+            hsv.v = RandomMax(3);
+            return hsv.ToRGBColor();
+    }
+}
 
-    return rgb;
+float RandomSpeed() {
+    return gSpeed * RandomBell(2, .005, .4);
 }
 
 Lobj* FireflyAlloc(void) {
   Lobj* lobj = Lobj::Alloc();
   if (! lobj) return NULL;
-  lobj->pos = RandomInt(CK::gOutputBuffer->GetCount() * Lobj::kPosIncr);
-//  static short lastpos = 0;
-//  lobj->pos = lastpos * Lobj::kPosIncr;
-//  lastpos += 3;
-//  if (lastpos >= CK::gOutputBuffer->GetCount()) lastpos = lastpos - CK::gOutputBuffer->GetCount();
-//  cout << lobj->pos << endl;
-  short maxSpeed = Lobj::kPosIncr/21;
-  short minSpeed = (Lobj::kPosIncr+63)/64;
-  lobj->speed = RandomInt(maxSpeed-minSpeed) + minSpeed;
-  lobj->velocity = RandomInt(lobj->speed + 1) - (lobj->speed / 2);
+  lobj->pos = RandomFloat(CK::gOutputBuffer->GetCount());
+  lobj->speed = RandomSpeed();
+  lobj->velocity = RandomFloat(-lobj->speed, lobj->speed);
   lobj->maxColor = RandomColor();
   lobj->color = lobj->maxColor;
   SetupNextCycle(lobj, gTime);
@@ -149,15 +177,9 @@ Lobj* FireflyAlloc(void) {
 }
 
 void FireflyMoveOne(Lobj* lobj) {
-#if 1
   lobj->pos += lobj->velocity;
-  short delta = RandomInt(lobj->speed + 1) - (lobj->speed+1)/2;
+  float delta = RandomBell(2, -lobj->speed/2, lobj->speed/2);
   lobj->velocity = lobj->velocity + delta;
-#else
-  short delta = RandomInt(2 * lobj->speed + 1) - lobj->speed;
-  lobj->pos += delta + lobj->velocity;
-  lobj->velocity = delta;
-#endif
 }
 
 void FireflyMove(void) {
@@ -167,8 +189,7 @@ void FireflyMove(void) {
 void FireflyClip(void) {
   for (short i = 0; i < Lobj::GetNum();) {
     Lobj* lobj = Lobj::GetNth(i);
-    short bufpos = lobj->pos / Lobj::kPosIncr;
-    if (bufpos <= -2 || bufpos >= CK::gOutputBuffer->GetCount() + 1)
+    if (lobj->pos <= -2 || lobj->pos >= CK::gOutputBuffer->GetCount() + 1)
      Lobj::Free(lobj);
     else
      ++i;
@@ -245,9 +266,6 @@ void FireflyDim(void) {
   Lobj::Map(FireflyDimOne);
 }
 
-// The time for each frame (in milliseconds
-const float gTimePerFrame = 25;
-
 void FireflyLoop()
 {
     Milli_t startTime = Milliseconds();
@@ -259,7 +277,7 @@ void FireflyLoop()
         FireflyClip();
         // Maybe allocate
         short num = Lobj::GetNum();
-        if (num == 0 || (num < kMaxFireflies && num < Lobj::GetMaxNum() && RandomInt(10) == 0))
+        if (num == 0 || (num < MaxFireflies() && num < Lobj::GetMaxNum() && RandomInt(10) == 0))
           FireflyAlloc();
         FireflyDim();
         // Render
@@ -272,9 +290,8 @@ void FireflyLoop()
             break;
         else {
             Milli_t elapsedSinceFrameStart = MillisecondsDiff(currentTime, gTime);
-            Milli_t frameDuration = gFrameDuration / gRate;
-            if (frameDuration > elapsedSinceFrameStart)
-                SleepMilli(frameDuration - elapsedSinceFrameStart);
+            if (gFrameDuration > elapsedSinceFrameStart)
+                SleepMilli(gFrameDuration - elapsedSinceFrameStart);
         }
     }
 }

@@ -5,7 +5,7 @@
 
 bool gAntiAlias = true;
 
-#define MAX_OBJS 10
+#define MAX_OBJS 100
 Lobj gAllLobjs[MAX_OBJS];
 short gLobjCount = 0;
 
@@ -20,16 +20,15 @@ void Lobj::Clear() {
 void Lobj::Render(LBuffer* buffer) const {
   if (! gAntiAlias) {
     // No anti-aliasing
-    short bpos = pos / kPosIncr;
+    int bpos = pos + .5;
     if (bpos < 0 || bpos >= buffer->GetCount()) return;
     buffer->AddRGB(bpos, color);
   } else {
-    float fpos = (float) pos / (float) kPosIncr;
-    float floorpos = floor(fpos);
+    float floorpos = floor(pos);
     // High-level clip (avoid aliasing at extreme values)
     if (floorpos <= -1.0 || floorpos >= (float) buffer->GetCount()) return;
 
-    float efrac = fpos - floorpos;
+    float efrac = pos - floorpos;
     float bfrac = 1.0 - efrac;
     short bpos = floorpos;
     short epos = bpos + 1;
