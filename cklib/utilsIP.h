@@ -8,7 +8,8 @@
 #ifdef WIN32
 #include <winsock2.h>
 #else
-#error "Unknown IP platform"
+// Standard Mac/Linux
+#include <netinet/in.h>
 #endif
 
 class IPAddr

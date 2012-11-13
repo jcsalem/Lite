@@ -102,6 +102,7 @@ string ErrorCodeStringInternal(int err)
     return message;
     }
 #else // WIN32
+// Mac and Linux
 string ErrorCodeStringInternal(int err)
     {
 	if (err < 0 || err >= sys_nerr)

@@ -9,6 +9,9 @@
 //----------------------------------------------------------------------------
 
 #ifdef WIN32
+// Linux compatibility
+typedef int socklen_t;
+
 string SocketErrorString()
 	{
 	return ErrorCodeString(WSAGetLastError());
@@ -50,13 +53,19 @@ void NetCleanup()
 
 #else // !WIN32
 
+#include <sys/socket.h>
+#include <netinet/in.h>
+#define INVALID_SOCKET -1
+#define SOCKET_ERROR -1
+
 string SocketErrorString()
 	{
     return ErrorCodeString();
 	}
 
-static bool DoNetInit(string* errmsg = NULL)
-    {}
+static bool DoNetInit(string* errmsg = NULL) {
+    return true;
+}
 
 #endif
 
@@ -194,17 +203,22 @@ bool SocketUDPClient::MultiWrite(const Buffer* buffers, int count)
         iLastError = "Socket wasn't open";
         return false;
         }
-	if (count < 0 || count > kSocketMaxWriteBuffers )
+	if (count <= 0 || count > kSocketMaxWriteBuffers )
 		{
 		iLastError = "Socket::MultiWrite had too many or too few buffers (" + IntToStr(count) + ". Max is " + IntToStr(kSocketMaxWriteBuffers) + ")";
 		return false;
 		}
 
+    // How many bytes were planned to write and how many were actually written
+	unsigned long totalBytes = 0;
+	unsigned long bytesWritten = 0;
+
+
+#ifdef WIN32
 	// Build up the WSABUF list
 	WSABUF bufs[kSocketMaxWriteBuffers];
 
 	int bufsIdx = 0;
-	unsigned long totalBytes = 0;
 	for (int i = 0; i < count; ++i)
 		{
 		if (buffers[i].len > 0)
@@ -217,7 +231,6 @@ bool SocketUDPClient::MultiWrite(const Buffer* buffers, int count)
 		}
 
 	// Write the data
-	unsigned long bytesWritten = 0;
 	if (WSASendTo(iSocket, bufs, bufsIdx, &bytesWritten, 0, iSockAddr.GetStruct(), iSockAddr.GetStructSize(), NULL, NULL) == SOCKET_ERROR)
         {
         // Unknown error
@@ -225,7 +238,38 @@ bool SocketUDPClient::MultiWrite(const Buffer* buffers, int count)
             + " (" + IntToStr(bytesWritten) + " bytes written)";
         return false;
         }
+#else // WIN32
+    // Mac and Linux version
 
+    // Prepare the buffer
+    void* bufptr;
+    if (count == 1) {
+        bufptr = const_cast<void*>(buffers[0].ptr);
+        totalBytes = buffers[0].len;
+    } else {
+        // multiple buffers that we need to combine
+        for (int i = 0; i < count; ++i)
+            totalBytes += buffers[i].len;
+        bufptr = malloc(totalBytes);
+        char* ptr = (char*) bufptr;
+        for (int i = 0; i < count; ++i) {
+            memcpy(ptr, buffers[i].ptr, buffers[i].len);
+            ptr += buffers[i].len;
+        }
+    }
+
+    // Write the buffer
+    bytesWritten = sendto(iSocket, bufptr, totalBytes, 0, iSockAddr.GetStruct(), iSockAddr.GetStructSize());
+    if (count != 1) free(bufptr); // Free the temp buffer (if needed)
+
+    // Test for error
+    if (bytesWritten < 0) {
+        iLastError = "Socket error trying to write " + IntToStr(totalBytes) + " bytes: " + SocketErrorString()
+            + " (" + IntToStr(bytesWritten) + " bytes written)";
+        return false;
+    }
+
+#endif // Mac/Linux
 
 	if (bytesWritten == 0)
 		{
@@ -320,7 +364,7 @@ bool SocketUDPServer::Read(char* buffer, int buflen, int* bytesRead) {
         return false;
         }
     struct sockaddr_in rsa;
-    int rsa_len = sizeof(rsa);
+    socklen_t rsa_len = sizeof(rsa);
     memset(&rsa, 0, rsa_len);
     int numRead = recvfrom(iSocket, buffer, buflen, 0, (sockaddr*) &rsa, &rsa_len);
     if (numRead == SOCKET_ERROR) {

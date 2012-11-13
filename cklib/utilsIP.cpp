@@ -2,6 +2,7 @@
 
 #include "utils.h"
 #include "utilsIP.h"
+#include <sstream>
 
 
 //-----------------------------------------------------
@@ -69,18 +70,11 @@ bool IPAddr::IsValid() const
 
 string IPAddr::GetString() const
     {
-    char buffer[25];
-    string ret;
-    itoa((iIP >> 24) & 0xFF, buffer, 10);
-    ret += string(buffer) + ".";
-    itoa((iIP >> 16) & 0xFF, buffer, 10);
-    ret += string(buffer) + ".";
-    itoa((iIP >>  8) & 0xFF, buffer, 10);
-    ret += string(buffer) + ".";
-    itoa((iIP      ) & 0xFF, buffer, 10);
-    ret += string(buffer);
-    return ret;
+    stringstream ss;
+    ss << ((iIP >> 24) & 0xFF) << "." << ((iIP >> 16) & 0xFF) << "." << ((iIP >> 8) & 0xFF) << "." << (iIP & 0xFF);
+    return ss.str();
     }
+
 //-----------------------------------------------------
 // SockAddr
 //-----------------------------------------------------
@@ -93,9 +87,17 @@ SockAddr::SockAddr(const sockaddr* sa, int len) {
         *this = SockAddr(kBadIP, 0);
     }
 
+#ifdef WIN32
+// Win32
+#define SINADDR_TO_IP(_sa_addr) (_sa_addr.S_un.S_addr)
+#else
+// Mac and Linux
+#define SINADDR_TO_IP(_sa_addr) (_sa_addr.s_addr)
+#endif
+
 SockAddr::SockAddr(const sockaddr_in& sa) {
     if (sa.sin_family == AF_INET) {
-        iAddr = IPAddr(ntohl(sa.sin_addr.S_un.S_addr));
+        iAddr = IPAddr(ntohl(SINADDR_TO_IP(sa.sin_addr)));
         iPort = ntohs(sa.sin_port);
         iStruct = sa;
     } else {
@@ -113,8 +115,8 @@ void SockAddr::InitStruct()
 
 string SockAddr::GetString() const
     {
-    char port[20];
-    itoa(iPort, port, 10);
-    return iAddr.GetString() + ":" + port;
+    stringstream ss;
+    ss << iAddr.GetString() << ":" << iPort;
+    return ss.str();
     }
 

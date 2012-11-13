@@ -9,6 +9,7 @@
 #ifdef WIN32
 #include <winsock2.h>
 #else
+// Standard Mac/Linux
 #define SOCKET int
 #endif
 
