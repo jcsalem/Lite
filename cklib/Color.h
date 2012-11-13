@@ -86,6 +86,7 @@ public:
     float v;  // 0.0 to 1.0; 0 is always black. >= 1 is always the max for that color
     virtual void ToRGBColor(RGBColor*) const;
     virtual string ToString() const;
+    RGBColor ToRGBColor() const {RGBColor rgb; ToRGBColor(&rgb); return rgb;}
 private:
     void SetFromRGB(const RGBColor& rgb);
   };

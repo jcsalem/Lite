@@ -242,15 +242,19 @@ bool CKbuffer::AddDevice(const CKdevice& dev)
     return !dev.HasError();
     }
 
-bool CKbuffer::AddDevice(csref devstr)
+bool CKbuffer::AddDevice(csref devstrarg)
 {
+    bool success = false;
+    size_t pos = devstrarg.find(',');
+    string devstr = devstrarg.substr(0, pos);
     CKdevice dev(devstr);
     if (dev.HasError())
-    {
-        iLastError = "Invalid device string: '" + devstr + "': " + dev.GetLastError();
-        return false;
-    }
-    return AddDevice(dev);
+        iLastError = "Invalid device string: '" + devstrarg + "': " + dev.GetLastError();
+    else
+        success = AddDevice(dev);
+    if (pos != string::npos)
+        success = AddDevice(devstrarg.substr(pos+1)) && success;
+    return success;
 }
 
 bool CKbuffer::Update()

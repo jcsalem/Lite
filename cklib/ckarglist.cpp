@@ -91,8 +91,19 @@ bool StdOptionsParse(int* argc, char** argv, string* errmsg)
         } else
             ++argv;
     }
+
+    // If no --pds, try environment variable
     if (!foundPDS) {
-        // Auto
+        const char* envval = getenv("PDS");
+        string devstr = TrimWhitespace(string(envval ? envval : ""));
+        if (! devstr.empty()) {
+            foundPDS = true;
+            ckbuffer->AddDevice(devstr);
+        }
+    }
+
+    // Poll for PDS if necessary
+    if (!foundPDS) {
         string myerrmsg;
         string* errmsgarg = errmsg ? errmsg : &myerrmsg;
         vector<CKdevice> devices = CKpollForDevices(errmsgarg);
@@ -105,7 +116,12 @@ bool StdOptionsParse(int* argc, char** argv, string* errmsg)
         }
     }
 
-    if (CK::gOutputBuffer->GetCount() == 0) {
+    if (ckbuffer->HasError()) {
+        if (errmsg) *errmsg = ckbuffer->GetLastError();
+        return false;
+    }
+
+    if (ckbuffer->GetCount() == 0) {
         if (errmsg) *errmsg = "Not output device specified and couldn't locate one on network.";
         return false;
     }
@@ -113,7 +129,7 @@ bool StdOptionsParse(int* argc, char** argv, string* errmsg)
     if (CK::gVerbose)
         cout << CK::gOutputBuffer->GetDescription() << endl;
 
-    return ! CK::gOutputBuffer->HasError();
+    return true;
 }
 
 }; // namespace CK

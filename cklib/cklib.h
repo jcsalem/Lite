@@ -98,7 +98,7 @@ public:
     CKbuffer(const CKdevice& dev) : LBuffer() {AddDevice(dev);}
     virtual ~CKbuffer() {}
     bool    AddDevice(const CKdevice& dev);
-    bool    AddDevice(csref desc);
+    bool    AddDevice(csref desc); // May add multiple devices if desc is a comma-separated list of devices
 
     virtual bool    HasError()       const;
     virtual string  GetLastError()   const;

@@ -11,6 +11,6 @@ int32 RandomInt (int32 max);
 
 // These return a random float from min up to but not including limit
 float RandomFloat(float min, float limit);
-float RandomFloat(float limit);
+float RandomFloat(float limit = 1.0);
 
 #endif // _UTILSRANDOM_H
