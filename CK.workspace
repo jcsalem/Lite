@@ -5,10 +5,13 @@
 		<Project filename="cktool/cktool.cbp">
 			<Depends filename="cklib/cklib.cbp" />
 		</Project>
-		<Project filename="ckfirefly/ckfirefly.cbp" active="1">
+		<Project filename="ckfirefly/ckfirefly.cbp">
 			<Depends filename="cklib/cklib.cbp" />
 		</Project>
-		<Project filename="ckinfo/ckinfo.cbp">
+		<Project filename="ckinfo/ckinfo.cbp" active="1">
+			<Depends filename="cklib/cklib.cbp" />
+		</Project>
+		<Project filename="cksparkle/cksparkle.cbp">
 			<Depends filename="cklib/cklib.cbp" />
 		</Project>
 	</Workspace>

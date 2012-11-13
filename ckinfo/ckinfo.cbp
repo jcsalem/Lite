@@ -33,6 +33,7 @@
 		<Compiler>
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
+			<Add directory="..\cklib" />
 		</Compiler>
 		<Linker>
 			<Add option="..\cklib\bin\$(TARGET_NAME)\libcklib.a -static-libgcc -static-libstdc++ -lws2_32" />

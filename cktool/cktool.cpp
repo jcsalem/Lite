@@ -1,8 +1,8 @@
-#include "../cklib/utils.h"
-#include "../cklib/Color.h"
-#include "../cklib/cklib.h"
-#include "../cklib/utilsTime.h"
-#include "../cklib/stdOptions.h"
+#include "utils.h"
+#include "Color.h"
+#include "cklib.h"
+#include "utilsTime.h"
+#include "stdOptions.h"
 #include <iostream>
 #include <getopt.h>
 

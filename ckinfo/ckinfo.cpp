@@ -1,8 +1,8 @@
 // Display info about current CK devices on the LAN
 
-#include "../cklib/utils.h"
-#include "../cklib/utilsSocket.h"
-#include "../cklib/cklib.h"
+#include "utils.h"
+#include "utilsSocket.h"
+#include "cklib.h"
 #include <iostream>
 #include <getopt.h>
 
