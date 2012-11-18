@@ -7,9 +7,9 @@
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="Debug">
-				<Option output="bin\Debug\ckfirefly" prefix_auto="1" extension_auto="1" />
-				<Option object_output="obj\Debug\" />
-				<Option external_deps="..\cklib\bin\Debug\libcklib.a;" />
+				<Option output="bin/Debug/ckfirefly" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option external_deps="../cklib/bin/Debug/libcklib.a;" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Option parameters="--pds 172.24.22.51@1r --pds 172.24.22.51@2" />
@@ -18,9 +18,9 @@
 				</Compiler>
 			</Target>
 			<Target title="Release">
-				<Option output="bin\Release\ckfirefly" prefix_auto="1" extension_auto="1" />
-				<Option object_output="obj\Release\" />
-				<Option external_deps="..\cklib\bin\Release\libcklib.a;" />
+				<Option output="bin/Release/ckfirefly" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option external_deps="../cklib/bin/Release/libcklib.a;" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
@@ -33,10 +33,10 @@
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
-			<Add directory="..\cklib" />
+			<Add directory="../cklib" />
 		</Compiler>
 		<Linker>
-			<Add option="..\cklib\bin\$(TARGET_NAME)\libcklib.a -static-libgcc -static-libstdc++ -lws2_32" />
+			<Add option="../cklib/bin/$(TARGET_NAME)/libcklib.a -static-libgcc -static-libstdc++ $(#extralibs)" />
 		</Linker>
 		<ExtraCommands>
 			<Add after="cp bin/$(TARGET_NAME)/$(TARGET_OUTPUT_BASENAME).exe ../bin/$(TARGET_OUTPUT_BASENAME).exe" />
