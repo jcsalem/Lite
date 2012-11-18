@@ -2,7 +2,7 @@
 #include "utilsTime.h"
 
 
-Milli_t MillisecondsDiff(Milli_t newTime, Milli_t oldTime)
+Milli_t MilliDiff(Milli_t newTime, Milli_t oldTime)
 {
     if (newTime >= oldTime)
         return newTime - oldTime;

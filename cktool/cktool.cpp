@@ -197,7 +197,7 @@ int main(int argc, char** argv)
             }
 
             SleepMilli(sleepBetween);
-            if (duration > 0 && MillisecondsDiff(Milliseconds(),  startTime) > (Milli_t) CK::gRunTime * 1000) break;
+            if (duration > 0 && MilliDiff(Milliseconds(),  startTime) > (Milli_t) CK::gRunTime * 1000) break;
 
         }
     } else

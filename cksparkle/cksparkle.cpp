@@ -10,13 +10,11 @@
 #include <iostream>
 #include <getopt.h>
 #include <stdio.h>
+#include <math.h>
 
 // Configuration
 Milli_t     gFrameDuration  = 40;    // duration of each frame of animation (in MS)
 float       gRate           = 1.0;  // Rate of sparkle creation
-
-// Fwd decls
-void SetupCycle(Lobj* lobj, Milli_t startTime);
 
 //----------------------------------------------------------------
 // Argument Parsing
@@ -76,11 +74,6 @@ void ParseArgs(const char* progname, int* argc, char** argv)
 //----------------------------------------------------------------
 Milli_t gTime;
 
-// fwd decls
-void SparkleMove(void);
-void SparkleClip(void);
-Lobj* SparkleAlloc(void);
-
 float RandomMax(int num, float mmin = 0.0, float mmax = 1.0) {
     float retval = RandomFloat(mmin, mmax);
     for (int i = 1; i < num; ++i)
@@ -105,13 +98,20 @@ float RandomBell(float bnum, float mmin = 0.0, float mmax = 1.0) {
     return retval / bnum;
 }
 
-typedef enum {kCrngDefault = 0, kCrngBrightHSV = 1, kCrngRandomRGB = 2, kCrngHalloween = 3} ColorRNG_t;
-ColorRNG_t gColorRNGmode = kCrngDefault;
+typedef enum {kCrngDefault = 0, kCrngBrightHSV = 1, kCrngRandomRGB = 2, kCrngHalloween = 3, kCrngStarry = 4} ColorRNG_t;
+ColorRNG_t gColorRNGmode = kCrngStarry;
 
 RGBColor RandomColor(void) {
     RGBColor rgb;
     HSVColor hsv;
+    float temp;
     switch (gColorRNGmode) {
+        case kCrngStarry:
+            temp = RandomFloat(.333);
+            hsv.h = (temp > .1666) ? temp + .5 : temp; // pick something in the red or blue spectrum
+            hsv.s = RandomMin(4, 0, .5);
+            hsv.v = RandomFloat(1.0);
+            return hsv.ToRGBColor();;
         case kCrngRandomRGB:
             rgb.r = RandomMax(2);
             rgb.g = RandomMax(2);
@@ -131,117 +131,98 @@ RGBColor RandomColor(void) {
     }
 }
 
-Lobj* SparkleAlloc(void) {
-  Lobj* lobj = Lobj::Alloc();
-  if (! lobj) return NULL;
-  lobj->pos = RandomInt(CK::gOutputBuffer->GetCount());
-  lobj->maxColor = RandomColor();
-  lobj->color = lobj->maxColor;
-  SetupCycle(lobj, gTime);
-  return lobj;
+//----------------------------------------------------------------------
+// Creating Sparkle
+//----------------------------------------------------------------------
+
+typedef enum {kSparkleDefault = 0, kSparkleSparkle = 1} SparkleRNG_t;
+SparkleRNG_t gSparkleRNGmode = kSparkleSparkle;
+
+Lsparkle RandomSparkle () {
+    Lsparkle si;
+    si.attack = min(RandomInt(100), RandomInt(150));
+    si.hold = si.attack/2 + RandomInt(200);
+    si.release = 10;
+    si.startTime = gTime;
+    return si;
+}
+
+LobjSparkle* SparkleAlloc(void) {
+    LobjSparkle* lobj = new LobjSparkle();
+    lobj->pos.x = RandomInt(CK::gOutputBuffer->GetCount());
+    lobj->color = RandomColor();
+    lobj->sparkle = RandomSparkle();
+    return lobj;
 }
 
 //----------------------------------------------------------------------
-// Brightness control
+// Sparkle color computation
 //----------------------------------------------------------------------
 
-short gFFattack = 3;
-short gFFhold   = 3;
-short gFFrelease= 4;
-short gFFSleepMin = 750;
-short gFFSleepMax = 3000;
-short gFFSleepFactor = 3;
+RGBColor Lsparkle::ComputeColor(const RGBColor& referenceColor, Milli_t currentTime) const {
+//    cout << "Color: " << referenceColor.ToString() << " start: " << startTime << " currentTime: " << currentTime << "  attack: " << attack << "  hold: " << hold << endl;
 
-short SmallRandInRange(short minval, short maxval, short factor) {
-  factor = max(factor, (short) 1);
-  short val = 32767;
-  for (int i = 0; i < factor; ++i)
-    val = min(val, (short) (RandomInt(maxval - minval) + minval));
-  return val;
+    if (MilliGE(startTime, currentTime))
+        return BLACK;
+    else if (MilliGT(startTime + attack, currentTime))
+        return referenceColor * ((float)(currentTime - startTime) / attack);
+    else if (MilliGE(startTime + attack + hold, currentTime))
+        return referenceColor;
+    else if (MilliGT(startTime + attack + hold + release, currentTime))
+        return referenceColor * ((float) (release - (currentTime - startTime - attack - hold)) / release);
+    else
+        return BLACK;
 }
 
-void SetupCycle(Lobj* lobj, Milli_t startTime) {
-  short attackDur = (RandomInt(150) + 0);
-  short holdDur = (RandomInt(attackDur) + RandomInt(attackDur) + attackDur * 2);
-  short releaseDur = min(RandomInt(200), RandomInt(200)) + 100;
-  attackDur *= gFFattack;
-  holdDur *= gFFhold;
-  releaseDur *= gFFrelease;
-  lobj->startAttack = startTime;
-  lobj->startHold = lobj->startAttack + attackDur;
-  lobj->startRelease = lobj->startHold + holdDur;
-  lobj->startNext = lobj->startRelease + releaseDur;
-}
+bool HasNoSparkleLeft(LobjBase* objarg, const void* ignore) {
+    const LobjSparkle* obj = dynamic_cast<const LobjSparkle*>(objarg);
+    if (! obj) return false;
 
-void RampColor(Lobj* lobj, Milli_t startTime, Milli_t endTime, bool reverse) {
-  Milli_t startDiff = gTime - startTime;
-  Milli_t totalDiff = endTime - startTime;
-  if (totalDiff == 0) return;
-  // Scale down so we don't overflow a short
-  while (totalDiff > 127) {
-      startDiff >>= 2;
-      totalDiff >>= 2;
-  }
-  if (reverse) startDiff = totalDiff - startDiff;
-  lobj->color = lobj->maxColor;
-  lobj->color *= startDiff;
-  lobj->color /= totalDiff;
-
-  //cout << "current=" << gTime << "  start=" << startTime << "  end=" << endTime << " startDiff=" << startDiff << " totalDiff=" << totalDiff << endl;
-}
-
-bool SparkleDimOne(Lobj* lobj) {
-  if (gTime < lobj->startHold)
-    RampColor(lobj, lobj->startAttack, lobj->startHold, false);
-  else if (gTime < lobj->startRelease)
-    lobj->color = lobj->maxColor;
-  else if (gTime < lobj->startNext)
-    RampColor(lobj, lobj->startRelease, lobj->startNext, true);
-  else
-    return false;
-  return true;
-}
-
-void SparkleDim(void) {
-    for (short i = 0; i < Lobj::GetNum();) {
-        Lobj* lobj = Lobj::GetNth(i);
-        bool alive = SparkleDimOne(lobj);
-        if (alive)
-            ++i;
-        else
-            Lobj::Free(lobj);
-    }
+    return MilliLT(obj->sparkle.startTime + obj->sparkle.attack + obj->sparkle.hold + obj->sparkle.release, gTime);
 }
 
 bool IsTimeToAlloc() {
-    return (gRate * CK::gOutputBuffer->GetCount() / 50.0) > RandomFloat(10);
+    return (gRate * CK::gOutputBuffer->GetCount() / 25.0) > RandomFloat(10);
 }
+
+Lgroup gObjs;
 
 void SparkleLoop()
 {
     Milli_t startTime = Milliseconds();
-    Milli_t runTimeMilli = CK::gRunTime * 1000 + .5;
+//    int lastSec = startTime / 1000;
+    Milli_t endTimeMilli =  CK::gRunTime > 0 ? startTime + (Milli_t) (CK::gRunTime * 1000 + .5) : 0;
 
     while (true) {
         gTime = Milliseconds();
-        // Maybe allocate
-        short num = Lobj::GetNum();
-        if (num < Lobj::GetMaxNum() && IsTimeToAlloc())
-          SparkleAlloc();
-        SparkleDim();
+
+        // Deallocate and Allocate
+        gObjs.FreeIf(HasNoSparkleLeft, NULL);
+        if (IsTimeToAlloc())
+            gObjs.Add(SparkleAlloc());
+
+        // Move (needed for time update
+        gObjs.MoveAll(gTime);
+
+        // Describe
+//        if (CK::gVerbose && lastSec != int(gTime/1000)) {
+//            lastSec = gTime/1000;
+//            int sinceSec = lastSec - (startTime/1000);
+//            cout << sinceSec << ": " << gObjs.GetDescription(CK::gVerbose) << endl;
+//        }
+
         // Render
         CK::gOutputBuffer->Clear();
-        Lobj::RenderAll(CK::gOutputBuffer);
+        gObjs.RenderAll(CK::gOutputBuffer);
         CK::gOutputBuffer->Update();
+
         // Exit if out of time, else delay until next frame
         Milli_t currentTime = Milliseconds();
-        if (runTimeMilli != 0 && runTimeMilli < MillisecondsDiff(currentTime, startTime))
-            break;
-        else {
-            Milli_t elapsedSinceFrameStart = MillisecondsDiff(currentTime, gTime);
-            if (gFrameDuration > elapsedSinceFrameStart)
-                SleepMilli(gFrameDuration - elapsedSinceFrameStart);
-        }
+        if (endTimeMilli != 0 && MilliLE(endTimeMilli, currentTime)) break;
+
+        Milli_t elapsedSinceFrameStart = MilliDiff(currentTime, gTime);
+        if (gFrameDuration > elapsedSinceFrameStart)
+            SleepMilli(gFrameDuration - elapsedSinceFrameStart);
     }
 }
 

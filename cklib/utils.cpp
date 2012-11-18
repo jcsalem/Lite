@@ -3,14 +3,13 @@
 //
 
 #include "utils.h"
+#include <sstream>
+#include <iomanip>
 
 #ifdef WIN32
 #include "stdarg.h"
 #include "windef.h"
 #include "winbase.h"
-#else
-// Mac Linux
-#include <sstream>
 #endif //WIN32
 
 // String Functions
@@ -95,6 +94,18 @@ string IntToHex(int val, bool noprefix) {
 #endif
 }
 
+string FltToStr(float val, int maxWidth) {
+    return DblToStr(val, maxWidth);
+}
+
+string DblToStr(double val, int maxWidth) {
+    ostringstream ss;
+    if (maxWidth == 0)
+        ss << val;
+    else
+        ss << setw(maxWidth) << val; // consider precision instead of setw
+    return ss.str();
+}
 
 // Error functions
 #ifdef WIN32

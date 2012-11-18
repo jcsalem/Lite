@@ -34,10 +34,12 @@ string strReplace(csref str, csref match, csref substitute);
 // Numeric conversions
 string IntToHex(int val, bool noprefix = false);
 string IntToStr(int val);
-inline int StrToInt(csref str);
+string FltToStr(float  val, int maxWidth = 0);
+string DblToStr(double val, int maxWidth = 0);
+int StrToInt(csref str);
 bool StrToInt(csref str, int* i); // returns false on error
-inline float StrToFloat(csref str);
-bool StrToFloat(csref str, float* i); // returns false on error
+float StrToFlt(csref str);
+bool StrToFlt(csref str, float* i); // returns false on error
 
 // Error related
 string ErrorCodeString          (int err = errno);

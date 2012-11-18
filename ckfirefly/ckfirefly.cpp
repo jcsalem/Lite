@@ -16,7 +16,7 @@ Milli_t     gFrameDuration  = 40;    // duration of each frame of animation (in 
 float       gSpeed          = 1.0;  // Higher means faster
 
 // Fwd decls
-void SetupNextCycle(Lobj* lobj, Milli_t startTime);
+void SetupNextCycle(LobjOld* lobj, Milli_t startTime);
 
 //----------------------------------------------------------------
 // Argument Parsing
@@ -108,7 +108,7 @@ int MaxFireflies () {
 // fwd decls
 void FireflyMove(void);
 void FireflyClip(void);
-Lobj* FireflyAlloc(void);
+LobjOld* FireflyAlloc(void);
 
 float RandomMax(int num, float mmin = 0.0, float mmax = 1.0) {
     float retval = RandomFloat(mmin, mmax);
@@ -164,8 +164,8 @@ float RandomSpeed() {
     return gSpeed * RandomBell(2, .005, .4);
 }
 
-Lobj* FireflyAlloc(void) {
-  Lobj* lobj = Lobj::Alloc();
+LobjOld* FireflyAlloc(void) {
+  LobjOld* lobj = LobjOld::Alloc();
   if (! lobj) return NULL;
   lobj->pos = RandomFloat(CK::gOutputBuffer->GetCount());
   lobj->speed = RandomSpeed();
@@ -176,21 +176,21 @@ Lobj* FireflyAlloc(void) {
   return lobj;
 }
 
-void FireflyMoveOne(Lobj* lobj) {
+void FireflyMoveOne(LobjOld* lobj) {
   lobj->pos += lobj->velocity;
   float delta = RandomBell(2, -lobj->speed/2, lobj->speed/2);
   lobj->velocity = lobj->velocity + delta;
 }
 
 void FireflyMove(void) {
-  Lobj::Map(FireflyMoveOne);
+  LobjOld::Map(FireflyMoveOne);
 }
 
 void FireflyClip(void) {
-  for (short i = 0; i < Lobj::GetNum();) {
-    Lobj* lobj = Lobj::GetNth(i);
+  for (short i = 0; i < LobjOld::GetNum();) {
+    LobjOld* lobj = LobjOld::GetNth(i);
     if (lobj->pos <= -2 || lobj->pos >= CK::gOutputBuffer->GetCount() + 1)
-     Lobj::Free(lobj);
+     LobjOld::Free(lobj);
     else
      ++i;
   }
@@ -215,7 +215,7 @@ short SmallRandInRange(short minval, short maxval, short factor) {
   return val;
 }
 
-void SetupNextCycle(Lobj* lobj, Milli_t startTime) {
+void SetupNextCycle(LobjOld* lobj, Milli_t startTime) {
   short attackDur = (RandomInt(150) + 0);
   short holdDur = (RandomInt(attackDur) + RandomInt(attackDur) + attackDur * 2);
   short releaseDur = min(RandomInt(200), RandomInt(200)) + 100;
@@ -230,7 +230,7 @@ void SetupNextCycle(Lobj* lobj, Milli_t startTime) {
   lobj->startNext = lobj->startSleep + sleepDur;
 }
 
-void RampColor(Lobj* lobj, Milli_t startTime, Milli_t endTime, bool reverse) {
+void RampColor(LobjOld* lobj, Milli_t startTime, Milli_t endTime, bool reverse) {
   Milli_t startDiff = gTime - startTime;
   Milli_t totalDiff = endTime - startTime;
   if (totalDiff == 0) return;
@@ -247,7 +247,7 @@ void RampColor(Lobj* lobj, Milli_t startTime, Milli_t endTime, bool reverse) {
   //cout << "current=" << gTime << "  start=" << startTime << "  end=" << endTime << " startDiff=" << startDiff << " totalDiff=" << totalDiff << endl;
 }
 
-void FireflyDimOne(Lobj* lobj) {
+void FireflyDimOne(LobjOld* lobj) {
   if (gTime < lobj->startHold)
     RampColor(lobj, lobj->startAttack, lobj->startHold, false);
   else if (gTime < lobj->startRelease)
@@ -263,7 +263,7 @@ void FireflyDimOne(Lobj* lobj) {
 }
 
 void FireflyDim(void) {
-  Lobj::Map(FireflyDimOne);
+  LobjOld::Map(FireflyDimOne);
 }
 
 void FireflyLoop()
@@ -276,20 +276,20 @@ void FireflyLoop()
         FireflyMove();
         FireflyClip();
         // Maybe allocate
-        short num = Lobj::GetNum();
-        if (num == 0 || (num < MaxFireflies() && num < Lobj::GetMaxNum() && RandomInt(10) == 0))
+        short num = LobjOld::GetNum();
+        if (num == 0 || (num < MaxFireflies() && num < LobjOld::GetMaxNum() && RandomInt(10) == 0))
           FireflyAlloc();
         FireflyDim();
         // Render
         CK::gOutputBuffer->Clear();
-        Lobj::RenderAll(CK::gOutputBuffer);
+        LobjOld::RenderAll(CK::gOutputBuffer);
         CK::gOutputBuffer->Update();
         // Exit if out of time, else delay until next frame
         Milli_t currentTime = Milliseconds();
-        if (runTimeMilli != 0 && runTimeMilli < MillisecondsDiff(currentTime, startTime))
+        if (runTimeMilli != 0 && runTimeMilli < MilliDiff(currentTime, startTime))
             break;
         else {
-            Milli_t elapsedSinceFrameStart = MillisecondsDiff(currentTime, gTime);
+            Milli_t elapsedSinceFrameStart = MilliDiff(currentTime, gTime);
             if (gFrameDuration > elapsedSinceFrameStart)
                 SleepMilli(gFrameDuration - elapsedSinceFrameStart);
         }

@@ -2,14 +2,15 @@
 #include "Color.h"
 #include "LBuffer.h"
 #include <math.h>
+#include <iostream>
 
 bool gAntiAlias = true;
 
 #define MAX_OBJS 100
-Lobj gAllLobjs[MAX_OBJS];
-short gLobjCount = 0;
+LobjOld gAllLobjOlds[MAX_OBJS];
+short gLobjOldCount = 0;
 
-void Lobj::Clear() {
+void LobjOld::Clear() {
   pos = 0;
   color = BLACK;
   speed = 0;
@@ -17,7 +18,7 @@ void Lobj::Clear() {
 }
 
 
-void Lobj::Render(LBuffer* buffer) const {
+void LobjOld::Render(LBuffer* buffer) const {
   if (! gAntiAlias) {
     // No anti-aliasing
     int bpos = pos + .5;
@@ -50,42 +51,182 @@ void Lobj::Render(LBuffer* buffer) const {
 
 
 // Global Operations
-void Lobj::RenderAll(LBuffer* buffer) {
-  for (int i = 0; i < gLobjCount; ++i) {
-    gAllLobjs[i].Render(buffer);
+void LobjOld::RenderAll(LBuffer* buffer) {
+  for (int i = 0; i < gLobjOldCount; ++i) {
+    gAllLobjOlds[i].Render(buffer);
   }
 }
 
-short Lobj::GetNum(void) {
-  return gLobjCount;
+short LobjOld::GetNum(void) {
+  return gLobjOldCount;
 }
 
-short Lobj::GetMaxNum(void) {
+short LobjOld::GetMaxNum(void) {
   return MAX_OBJS;
 }
 
-Lobj* Lobj::GetNth(short index) {
-  if (index >= gLobjCount || index < 0) return 0;
-  return gAllLobjs + index;
+LobjOld* LobjOld::GetNth(short index) {
+  if (index >= gLobjOldCount || index < 0) return 0;
+  return gAllLobjOlds + index;
 }
 
-Lobj* Lobj::Alloc(void) {
-  if (gLobjCount >= MAX_OBJS) return 0;
-  Lobj* retval = &(gAllLobjs[gLobjCount++]);
+LobjOld* LobjOld::Alloc(void) {
+  if (gLobjOldCount >= MAX_OBJS) return 0;
+  LobjOld* retval = &(gAllLobjOlds[gLobjOldCount++]);
   retval->Clear();
   return retval;
 }
 
-bool Lobj::Free(Lobj* lptr) {
-  int index = lptr - gAllLobjs;
-  if (index < 0 || index >= gLobjCount) return false;
-  for (int i = index; i < gLobjCount-1; ++i)
-    gAllLobjs[i] = gAllLobjs[i+1];
-  --gLobjCount;
+bool LobjOld::Free(LobjOld* lptr) {
+  int index = lptr - gAllLobjOlds;
+  if (index < 0 || index >= gLobjOldCount) return false;
+  for (int i = index; i < gLobjOldCount-1; ++i)
+    gAllLobjOlds[i] = gAllLobjOlds[i+1];
+  --gLobjOldCount;
   return true;
 }
 
-void Lobj::Map(LobjMapFcn_t mapfcn) {
-  for (int i = 0; i < gLobjCount; ++i)
-    mapfcn(gAllLobjs + i);
+void LobjOld::Map(LobjOldMapFcn_t mapfcn) {
+  for (int i = 0; i < gLobjOldCount; ++i)
+    mapfcn(gAllLobjOlds + i);
+}
+
+//----------------------------------------------------------------------
+// LobjBase Operations
+//----------------------------------------------------------------------
+
+void LobjBase::Render(LBuffer* buffer) const {
+    // Only supports 1D rendering at the moment
+    // Position is the middle of the object
+
+    RGBColor rgb = GetCurrentColor();
+//    cout << "Render: " << rgb.ToString() << " at " << pos.x << "," << pos.y << endl;
+
+    if (width == 0 || !gAntiAlias) {
+        // Round to nearest pixel to beginning of object
+        int ipos = pos.x - width/2.0 + .5;
+        int iwidth = width == 0? 1 : (width + .5);
+        for (int i = 0; i < iwidth; ++i, ++ipos)
+            buffer->AddRGB(ipos, rgb);
+    } else {
+    // Non-zero width AND anti-aliasing.
+    float left = pos.x - width / 2.0 + .5;  // The .5 insures that a sparkle of width 1 displays as a single pixel
+    float lfloor = floor(left);
+    float lfrac = left - lfloor;
+    int lpos = lfloor;
+    float right = pos.x + width / 2.0 + .5;
+    float rfloor = floor(right);
+    float rfrac = 1.0 - (right - rfloor);
+    int rpos = rfloor;
+    if (lpos == rpos) lfrac *= rfrac;  // May need more thought
+
+    // Write out first pixel
+    buffer->AddRGB(lpos, rgb * lfrac);
+    // Write out middle pixels
+    for (int ipos = lpos + 1; ipos < rpos; ++ipos)
+        buffer->AddRGB(ipos, rgb);
+    // Write out last pixel
+    if (lpos != rpos)
+        buffer->AddRGB(rpos, rgb * rfrac);
+    }
+}
+
+void LobjBase::Move(Milli_t newTime) {
+    float timeDiff = MilliDiff(newTime, lastTime);
+    pos += speed * timeDiff/1000;
+    lastTime = newTime;
+}
+
+void LobjBase::Wrap(const Lxy& minBound, const Lxy& maxBound) {
+    Lxy range = maxBound - minBound;
+
+    float newX = fmod(pos.x - minBound.x, range.x) + minBound.x;
+    float newY = fmod(pos.y - minBound.y, range.y) + minBound.y;
+    pos = Lxy(newX, newY);
+}
+
+bool LobjBase::IsOutOfBounds(const Lxy& minBound, const Lxy& maxBound) {
+    return pos.x < minBound.x && pos.x > maxBound.x && pos.y < minBound.y && pos.y > maxBound.y;
+}
+
+string LobjBase::GetDescription(bool verbose) const {
+    string retval = "[" + DblToStr(pos.x) + "," + DblToStr(pos.y) + "," + color.ToString() + "]";
+    return retval;
+}
+
+//----------------------------------------------------------------------
+// Group functions
+//----------------------------------------------------------------------
+
+
+void Lgroup::Add(LobjBase* obj) {
+    if (obj) iObjs.push_back(obj);
+}
+
+void Lgroup::Add(int num, Lobj::AllocFcn_t fcn, const void* info) {
+    for (int i = 0; i < num; ++i)
+        Add(fcn(i, info));
+}
+
+bool Lgroup::Free(LobjBase* obj) {
+    for (iterator i = begin(); i != end(); ++i) {
+        if (*i == obj) {
+            iObjs.erase(i);
+            delete obj;
+            return true;
+        }
+    }
+    return false;
+}
+
+void Lgroup::FreeAll() {
+    for (iterator i = begin(); i != end(); ++i)
+        delete *i;
+    iObjs.clear();
+}
+
+void Lgroup::FreeIf(Lobj::FreeIfFcn_t fcn, const void* info) {
+    for (iterator i = begin(); i != end();) {
+        if (fcn(*i, info)) {
+            delete *i;
+            iObjs.erase(i);
+        } else
+            ++i;
+    }
+}
+
+//void Lgroup::FreeIfOutOfBounds(Lxy MinBound, Lxy maxBound) const;
+
+// Common functions
+void Lgroup::RenderAll(LBuffer* buffer) const {
+    for (const_iterator i = begin(); i != end(); ++i)
+        (*i)->Render(buffer);
+}
+
+void Lgroup::MoveAll(Milli_t newTime) const {
+    for (const_iterator i = begin(); i != end(); ++i)
+        (*i)->Move(newTime);
+}
+
+void Lgroup::WrapAll(const Lxy& minBound, const Lxy& maxBound) const {
+    for (const_iterator i = begin(); i != end(); ++i)
+        (*i)->Wrap(minBound, maxBound);
+}
+
+// Mapping
+void Lgroup::Map(Lobj::MapFcn_t mapfcn, const void* info) {
+    for (const_iterator i = begin(); i != end(); ++i)
+        mapfcn(*i, info);
+}
+
+string Lgroup::GetDescription(bool verbose) const {
+    string retval;
+    retval += IntToStr(GetCount()) + " objects";
+    if (verbose) {
+        for (const_iterator i = begin(); i != end(); ++i) {
+            retval += (i == begin() ? ":" : ",");
+            retval += (*i)->GetDescription(verbose);
+        }
+    }
+    return retval;
 }
