@@ -17,59 +17,6 @@ Milli_t     gFrameDuration  = 40;    // duration of each frame of animation (in 
 float       gRate           = 1.0;  // Rate of sparkle creation
 
 //----------------------------------------------------------------
-// Argument Parsing
-//----------------------------------------------------------------
-void Usage(const char* progname, csref msg = "")
-    {
-    if (! msg.empty()) cerr << msg << endl;
-    cerr << "Usage: " << progname << CK::kStdOptionsArgs << " [--rate rateval]" << endl;
-    cerr << "Where:" << endl;
-    cerr << CK::kStdOptionsArgsDoc << endl;
-    cerr << "  rateval - Rate of sparkle creation (default is 1.0)" << endl;
-    exit (EXIT_FAILURE);
-    }
-
-struct option longOpts[] =
-    {
-        {"help",    no_argument,        0, 'h'},
-        {"rate",    required_argument,  0, 'r'},
-        {0,0,0,0}
-    };
-
-
-void ParseArgs(const char* progname, int* argc, char** argv)
-{
-    // Parse stamdard options
-    string errmsg;
-    bool success = CK::StdOptionsParse(argc, argv, &errmsg);
-    if (! success)
-        Usage(progname, errmsg);
-
-    // Parse remaining
-    optind = 0; // avoid warning
-
-    while (true)
-    {
-        int optIndex;
-        char c = getopt_long (*argc, argv, "", longOpts, &optIndex);
-        if (c == -1) break; // Done parsing
-        switch (c)
-            {
-            case 'h':
-                Usage(progname);
-            case 'r':
-                gRate = atof(optarg);
-                if (gRate <= 0)
-                    Usage(progname, "--rate argument must be positive. Was " + string(optarg));
-                break;
-            default:
-                cerr << "Internal error - unknown option: " << c << endl;
-                Usage(progname);
-            }
-    }
-}
-
-//----------------------------------------------------------------
 // Utilities
 //----------------------------------------------------------------
 Milli_t gTime;
@@ -135,15 +82,34 @@ RGBColor RandomColor(void) {
 // Creating Sparkle
 //----------------------------------------------------------------------
 
-typedef enum {kSparkleDefault = 0, kSparkleSparkle = 1} SparkleRNG_t;
-SparkleRNG_t gSparkleRNGmode = kSparkleSparkle;
+typedef enum {kSparkleError = -1, kSparkleDefault = 0, kSparkleSparkle = 1, kSparkleFirefly = 2} SparkleMode_t;
+SparkleMode_t gSparkleMode = kSparkleDefault;
+
+SparkleMode_t StrToSparkle(csref str) {
+    if      (strEQ(str, "default"))     return kSparkleDefault;
+    else if (strEQ(str, "sparkle"))     return kSparkleSparkle;
+    else if (strEQ(str, "firefly"))     return kSparkleFirefly;
+    else return kSparkleError;
+}
 
 Lsparkle RandomSparkle () {
     Lsparkle si;
-    si.attack = min(RandomInt(100), RandomInt(150));
-    si.hold = si.attack/2 + RandomInt(200);
-    si.release = 10;
     si.startTime = gTime;
+
+    switch (gSparkleMode) {
+        case kSparkleFirefly:
+            si.attack = RandomInt(100, 450);
+            si.hold = si.attack * 2 + RandomInt(si.attack) + RandomInt(si.attack);
+            si.release = RandomMin(2, 0, 800) + 400;
+            break;
+        case kSparkleSparkle:
+        default:
+            si.attack = min(RandomInt(100), RandomInt(150));
+            si.hold = si.attack/2 + RandomInt(200);
+            si.release = 10;
+            break;
+    }
+
     return si;
 }
 
@@ -182,7 +148,26 @@ bool HasNoSparkleLeft(LobjBase* objarg, const void* ignore) {
 }
 
 bool IsTimeToAlloc() {
-    return (gRate * CK::gOutputBuffer->GetCount() / 25.0) > RandomFloat(10);
+    static Milli_t lastTime = gTime;
+    Milli_t millisSinceLast = MilliDiff(gTime,lastTime);
+    lastTime = gTime;
+
+    // Default probability is that every light has a 50% chance to flash every 10 seconds
+    float lightProb = (millisSinceLast / 20000.0F);
+    lightProb *= CK::gOutputBuffer->GetCount();
+    lightProb *= gRate;
+
+    switch (gSparkleMode) {
+        case kSparkleFirefly:
+            // Slower for firefly
+            lightProb /= 4;
+            break;
+        case kSparkleSparkle:
+        default:
+            break;
+    }
+
+    return lightProb > RandomFloat();
 }
 
 Lgroup gObjs;
@@ -223,6 +208,65 @@ void SparkleLoop()
         Milli_t elapsedSinceFrameStart = MilliDiff(currentTime, gTime);
         if (gFrameDuration > elapsedSinceFrameStart)
             SleepMilli(gFrameDuration - elapsedSinceFrameStart);
+    }
+}
+
+//----------------------------------------------------------------
+// Argument Parsing
+//----------------------------------------------------------------
+void Usage(const char* progname, csref msg = "")
+    {
+    if (! msg.empty()) cerr << msg << endl;
+    cerr << "Usage: " << progname << CK::kStdOptionsArgs << " [--rate rateval] [--sparkle sparklemode]" << endl;
+    cerr << "Where:" << endl;
+    cerr << CK::kStdOptionsArgsDoc << endl;
+    cerr << "  rateval - Rate of sparkle creation (default is 1.0)" << endl;
+    exit (EXIT_FAILURE);
+    }
+
+struct option longOpts[] =
+    {
+        {"help",    no_argument,        0, 'h'},
+        {"rate",    required_argument,  0, 'r'},
+        {"sparkle", required_argument,  0, 's'},
+        {0,0,0,0}
+    };
+
+
+void ParseArgs(const char* progname, int* argc, char** argv)
+{
+    // Parse stamdard options
+    string errmsg;
+    bool success = CK::StdOptionsParse(argc, argv, &errmsg);
+    if (! success)
+        Usage(progname, errmsg);
+
+    // Parse remaining
+    optind = 0; // avoid warning
+
+    while (true)
+    {
+        int optIndex;
+        char c = getopt_long (*argc, argv, "", longOpts, &optIndex);
+        if (c == -1) break; // Done parsing
+        switch (c)
+            {
+            case 'h':
+                Usage(progname);
+            case 'r':
+                gRate = atof(optarg);
+                if (gRate <= 0)
+                    Usage(progname, "--rate argument must be positive. Was " + string(optarg));
+                break;
+            case 's':
+                gSparkleMode = StrToSparkle(optarg);
+                if (gSparkleMode == kSparkleError)
+                    Usage(progname, "--sparkle must be either sparkle or firefly");
+                break;
+            default:
+                cerr << "Internal error - unknown option: " << c << endl;
+                Usage(progname);
+            }
     }
 }
 
