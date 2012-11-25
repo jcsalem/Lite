@@ -87,9 +87,10 @@ class LobjBase {
     Milli_t     lastTime;
 
     // Standard operations
-    virtual void Move           (Milli_t newTime);
+    virtual void Move           (Milli_t currentTime);
     virtual void Wrap           (const Lxy& minBound, const Lxy& maxBound);
-    virtual bool IsOutOfBounds  (const Lxy& minBound, const Lxy& maxBound);
+    virtual bool IsOutOfBounds  (const Lxy& minBound, const Lxy& maxBound) const;
+    virtual bool IsOutOfTime    (Milli_t currentTime)   const {return false;}
 
     virtual void Clear() {*this = LobjBase();}
 
@@ -105,14 +106,15 @@ class LobjBase {
 // This describes a sparkly light of some kind
 class Lsparkle {
   public:
-    Lsparkle() : attack(0), hold(0), release(0), startTime(0) {}
+    Lsparkle() : attack(0), hold(0), release(0), startTime(0), sleepTime(0) {}
     Milli_t attack;
     Milli_t hold;
     Milli_t release;
     Milli_t startTime;
+    Milli_t sleepTime;
 
-    RGBColor ComputeColor(const RGBColor& referenceColor, Milli_t currentTime) const;
-
+    RGBColor    ComputeColor(const RGBColor& referenceColor, Milli_t currentTime) const;
+    bool        IsOutOfTime(Milli_t currentTime) const;
 };
 
 class LobjSparkle : public LobjBase {
@@ -126,6 +128,7 @@ class LobjSparkle : public LobjBase {
 
     // Operations
     virtual void Clear() {*this = LobjSparkle();}
+    virtual bool IsOutOfTime(Milli_t currentTime) const;
 
     // Allocate function
     static LobjSparkle* Alloc(int,const void*) {return new LobjSparkle();}

@@ -1,4 +1,4 @@
-// Top level firefly code
+// Top level Starry Night code
 
 #include "utils.h"
 #include "utilsTime.h"
@@ -14,6 +14,7 @@
 // Configuration
 Milli_t     gFrameDuration  = 40;    // duration of each frame of animation (in MS)
 float       gRate           = 1.0;  // Rate of sparkle creation
+float       gDensity        = 0.8;  // Average density of stars
 
 //----------------------------------------------------------------
 // Utilities
@@ -24,13 +25,14 @@ Milli_t gTime;
 // Creating Sparkle
 //----------------------------------------------------------------------
 
-typedef enum {kSparkleError = -1, kSparkleDefault = 0, kSparkleSparkle = 1, kSparkleFirefly = 2} SparkleMode_t;
-SparkleMode_t gSparkleMode = kSparkleDefault;
+typedef enum {kSparkleError = -1, kSparkleDefault = 0, kSparkleSparkle = 1, kSparkleFirefly = 2, kSparkleSlow = 3} SparkleMode_t;
+SparkleMode_t gSparkleMode = kSparkleSlow;
 
 SparkleMode_t StrToSparkle(csref str) {
     if      (strEQ(str, "default"))     return kSparkleDefault;
     else if (strEQ(str, "sparkle"))     return kSparkleSparkle;
     else if (strEQ(str, "firefly"))     return kSparkleFirefly;
+    else if (strEQ(str, "slow"))        return kSparkleSlow;
     else return kSparkleError;
 }
 
@@ -39,62 +41,56 @@ Lsparkle RandomSparkle () {
     si.startTime = gTime;
 
     switch (gSparkleMode) {
+        case kSparkleSlow:
+            si.attack   = 5000/gRate;
+            si.hold     = RandomMax(3, 15000, 300000)/gRate;
+            si.release  = RandomInt(100, 250);
+            si.sleepTime= RandomNormalBounded(333, 250, 50, 10000);
+            break;
         case kSparkleFirefly:
-            si.attack = RandomInt(100, 450);
-            si.hold = si.attack * 2 + RandomInt(si.attack) + RandomInt(si.attack);
-            si.release = RandomMin(2, 0, 800) + 400;
+            si.attack   = RandomInt(100, 450);
+            si.hold     = si.attack * 2 + RandomInt(si.attack) + RandomInt(si.attack);
+            si.release  = RandomMin(2, 0, 800) + 400;
+            si.sleepTime= RandomMin(3, 750, 3000);
             break;
         case kSparkleSparkle:
         default:
-            si.attack = min(RandomInt(100), RandomInt(150));
-            si.hold = si.attack/2 + RandomInt(200);
-            si.release = 10;
+            si.attack   = min(RandomInt(100), RandomInt(150));
+            si.hold     = si.attack/2 + RandomInt(200);
+            si.release  = 10;
+            si.sleepTime= 100;
             break;
     }
 
     return si;
 }
 
-LobjSparkle* SparkleAlloc(void) {
-    LobjSparkle* lobj = new LobjSparkle();
-    lobj->pos.x = RandomInt(CK::gOutputBuffer->GetCount());
-    lobj->color = RandomColor();
+void InitializeOneStar(LobjSparkle* lobj, int idx) {
+    lobj->pos.x = (idx != -1) ? idx : RandomInt(CK::gOutputBuffer->GetCount());
+    lobj->color = (RandomFloat() < gDensity) ? RandomColor() : BLACK;
     lobj->sparkle = RandomSparkle();
+}
+
+LobjBase* SparkleAlloc(int idx, const void* ignore) {
+    LobjSparkle* lobj = new LobjSparkle();
+    InitializeOneStar(lobj, idx);
     return lobj;
 }
 
-bool HasNoSparkleLeft(LobjBase* objarg, const void* ignore) {
-    const LobjSparkle* obj = dynamic_cast<const LobjSparkle*>(objarg);
-    if (! obj) return false;
-    return obj->IsOutOfTime(gTime);
-}
-
-bool IsTimeToAlloc() {
-    static Milli_t lastTime = gTime;
-    Milli_t millisSinceLast = MilliDiff(gTime,lastTime);
-    lastTime = gTime;
-
-    // Default probability is that every light has a 50% chance to flash every 10 seconds
-    float lightProb = (millisSinceLast / 20000.0F);
-    lightProb *= CK::gOutputBuffer->GetCount();
-    lightProb *= gRate;
-
-    switch (gSparkleMode) {
-        case kSparkleFirefly:
-            // Slower for firefly
-            lightProb /= 4;
-            break;
-        case kSparkleSparkle:
-        default:
-            break;
-    }
-
-    return lightProb > RandomFloat();
+void RestartExpired(LobjBase* objarg, const void* ignore) {
+    LobjSparkle* obj = dynamic_cast<LobjSparkle*>(objarg);
+    if (! obj || !obj->IsOutOfTime(gTime)) return;
+    InitializeOneStar(obj, obj->pos.x);
 }
 
 Lgroup gObjs;
 
-void SparkleLoop()
+void InitializeStars() {
+    int numLights = CK::gOutputBuffer->GetCount();
+    gObjs.Add(numLights, SparkleAlloc, NULL);
+    }
+
+void StarryLoop()
 {
     Milli_t startTime = Milliseconds();
 //    int lastSec = startTime / 1000;
@@ -103,10 +99,11 @@ void SparkleLoop()
     while (true) {
         gTime = Milliseconds();
 
-        // Deallocate and Allocate
-        gObjs.FreeIf(HasNoSparkleLeft, NULL);
-        if (IsTimeToAlloc())
-            gObjs.Add(SparkleAlloc());
+        // Restart expired stars
+        gObjs.Map(RestartExpired, NULL);
+//        FreeIf(HasNoSparkleLeft, NULL);
+//        if (IsTimeToAlloc())
+//            gObjs.Add(SparkleAlloc());
 
         // Move (needed for time update
         gObjs.MoveAll(gTime);
@@ -214,5 +211,8 @@ int main(int argc, char** argv)
     // Test everything
     // TestLights();
 
-    SparkleLoop();
+    gTime = Milliseconds();
+    InitializeStars();
+
+    StarryLoop();
 }

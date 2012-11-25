@@ -476,7 +476,7 @@ RGBColor RandomColor() {
             temp = RandomFloat(.333);
             hsv.h = (temp > .1666) ? temp + .5 : temp; // pick something in the red or blue spectrum
             hsv.s = RandomMin(4, 0, .5);
-            hsv.v = RandomExponential(1.0, 1.0);
+            hsv.v = RandomMin(4); //RandomExponential(4, 1.0);
             return hsv.ToRGBColor();;
         case CK::kRandomColorStarry:
             temp = RandomFloat(.333);

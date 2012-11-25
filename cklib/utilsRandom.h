@@ -22,6 +22,8 @@ float RandomMin(int num, float limit = 1.0);
 
 // This returns a normally distributed random number
 float RandomNormal(float mean = 0.0, float sigma = .5);
+// This returns a normally distributed random number that is bounded
+float RandomNormalBounded(float mean, float sigma, float minVal, float maxVal);
 // Returns a positive number
 float RandomExponential(float alpha = 1.0, float maxVal = 0.0);
 
