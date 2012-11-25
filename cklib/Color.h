@@ -60,7 +60,6 @@ public:
     virtual char bAsChar(void) const;
     virtual void ToRGBColor(RGBColor* colorptr) const {*colorptr = *this;}
     virtual string ToString() const;
-
   };
 
 class HSVColor : public Color
@@ -105,7 +104,6 @@ public:
 };
 
 // Standard color names
-
 #define BLACK   RGBColor(  0,  0,  0)
 #define WHITE   RGBColor(1.0,1.0,1.0)
 #define GRAY    RGBColor(.25,.25,.25)
@@ -122,5 +120,20 @@ public:
 
 #define ORANGE  RGBColor(1.0,.33,  0)
 #define PURPLE  RGBColor(.63,.13,.94)
+
+// Random color utilities (really part of stdOptions.h)
+// --color option
+namespace CK {
+typedef enum {kRandomColorDefault = 0, kRandomColorBright = 1, kRandomColorRGB = 2,
+            kRandomColorHalloween = 3, kRandomColorStarry = 4, kRandomColorRealStar = 5, kRandomColorRange = 6, kRandomColorExact = 7}
+    RandomColorMode_t;
+extern RandomColorMode_t    gRandomColorMode;
+extern RGBColor             gRandomColor1;
+extern RGBColor             gRandomColor2;
+bool ParseColorMode(csref str, string* errmsg = NULL);
+};
+
+RGBColor RandomColor();
+
 
 #endif

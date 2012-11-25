@@ -10,7 +10,6 @@
 #include <iostream>
 #include <getopt.h>
 #include <stdio.h>
-#include <math.h>
 
 // Configuration
 Milli_t     gFrameDuration  = 40;    // duration of each frame of animation (in MS)
@@ -20,63 +19,6 @@ float       gRate           = 1.0;  // Rate of sparkle creation
 // Utilities
 //----------------------------------------------------------------
 Milli_t gTime;
-
-float RandomMax(int num, float mmin = 0.0, float mmax = 1.0) {
-    float retval = RandomFloat(mmin, mmax);
-    for (int i = 1; i < num; ++i)
-        retval = max(RandomFloat(mmin, mmax), retval);
-    return retval;
-}
-
-float RandomMin(int num, float mmin = 0.0, float mmax = 1.0) {
-    float retval = RandomFloat(mmin, mmax);
-    for (int i = 1; i < num; ++i)
-        retval = min(RandomFloat(mmin, mmax), retval);
-    return retval;
-}
-
-float RandomBell(float bnum, float mmin = 0.0, float mmax = 1.0) {
-    int num = bnum;
-    float retval = 0.0;
-    for (int i = 0; i < num; ++i)
-        retval += RandomFloat(mmin, mmax);
-    if (bnum != num)
-        retval += (bnum - num) * RandomFloat(mmin, mmax);
-    return retval / bnum;
-}
-
-typedef enum {kCrngDefault = 0, kCrngBrightHSV = 1, kCrngRandomRGB = 2, kCrngHalloween = 3, kCrngStarry = 4} ColorRNG_t;
-ColorRNG_t gColorRNGmode = kCrngStarry;
-
-RGBColor RandomColor(void) {
-    RGBColor rgb;
-    HSVColor hsv;
-    float temp;
-    switch (gColorRNGmode) {
-        case kCrngStarry:
-            temp = RandomFloat(.333);
-            hsv.h = (temp > .1666) ? temp + .5 : temp; // pick something in the red or blue spectrum
-            hsv.s = RandomMin(4, 0, .5);
-            hsv.v = RandomFloat(1.0);
-            return hsv.ToRGBColor();;
-        case kCrngRandomRGB:
-            rgb.r = RandomMax(2);
-            rgb.g = RandomMax(2);
-            rgb.b = RandomMax(2);
-            return rgb;
-        case kCrngHalloween:
-            rgb.r = RandomMax(2, 0.5, 1.0);
-            rgb.g = RandomFloat (0.0, 0.4);
-            rgb.b = RandomFloat (0.0, 0.1);
-            return rgb;
-        case kCrngBrightHSV:
-        default:
-            hsv.h = RandomFloat(1.0);
-            hsv.s = RandomMax(2);
-            hsv.v = RandomMax(3);
-            return hsv.ToRGBColor();
-    }
-}
 
 //----------------------------------------------------------------------
 // Creating Sparkle
@@ -275,6 +217,9 @@ int main(int argc, char** argv)
     const char* progname = "cksparkle";
     if (argc > 0 && argv != NULL && argv[0] != NULL)
         progname = argv[0];
+
+    // Change the default for this
+    CK::gRandomColorMode = CK::kRandomColorStarry;
 
     // Parse arguments
     ParseArgs(progname, &argc, argv);

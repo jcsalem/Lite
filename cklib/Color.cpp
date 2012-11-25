@@ -457,3 +457,71 @@ HSVColor HSVColorRange::GetRandomColor() const {
     return GetColor(RandomFloat(1.0));
 }
 
+//--------------------------------------------------------------------------
+// Picking a random color
+//--------------------------------------------------------------------------
+
+CK::RandomColorMode_t CK::gRandomColorMode = CK::kRandomColorDefault;
+RGBColor CK::gRandomColor1 = BLACK;
+RGBColor CK::gRandomColor2 = WHITE;
+
+RGBColor RandomColor() {
+    RGBColor rgb;
+    HSVColor hsv;
+    float temp;
+    switch (CK::gRandomColorMode) {
+        case CK::kRandomColorExact:
+            return CK::gRandomColor2;
+        case CK::kRandomColorRealStar:
+            temp = RandomFloat(.333);
+            hsv.h = (temp > .1666) ? temp + .5 : temp; // pick something in the red or blue spectrum
+            hsv.s = RandomMin(4, 0, .5);
+            hsv.v = RandomExponential(1.0, 1.0);
+            return hsv.ToRGBColor();;
+        case CK::kRandomColorStarry:
+            temp = RandomFloat(.333);
+            hsv.h = (temp > .1666) ? temp + .5 : temp; // pick something in the red or blue spectrum
+            hsv.s = RandomMin(4, 0, .5);
+            hsv.v = RandomFloat(1.0);
+            return hsv.ToRGBColor();;
+        case CK::kRandomColorRGB:
+            rgb.r = RandomMax(2);
+            rgb.g = RandomMax(2);
+            rgb.b = RandomMax(2);
+            return rgb;
+        case CK::kRandomColorHalloween:
+            rgb.r = RandomMax(2, 0.5, 1.0);
+            rgb.g = RandomFloat (0.0, 0.4);
+            rgb.b = RandomFloat (0.0, 0.1);
+            return rgb;
+        case CK::kRandomColorBright:
+        default:
+            hsv.h = RandomFloat(1.0);
+            hsv.s = RandomMax(2);
+            hsv.v = RandomMax(3);
+            return hsv.ToRGBColor();
+    }
+}
+
+namespace CK {
+bool ParseColorMode(csref str, string* errmsg) {
+    RGBColor rgb;
+    string localError;
+    if (RGBColor::FromString(str, &rgb, &localError)) {
+        CK::gRandomColorMode = CK::kRandomColorExact;
+        CK::gRandomColor2 = rgb;
+        return true;
+    }
+    if      (strEQ(str, "RealStar"))            CK::gRandomColorMode = CK::kRandomColorRealStar;
+    else if (strEQ(str, "Starry"))              CK::gRandomColorMode = CK::kRandomColorStarry;
+    else if (strEQ(str, "RGB"))                 CK::gRandomColorMode = CK::kRandomColorRGB;
+    else if (strEQ(str, "Halloween"))           CK::gRandomColorMode = CK::kRandomColorHalloween;
+    else if (strEQ(str, "Bright"))              CK::gRandomColorMode = CK::kRandomColorBright;
+    else {
+        if (errmsg) *errmsg = "Invalid color parameter: " + str + ". " + localError;
+        return false;
+    }
+    return true;
+}
+
+};//namespace
