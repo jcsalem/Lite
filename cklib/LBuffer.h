@@ -5,6 +5,7 @@
 #include "utils.h"
 #include "Color.h"
 #include <vector>
+#include "utilsTime.h"
 
 class LBuffer
     {
@@ -19,7 +20,11 @@ class LBuffer
     void AddRGB(int idx, const RGBColor& rgb)   {SetRGB(idx, GetRGB(idx) + rgb);}
     void SetColor(int idx, const Color& color);
     void SetAll(const Color& color);
+
+    // Operations
     void Rotate(int inc = 1);
+    // If minTime < maxTime, fade in.  Otherwise, fade out
+    void Fade(Milli_t currentTime, Milli_t minTime, Milli_t maxTime);
 
     // Things to be overridden by the specific output class
     virtual bool    HasError()          const {return !iLastError.empty();}

@@ -145,7 +145,7 @@ void LobjBase::Wrap(const Lxy& minBound, const Lxy& maxBound) {
     pos = Lxy(newX, newY);
 }
 
-bool LobjBase::IsOutOfBounds(const Lxy& minBound, const Lxy& maxBound) {
+bool LobjBase::IsOutOfBounds(const Lxy& minBound, const Lxy& maxBound) const {
     return pos.x < minBound.x && pos.x > maxBound.x && pos.y < minBound.y && pos.y > maxBound.y;
 }
 
@@ -229,4 +229,31 @@ string Lgroup::GetDescription(bool verbose) const {
         }
     }
     return retval;
+}
+
+//----------------------------------------------------------------------
+// Sparkle definitions
+//----------------------------------------------------------------------
+
+RGBColor Lsparkle::ComputeColor(const RGBColor& referenceColor, Milli_t currentTime) const {
+//    cout << "Color: " << referenceColor.ToString() << " start: " << startTime << " currentTime: " << currentTime << "  attack: " << attack << "  hold: " << hold << endl;
+
+    if (MilliGE(startTime, currentTime))
+        return BLACK;
+    else if (MilliGT(startTime + attack, currentTime))
+        return referenceColor * ((float)(currentTime - startTime) / attack);
+    else if (MilliGE(startTime + attack + hold, currentTime))
+        return referenceColor;
+    else if (MilliGT(startTime + attack + hold + release, currentTime))
+        return referenceColor * ((float) (release - (currentTime - startTime - attack - hold)) / release);
+    else
+        return BLACK;
+}
+
+bool Lsparkle::IsOutOfTime(Milli_t currentTime) const {
+    return MilliLT(startTime + attack + hold + release + sleepTime, currentTime);
+}
+
+bool LobjSparkle::IsOutOfTime(Milli_t currentTime) const {
+    return sparkle.IsOutOfTime(currentTime);
 }

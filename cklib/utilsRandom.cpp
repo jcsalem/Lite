@@ -73,6 +73,15 @@ float RandomNormal(float mean, float sigma) {
     return mean + sigma * sqrt(-2*log(r1)) * cos(2*M_PI*r2);
 }
 
+float RandomNormalBounded(float mean, float sigma, float minVal, float maxVal) {
+    float rval;
+    do {
+        rval = RandomNormal(mean, sigma);
+    } while (rval < minVal || rval > maxVal);
+    return rval;
+}
+
+
 // Probability is highest for numbers near zero
 // This may return arbitrarily large numbers
 float RandomExponential(float alpha, float valLimit) {
