@@ -27,5 +27,9 @@ float RandomNormalBounded(float mean, float sigma, float minVal, float maxVal);
 // Returns a positive number
 float RandomExponential(float alpha = 1.0, float maxVal = 0.0);
 
+// Initialization
+typedef unsigned int RandomSeed_t;
+RandomSeed_t RandomInitialize(RandomSeed_t seed = 0);
+//   If seed is zero, then a random number will be chosen
 
 #endif // _UTILSRANDOM_H

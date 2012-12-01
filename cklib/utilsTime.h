@@ -7,7 +7,7 @@ typedef uint32 Milli_t;
 const uint32 kMaxMilli_t = 0xFFFFFFFFUL;
 const uint32 kMilliEndOfRangeMask = 0xF000000UL;
 
-Milli_t Milliseconds();
+Milli_t Milliseconds(); // This is a monotonically increasing millisecond count
 Milli_t MilliDiff(Milli_t newTime, Milli_t oldTime);
 
 inline bool MilliLT(Milli_t a, Milli_t b) {if ((a & kMilliEndOfRangeMask) == kMilliEndOfRangeMask && (b & kMilliEndOfRangeMask) == 0) return true; else return a < b;}

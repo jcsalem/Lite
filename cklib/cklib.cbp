@@ -51,6 +51,7 @@
 		<Unit filename="utilsFile.h" />
 		<Unit filename="utilsIP.cpp" />
 		<Unit filename="utilsIP.h" />
+		<Unit filename="utilsPrecomp.h" />
 		<Unit filename="utilsRandom.cpp" />
 		<Unit filename="utilsRandom.h" />
 		<Unit filename="utilsSocket.cpp" />

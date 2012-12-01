@@ -42,7 +42,7 @@ Lsparkle RandomSparkle () {
 
     switch (gSparkleMode) {
         case kSparkleSlow:
-            si.attack   = 5000/gRate;
+            si.attack   = 1000/gRate;
             si.hold     = RandomMax(3, 15000, 300000)/gRate;
             si.release  = RandomInt(100, 250);
             si.sleepTime= RandomNormalBounded(333, 250, 50, 10000);

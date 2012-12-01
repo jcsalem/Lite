@@ -1,3 +1,4 @@
+// For Windows to force the definition of rand_s in stdlib.h (only supported on XP/2003 and later)
 #include "utils.h"
 #include "utilsRandom.h"
 #include <math.h>
@@ -93,3 +94,82 @@ float RandomExponential(float alpha, float valLimit) {
     }
 }
 
+//------------------------------------------------
+// Initialization
+//------------------------------------------------
+
+// Pid value
+#if defined(OS_WINDOWS)
+#include "Windows.h"
+#include <ctime>
+// RtlGenRandom and rand_s are not defined by default in MING. It's been in Windows since XP
+typedef BOOLEAN (WINAPI *RtlGenRandom_t)(PVOID randomBuffer, ULONG length);
+RtlGenRandom_t gRtlGenRandom = NULL;
+RandomSeed_t RandomGenerateSeed() {
+    static bool isSetup = false;
+    if (! isSetup) {
+        gRtlGenRandom = (RtlGenRandom_t) GetDLLFunctionAddress("SystemFunction036", "advapi32");
+        isSetup = true;
+    }
+    RandomSeed_t seed = 0;
+    if (gRtlGenRandom && gRtlGenRandom(&seed,sizeof(RandomSeed_t)) && seed) return seed;
+    // RtlGenRandom failed
+    seed = GetCurrentThreadId() ^ GetCurrentProcessId() ^ time(NULL) ^ clock();
+    return seed;
+}
+#elif defined(OS_ARDUINO)
+#warn "Arduino RandomGenerateSeed needs work"
+RandomSeed_t RandomGenerateSeed() {
+    return 0x12345678;
+}
+#elif defined(__posix__) || defined(OS_LINUX)
+#include <unistd.h>
+#inclide <stdio.h>
+namespace{
+RandomSeed_t _ReadURandom() {
+    FILE* file = fopen("/dev/urandom", "rb");
+    if (!file) return 0;
+    RandomSeed_t seed = 0;
+    fread(&seed, sizeof(seed), 1, file);
+    fclose(file);
+    return seed;
+}
+); // namespace
+
+RandomSeed_t RandomGenerateSeed() {
+    RandomSeed_t seed = _ReadURandom();
+    if (seed) return seed;
+
+    // No /dev/urandom.  Fall back to something simple
+    pid_t pid = getpid();
+    pid_t tid = gettid(); // If this isn't defined syscall(SYS_gettid) can be used or pthread_self()
+    if (tid != pid) pid ^= tid;
+    seed ^= pid;
+    seed ^= gethostid();
+    seed ^= time(NULL);
+    seed ^= clock();
+    return seed;
+}
+#else
+#error "No RandomGenerateSeed implementation for this architecture"
+#endif
+
+// If it's zero, it uses a system noise value
+RandomSeed_t RandomInitialize(RandomSeed_t seed) {
+    if (seed == 0) seed = RandomGenerateSeed();
+    srand(seed);
+    return seed;
+}
+
+#ifndef NO_RANDOM_INIT
+namespace { // make private
+class RandomInitAtStartup {
+    public:
+        RandomInitAtStartup() {RandomInitialize();}
+};
+
+RandomInitAtStartup foo;
+
+};
+
+#endif // NO_RANDOM_INIT

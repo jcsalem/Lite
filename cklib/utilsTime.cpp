@@ -1,6 +1,9 @@
-#include <time.h>
+#include "utilsPrecomp.h"
 #include "utilsTime.h"
 
+//-------------------------------------------------------------
+// Generic functions
+//-------------------------------------------------------------
 
 Milli_t MilliDiff(Milli_t newTime, Milli_t oldTime)
 {
@@ -13,8 +16,27 @@ Milli_t MilliDiff(Milli_t newTime, Milli_t oldTime)
     }
 }
 
-#ifdef _WIN32
+void SleepSec(int secs) {
+    SleepMilli(secs * 1000);
+}
+
+
+//-------------------------------------------------------------
+// OS-specific ones
+//-------------------------------------------------------------
+
+#if defined(OS_ARDUINO)
+#include "WProgram.h"
+// Arduino
+Milli_t Milliseconds()
+{
+    return millis();
+}
+
+#elif defined(OS_WINDOWS)
 #include "Windows.h"
+#include <ctime>
+
 const Milli_t kClocksToMillis = 1000 / CLOCKS_PER_SEC;
 
 Milli_t Milliseconds()
@@ -45,21 +67,11 @@ void SleepMilli(Milli_t millis) {
     Sleep(millis);
 }
 
-void SleepSec(int secs) {
-    Sleep(secs * 1000);
-}
-
-#elif defined(__AVR__)
-#include "WProgram.h"
-// Arduino
-Milli_t Milliseconds()
-{
-    return millis();
-}
 
 #else
-#include <unistd.h>
 // POSIX version
+#include <ctime>
+#include <unistd.h>
 const Milli_t kClocksToMillis = 1000 / CLOCKS_PER_SEC;
 Milli_t Milliseconds()
 {
@@ -69,10 +81,6 @@ Milli_t Milliseconds()
 
 void SleepMilli(Milli_t millis) {
     usleep(millis * 1000);
-}
-
-void SleepSec(int secs) {
-    usleep(secs * 1000000);
 }
 
 #endif

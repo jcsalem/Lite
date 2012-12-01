@@ -117,7 +117,7 @@ CKdevice::CKdevice(csref devstrArg) : iUniverse(0), iPort(1), iCount(50), iLayou
             iLastError = "Device string has mismatched parentheses";
             return;
         }
-        iCount = atoi(devstr.substr(parenpos, len - parenpos - 2).c_str());
+        iCount = atoi(devstr.substr(parenpos + 1, len - parenpos - 2).c_str());
         if (iCount <= 0 || iCount > 256)
         {
             iLastError = "Device count must be between 1 and 256";

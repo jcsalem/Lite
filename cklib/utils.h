@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string>
 #include <errno.h>
+#include "utilsPrecomp.h"
 using namespace std;
 
 // Standard Data Types
@@ -43,5 +44,11 @@ bool StrToFlt(csref str, float* i); // returns false on error
 
 // Error related
 string ErrorCodeString          (int err = errno);
+
+// Windows specific utilities
+#ifdef OS_WINDOWS
+// Returns a pointer to a function in a windows DLL or NULL if it couldn't be found
+void* GetDLLFunctionAddress(csref fcnName, csref dllName, string *errmsg = NULL);
+#endif
 
 #endif // __UTILS_H

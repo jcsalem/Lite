@@ -6,11 +6,9 @@
 #include <sstream>
 #include <iomanip>
 
-#ifdef WIN32
-#include "stdarg.h"
-#include "windef.h"
-#include "winbase.h"
-#endif //WIN32
+#ifdef OS_WINDOWS
+#include "Windows.h"
+#endif //OS_WINDOWS
 
 // String Functions
 string TrimWhitespace(csref str)
@@ -54,7 +52,7 @@ string strReplace(csref str, csref match, csref subst) {
 
 string IntToStr(int val)
     {
-#ifdef WIN32
+#ifdef OS_WINDOWS
     char buffer[32]; // good enough for 64 bit ints
     itoa(val, buffer, 10);
     return string(buffer);
@@ -67,7 +65,7 @@ string IntToStr(int val)
     }
 
 string IntToHex(int val, bool noprefix) {
-#ifdef WIN32
+#ifdef OS_WINDOWS
     char buffer[32]; // good enough for 64 bit ints
     char* bptr = buffer;
     if (! noprefix)
@@ -108,7 +106,7 @@ string DblToStr(double val, int maxWidth) {
 }
 
 // Error functions
-#ifdef WIN32
+#ifdef OS_WINDOWS
 string ErrorCodeStringInternal(int err)
     {
     LPTSTR	lpMsgBuf = NULL;
@@ -133,7 +131,7 @@ string ErrorCodeStringInternal(int err)
 		}
     return message;
     }
-#else // WIN32
+#else
 // Mac and Linux
 string ErrorCodeStringInternal(int err)
     {
@@ -148,3 +146,32 @@ string ErrorCodeString(int err)
     {
 	return ErrorCodeStringInternal(err) +" (Code=" + IntToHex(err) + ")";
     }
+
+//-------------------------------------------------------------------------
+// Windows specific stuff
+//-------------------------------------------------------------------------
+#ifdef OS_WINDOWS
+// Returns a pointer to a library function or NULL if it couldn't be found
+void* GetDLLFunctionAddress(csref fcnName, csref dllName, string *errmsg)
+	{
+	// Get a pointer to the function
+	HMODULE module = GetModuleHandle(dllName.c_str());
+	if (module == NULL)
+		{
+        // Try to load it
+        module = LoadLibrary(dllName.c_str());
+        if (module == NULL) {
+            if (errmsg) *errmsg = "Couldn't locate " + dllName + " module: " + ErrorCodeString(GetLastError());
+            return NULL;
+            }
+		}
+	void* fcnPtr = (void*) GetProcAddress(module, fcnName.c_str());
+	if (! fcnPtr)
+		{
+		if (errmsg) *errmsg = fcnName + " was not defined in " + dllName + " module: " + ErrorCodeString(GetLastError());
+		return NULL;
+		}
+	else
+		return fcnPtr;
+	}
+#endif
