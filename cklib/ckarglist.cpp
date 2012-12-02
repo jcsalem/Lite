@@ -7,12 +7,13 @@ namespace CK {
 //---------------------------------------------------------------
 // Usage doc
 //---------------------------------------------------------------
-const char* kStdOptionsArgs = " --pds pdsinfo1 [--pds pdsinfo2 ...] [--verbose] [--time duration] [--color colorinfo]";
+const char* kStdOptionsArgs = " --pds pdsinfo1 [--pds pdsinfo2 ...] [--verbose] [--time duration] [--rate rateval] [--color colorinfo]";
 const char* kStdOptionsArgsDoc =
     "  pdsinfo describes the PDS IP and fixture port in the format IP/port(count)\n"
     "    For example, 172.24.22.51/1  or  172.24.22.51/2r(50).  'r' means reverse the order of those lights\n"
     "    If no PDS devices are specified, then they are auto detected.\n"
     "  duration is the running time in seconds. By default, animation continues forever.\n"
+    "  rateval is the relative speed of the effect. Default is 1.0\n"
     "  colorinfo is description of a random mode."
     ;
 
@@ -22,6 +23,7 @@ const char* kStdOptionsArgsDoc =
 LBuffer*            gOutputBuffer   = NULL;
 bool                gVerbose        = false;
 float               gRunTime        = 0.0;
+float               gRate           = 1.0;
 
 // Force gOutputBuffer to be deleted at exit
 struct UninitAtExit {
@@ -82,7 +84,14 @@ bool StdOptionsParse(int* argc, char** argv, string* errmsg)
             const char* cstr = PopArg(argc, argv, true);
             if (! CK::ParseColorMode(cstr, errmsg))
                 return false;
-        }  else if (strEQ(*argv, "--time")) {
+        } else if (strEQ(*argv, "--rate")) {
+            const char* cstr = PopArg(argc, argv, true);
+            CK::gRate = StrToFlt(cstr);
+            if (CK::gRate <= 0) {
+                if (errmsg) *errmsg = "--rate argument must be positive. Was " + string(cstr);
+                return false;
+            }
+        } else if (strEQ(*argv, "--time")) {
             const char* tstr = PopArg(argc,argv,true);
             if (!tstr) {
                 if (errmsg) *errmsg = "Missing argument to --time";

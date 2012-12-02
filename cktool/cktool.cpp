@@ -6,8 +6,6 @@
 #include <iostream>
 #include <getopt.h>
 
-float gRotateRate   = 1;    // Relative rotation rate
-
 //----------------------------------------------------------------------------
 // Option Parsing
 //----------------------------------------------------------------------------
@@ -16,12 +14,10 @@ void Usage(const char* progname, csref msg = "")
     {
     if (! msg.empty()) cerr << msg << endl;
     cerr << "Usage: " << progname << CK::kStdOptionsArgs
-            << " [--rate rateval]"
             << " command args" << endl;
     cerr << "Where:" << endl;
     cerr << CK::kStdOptionsArgsDoc << endl;
     cerr << "  numsecs is the time the command should run for in seconds " << endl;
-    cerr << "  rateval is the relative speed for the rotate and rotwash commands (default value is 1.0)" << endl;
     cerr << "  command is one of: " << endl;
     cerr << "    clear " << endl;
     cerr << "    all color" << endl;
@@ -36,7 +32,6 @@ void Usage(const char* progname, csref msg = "")
 struct option longOpts[] =
     {
         {"help",    no_argument,        0, 'h'},
-        {"rate",    required_argument,  0, 'r'},
         {0,0,0,0}
     };
 
@@ -62,11 +57,6 @@ void ParseArgs(const char* progname, int* argc, char** argv)
             {
             case 'h':
                 Usage(progname);
-                break;
-            case 'r':
-                gRotateRate = atof(optarg);
-                if (gRotateRate <= 0)
-                    Usage(progname, "--rate argument must be positive. Was " + string(optarg));
                 break;
             default:
                 cerr << "Internal error - unknown option: " << c << endl;
@@ -162,8 +152,8 @@ int main(int argc, char** argv)
             cout << "  Index: " << idx;
         if (CK::gRunTime != 0)
             cout << "  Time: " << CK::gRunTime << " seconds";
-        if (defaultRotateDelay != 0 && gRotateRate != 1)
-            cout << "  Rate: " << gRotateRate;
+        if (defaultRotateDelay != 0 && CK::gRate != 1)
+            cout << "  Rate: " << CK::gRate;
         cout << endl;
     }
 
@@ -187,7 +177,7 @@ int main(int argc, char** argv)
     Milli_t duration = CK::gRunTime * 1000;
     if (defaultRotateDelay != 0) {
         Milli_t startTime = Milliseconds();
-        Milli_t sleepBetween = defaultRotateDelay / gRotateRate;
+        Milli_t sleepBetween = defaultRotateDelay / CK::gRate;
         while (true) {
             CK::gOutputBuffer->Rotate();
             CK::gOutputBuffer->Update();

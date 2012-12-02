@@ -5,6 +5,7 @@
 #include "utils.h"
 #include <sstream>
 #include <iomanip>
+#include "limits.h"
 
 #ifdef OS_WINDOWS
 #include "Windows.h"
@@ -49,6 +50,41 @@ string strReplace(csref str, csref match, csref subst) {
     retval += str.substr(startpos);
     return retval;
 }
+
+//-------------------------------------------------------------------------
+// String to number conversions
+//-------------------------------------------------------------------------
+bool StrToFlt(csref str, float* result) {
+    errno = 0;
+    float val = strtof(str.c_str(), NULL);
+    if (result) *result = val;
+    return errno != 0;
+}
+
+float StrToFlt(csref str) {
+    float val;
+    StrToFlt(str, &val);
+    return val;
+}
+
+bool StrToInt(csref str, int* result) {
+    errno = 0;
+    long int val = strtol(str.c_str(), NULL, 0);
+    if (val < INT_MIN) {val = INT_MIN; errno = ERANGE;}
+    if (val > INT_MAX) {val = INT_MAX; errno = ERANGE;}
+    if (result) *result = val;
+    return errno != 0;
+}
+
+int StrToInt(csref str) {
+    int val;
+    StrToInt(str, &val);
+    return val;
+}
+
+//-------------------------------------------------------------------------
+// Numeric to String conversions
+//-------------------------------------------------------------------------
 
 string IntToStr(int val)
     {

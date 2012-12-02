@@ -13,7 +13,6 @@
 
 // Configuration
 Milli_t     gFrameDuration  = 40;    // duration of each frame of animation (in MS)
-float       gRate           = 1.0;  // Rate of sparkle creation
 float       gDensity        = 0.8;  // Average density of stars
 
 //----------------------------------------------------------------
@@ -42,8 +41,8 @@ Lsparkle RandomSparkle () {
 
     switch (gSparkleMode) {
         case kSparkleSlow:
-            si.attack   = 1000/gRate;
-            si.hold     = RandomMax(3, 15000, 300000)/gRate;
+            si.attack   = 1000/CK::gRate;
+            si.hold     = RandomMax(3, 15000, 300000)/CK::gRate;
             si.release  = RandomInt(100, 250);
             si.sleepTime= RandomNormalBounded(333, 250, 50, 10000);
             break;
@@ -136,7 +135,7 @@ void StarryLoop()
 void Usage(const char* progname, csref msg = "")
     {
     if (! msg.empty()) cerr << msg << endl;
-    cerr << "Usage: " << progname << CK::kStdOptionsArgs << " [--rate rateval] [--sparkle sparklemode]" << endl;
+    cerr << "Usage: " << progname << CK::kStdOptionsArgs << " [--density densityval] [--sparkle sparklemode]" << endl;
     cerr << "Where:" << endl;
     cerr << CK::kStdOptionsArgsDoc << endl;
     cerr << "  rateval - Rate of sparkle creation (default is 1.0)" << endl;
@@ -146,7 +145,6 @@ void Usage(const char* progname, csref msg = "")
 struct option longOpts[] =
     {
         {"help",    no_argument,        0, 'h'},
-        {"rate",    required_argument,  0, 'r'},
         {"sparkle", required_argument,  0, 's'},
         {"density", required_argument,  0, 'd'},
         {0,0,0,0}
@@ -173,11 +171,6 @@ void ParseArgs(const char* progname, int* argc, char** argv)
             {
             case 'h':
                 Usage(progname);
-            case 'r':
-                gRate = atof(optarg);
-                if (gRate <= 0)
-                    Usage(progname, "--rate argument must be positive. Was " + string(optarg));
-                break;
             case 'd':
                 gDensity = atof(optarg);
                 if (gDensity <= 0 || gDensity > 1)

@@ -12,12 +12,10 @@ extern LBuffer*    gOutputBuffer;
 extern bool        gVerbose;
 // --time
 extern float       gRunTime;
-
 // --color
-// See color.h for the random color definitions
-//typedef enum {kRandomColorDefault = 0, kRandomColorBrightHSV = 1, kRandomColorRGB = 2, kRandomColorHalloween = 3, kRandomColorStarry = 4, kRandomColorRealStar = 5, kRandomColorRange = 6}
-//    RandomColor_t;
-//extern RandomColor_t gRandomColorMode;
+// See color.h for the latest random color definitions
+// --rate
+extern float       gRate;
 
 // Parses and initialize all of the standard options.  Modifies argc and argv
 bool StdOptionsParse(int* argc, char** argv, string* errmsg = NULL);

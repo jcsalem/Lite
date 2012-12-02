@@ -13,7 +13,6 @@
 
 // Configuration
 Milli_t     gFrameDuration  = 40;    // duration of each frame of animation (in MS)
-float       gRate           = 1.0;  // Rate of sparkle creation
 
 //----------------------------------------------------------------
 // Utilities
@@ -77,7 +76,7 @@ bool IsTimeToAlloc() {
     // Default probability is that every light has a 50% chance to flash every 10 seconds
     float lightProb = (millisSinceLast / 20000.0F);
     lightProb *= CK::gOutputBuffer->GetCount();
-    lightProb *= gRate;
+    lightProb *= CK::gRate;
 
     switch (gSparkleMode) {
         case kSparkleFirefly:
@@ -139,17 +138,15 @@ void SparkleLoop()
 void Usage(const char* progname, csref msg = "")
     {
     if (! msg.empty()) cerr << msg << endl;
-    cerr << "Usage: " << progname << CK::kStdOptionsArgs << " [--rate rateval] [--sparkle sparklemode]" << endl;
+    cerr << "Usage: " << progname << CK::kStdOptionsArgs << " [--sparkle sparklemode]" << endl;
     cerr << "Where:" << endl;
     cerr << CK::kStdOptionsArgsDoc << endl;
-    cerr << "  rateval - Rate of sparkle creation (default is 1.0)" << endl;
     exit (EXIT_FAILURE);
     }
 
 struct option longOpts[] =
     {
         {"help",    no_argument,        0, 'h'},
-        {"rate",    required_argument,  0, 'r'},
         {"sparkle", required_argument,  0, 's'},
         {0,0,0,0}
     };
@@ -175,11 +172,6 @@ void ParseArgs(const char* progname, int* argc, char** argv)
             {
             case 'h':
                 Usage(progname);
-            case 'r':
-                gRate = atof(optarg);
-                if (gRate <= 0)
-                    Usage(progname, "--rate argument must be positive. Was " + string(optarg));
-                break;
             case 's':
                 gSparkleMode = StrToSparkle(optarg);
                 if (gSparkleMode == kSparkleError)

@@ -13,7 +13,6 @@
 
 // Configuration
 Milli_t     gFrameDuration  = 40;    // duration of each frame of animation (in MS)
-float       gSpeed          = 1.0;  // Higher means faster
 
 // Fwd decls
 void SetupNextCycle(LobjOld* lobj, Milli_t startTime);
@@ -24,17 +23,15 @@ void SetupNextCycle(LobjOld* lobj, Milli_t startTime);
 void Usage(const char* progname, csref msg = "")
     {
     if (! msg.empty()) cerr << msg << endl;
-    cerr << "Usage: " << progname << CK::kStdOptionsArgs << " [--speed speedval]" << endl;
+    cerr << "Usage: " << progname << CK::kStdOptionsArgs << endl;
     cerr << "Where:" << endl;
     cerr << CK::kStdOptionsArgsDoc << endl;
-    cerr << "  speedval is the relative speed (default value is 1.0)" << endl;
     exit (EXIT_FAILURE);
     }
 
 struct option longOpts[] =
     {
         {"help",    no_argument,        0, 'h'},
-        {"speed",   required_argument,  0, 's'},
         {0,0,0,0}
     };
 
@@ -59,11 +56,6 @@ void ParseArgs(const char* progname, int* argc, char** argv)
             {
             case 'h':
                 Usage(progname);
-            case 's':
-                gSpeed = atof(optarg);
-                if (gSpeed < 0)
-                    Usage(progname, "--speed argument must be positive. Was " + string(optarg));
-                break;
             default:
                 cerr << "Internal error - unknown option: " << c << endl;
                 Usage(progname);
@@ -121,7 +113,7 @@ float RandomBell(float bnum, float mmin = 0.0, float mmax = 1.0) {
 }
 
 float RandomSpeed() {
-    return gSpeed * RandomBell(2, .005, .4);
+    return CK::gRate * RandomBell(2, .005, .4);
 }
 
 LobjOld* FireflyAlloc(void) {

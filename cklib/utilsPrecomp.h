@@ -45,6 +45,7 @@
 
 // Force minimal Windows.h (if it's later included)
 #ifdef OS_WINDOWS
+#define VC_EXTRALEAN
 #define WIN32_LEAN_AND_MEAN
 #define NOGDI
 #endif
