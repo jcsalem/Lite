@@ -472,22 +472,31 @@ RGBColor RandomColor() {
     RGBColor rgb;
     HSVColor hsv;
     float temp;
+
     switch (CK::gRandomColorMode) {
         case CK::kRandomColorExact:
             return CK::gRandomColor2;
         case CK::kRandomColorRealStar:
-            temp = RandomFloat(.333);
-            hsv.h = (temp > .1666) ? temp + .5 : temp; // pick something in the red or blue spectrum
-            hsv.s = RandomMin(4, 0, .5);
-            hsv.v = RandomExponential(4);
-            if (hsv.v >= 1.0) hsv.v = 0;
-            return hsv.ToRGBColor();;
+            temp = RandomFloat(-.1, .1);
+            hsv.h = temp < 0 ? temp + 1 : temp; // pick something in the red or blue spectrum
+            hsv.s = RandomMin(4, .05, .3);
+            hsv.v = RandomExponential(6, 1.0);
+            return hsv.ToRGBColor();
         case CK::kRandomColorStarry:
             temp = RandomFloat(.333);
             hsv.h = (temp > .1666) ? temp + .5 : temp; // pick something in the red or blue spectrum
             hsv.s = RandomMin(4, 0, .5);
             hsv.v = RandomFloat(1.0);
-            return hsv.ToRGBColor();;
+            return hsv.ToRGBColor();
+        case CK::kRandomColorChristmas:
+            if (RandomInt(1)) // pick red or green
+                temp = RandomNormalBounded(0, .01, -.025, .05);
+            else
+                temp = RandomNormalBounded(.33333, .01, .2533, .40);
+            hsv.h = temp < 0 ? temp + 1 : temp;
+            hsv.s = RandomMax(3, .9, 1);
+            hsv.v = RandomExponential(2, 1.0);
+            return hsv.ToRGBColor();
         case CK::kRandomColorRGB:
             rgb.r = RandomMax(2);
             rgb.g = RandomMax(2);
@@ -529,6 +538,7 @@ bool ParseColorMode(csref strarg, string* errmsg) {
     else if (StrEQ(str, "RGB"))                 CK::gRandomColorMode = CK::kRandomColorRGB;
     else if (StrEQ(str, "Halloween"))           CK::gRandomColorMode = CK::kRandomColorHalloween;
     else if (StrEQ(str, "Bright"))              CK::gRandomColorMode = CK::kRandomColorBright;
+    else if (StrEQ(str, "xmas") || StrEQ(str, "Christmas")) CK::gRandomColorMode = CK::kRandomColorChristmas;
     else {
         if (errmsg) {
             *errmsg = "Invalid color parameter: " + str + ". ";

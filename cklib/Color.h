@@ -125,7 +125,7 @@ public:
 // --color option
 namespace CK {
 typedef enum {kRandomColorDefault = 0, kRandomColorBright = 1, kRandomColorRGB = 2,
-            kRandomColorHalloween = 3, kRandomColorStarry = 4, kRandomColorRealStar = 5, kRandomColorRange = 6, kRandomColorExact = 7}
+            kRandomColorHalloween = 3, kRandomColorStarry = 4, kRandomColorRealStar = 5, kRandomColorRange = 6, kRandomColorExact = 7, kRandomColorChristmas = 8}
     RandomColorMode_t;
 extern RandomColorMode_t    gRandomColorMode;
 extern RGBColor             gRandomColor1;
