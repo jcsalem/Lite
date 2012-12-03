@@ -1,6 +1,7 @@
 #include "Lobj.h"
 #include "Color.h"
 #include "LBuffer.h"
+#include "LFilter.h"
 #include <math.h>
 #include <iostream>
 
@@ -92,15 +93,21 @@ void LobjOld::Map(LobjOldMapFcn_t mapfcn) {
 }
 
 //----------------------------------------------------------------------
-// LobjBase Operations
+// Rendering
 //----------------------------------------------------------------------
 
-void LobjBase::Render(LBuffer* buffer) const {
+namespace { // These are internal to just this file
+// Just used for default values
+LFilterList gDummyFilterList;
+
+void ObjRender(const LobjBase* obj, LBuffer* buffer, const LFilterList& filters) {
     // Only supports 1D rendering at the moment
     // Position is the middle of the object
 
-    RGBColor rgb = GetCurrentColor();
+    RGBColor rgb = obj->GetCurrentColor();
 //    cout << "Render: " << rgb.ToString() << " at " << pos.x << "," << pos.y << endl;
+    float   width   = obj->width;
+    Lxy     pos     = obj->pos;
 
     if (width == 0 || !gAntiAlias) {
         // Round to nearest pixel to beginning of object
@@ -130,6 +137,12 @@ void LobjBase::Render(LBuffer* buffer) const {
         buffer->AddRGB(rpos, rgb * rfrac);
     }
 }
+
+}; // Local namespace
+
+//----------------------------------------------------------------------
+// LobjBase Operations
+//----------------------------------------------------------------------
 
 void LobjBase::Move(Milli_t newTime) {
     float timeDiff = MilliDiff(newTime, lastTime);
@@ -200,7 +213,7 @@ void Lgroup::FreeIf(Lobj::FreeIfFcn_t fcn, const void* info) {
 // Common functions
 void Lgroup::RenderAll(LBuffer* buffer) const {
     for (const_iterator i = begin(); i != end(); ++i)
-        (*i)->Render(buffer);
+        ObjRender(*i, buffer,gDummyFilterList);
 }
 
 void Lgroup::MoveAll(Milli_t newTime) const {
@@ -254,6 +267,6 @@ bool Lsparkle::IsOutOfTime(Milli_t currentTime) const {
     return MilliLT(startTime + attack + hold + release + sleepTime, currentTime);
 }
 
-bool LobjSparkle::IsOutOfTime(Milli_t currentTime) const {
-    return sparkle.IsOutOfTime(currentTime);
+bool LobjSparkle::IsOutOfTime() const {
+    return sparkle.IsOutOfTime(lastTime);
 }

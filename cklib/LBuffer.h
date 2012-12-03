@@ -21,10 +21,12 @@ class LBuffer
     void SetColor(int idx, const Color& color);
     void SetAll(const Color& color);
 
+    // Filters
+    //void AttachFilter(const LFilter& filter); // adds a processing filter
+    //void DeleteAllFilters();
+
     // Operations
     void Rotate(int inc = 1);
-    // If minTime < maxTime, fade in.  Otherwise, fade out
-    void Fade(Milli_t currentTime, Milli_t minTime, Milli_t maxTime);
 
     // Things to be overridden by the specific output class
     virtual bool    HasError()          const {return !iLastError.empty();}
@@ -40,16 +42,17 @@ class LBuffer
     iterator        begin()                 {return iBuffer.begin();}
     iterator        end()                   {return iBuffer.end();}
 
+    virtual ~LBuffer() {/*DeleteAllFilters();*/}
+
   protected:
     LBuffer(int count = 0) : iBuffer(count) {}
     vector<RGBColor>    iBuffer;
     string              iLastError;
+    //vector<LFilter*>    iFilters;
 
     // Disallow copy construction because it doesn't work reliably for the derived class
     LBuffer(const LBuffer&);
     LBuffer& operator=(const LBuffer&);
     };
-
-
 
 #endif // _LBUFFER_H

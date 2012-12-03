@@ -39,6 +39,8 @@
 		<Unit filename="KiNET.h" />
 		<Unit filename="LBuffer.cpp" />
 		<Unit filename="LBuffer.h" />
+		<Unit filename="LFilter.cpp" />
+		<Unit filename="LFilter.h" />
 		<Unit filename="Lobj.cpp" />
 		<Unit filename="Lobj.h" />
 		<Unit filename="ckarglist.cpp" />

@@ -8,6 +8,7 @@
 #include "LBuffer.h"
 
 extern bool gAntiAlias; // 1 to enable
+class LFilterList; //fwd decl
 
 // Type definitions
 class LobjBase; // forward decl
@@ -55,6 +56,8 @@ public:
 
     // Common functions
     void RenderAll(LBuffer* buffer) const;
+    void RenderAll(LBuffer* buffer, const LFilterList& filters) const;
+
     void MoveAll(Milli_t newTime) const;
     void WrapAll(const Lxy& MinBound, const Lxy& maxBound) const;
     string GetDescription(bool verbose = false) const;
@@ -75,7 +78,7 @@ private:
 class LobjBase {
   public:
      // Constructor
-    LobjBase() : width(0), color(BLACK), lastTime(Milliseconds()) {}
+    LobjBase(Milli_t currentTime = 0) : width(0), color(BLACK), lastTime(currentTime) {}
     virtual ~LobjBase() {}
 
     // Instance variables
@@ -90,17 +93,18 @@ class LobjBase {
     virtual void Move           (Milli_t currentTime);
     virtual void Wrap           (const Lxy& minBound, const Lxy& maxBound);
     virtual bool IsOutOfBounds  (const Lxy& minBound, const Lxy& maxBound) const;
-    virtual bool IsOutOfTime    (Milli_t currentTime)   const {return false;}
+    virtual bool IsOutOfTime    ()   const {return false;}
 
     virtual void Clear() {*this = LobjBase();}
 
-    virtual void Render(LBuffer* buffer) const;
-    void Render(LBuffer* buffer, const RGBColor& color) const;
+    // Returns the color as of lastTime
+    virtual RGBColor GetCurrentColor() const {return color;}
+
+    //virtual void Render(LBuffer* buffer, const LFilterList& filters) const;
+
+    //void Render(LBuffer* buffer, const RGBColor& color) const;
 
     virtual string GetDescription(bool verbose = false) const;
-
-  protected:
-    virtual RGBColor GetCurrentColor() const {return color;}
 };
 
 // This describes a sparkly light of some kind
@@ -120,7 +124,7 @@ class Lsparkle {
 class LobjSparkle : public LobjBase {
   public:
      // Constructor
-    LobjSparkle() : LobjBase(), sparkle() {}
+    LobjSparkle(Milli_t currentTime = 0) : LobjBase(currentTime), sparkle() {}
     virtual ~LobjSparkle() {}
 
     // Variables
@@ -128,12 +132,11 @@ class LobjSparkle : public LobjBase {
 
     // Operations
     virtual void Clear() {*this = LobjSparkle();}
-    virtual bool IsOutOfTime(Milli_t currentTime) const;
+    virtual bool IsOutOfTime() const;
 
     // Allocate function
     static LobjSparkle* Alloc(int,const void*) {return new LobjSparkle();}
 
-  protected:
     virtual RGBColor GetCurrentColor() const {return sparkle.ComputeColor(color, lastTime);}
 
 };

@@ -69,7 +69,7 @@ bool StdOptionsParse(int* argc, char** argv, string* errmsg)
 
     while (*argv)
     {
-        if (strEQ(*argv, "--pds")) {
+        if (StrEQ(*argv, "--pds")) {
             const char* pds = PopArg(argc, argv, true);
             if (!pds) {
                 if (errmsg) *errmsg = "Missing argument to --pds";
@@ -77,21 +77,21 @@ bool StdOptionsParse(int* argc, char** argv, string* errmsg)
             }
             ckbuffer->AddDevice(string(pds));
             foundPDS = true;
-        } else if (strEQ(*argv, "--verbose")) {
+        } else if (StrEQ(*argv, "--verbose")) {
             CK::gVerbose = true;
             PopArg(argc,argv,false);
-        } else if (strEQ(*argv, "--color")) {
+        } else if (StrEQ(*argv, "--color")) {
             const char* cstr = PopArg(argc, argv, true);
             if (! CK::ParseColorMode(cstr, errmsg))
                 return false;
-        } else if (strEQ(*argv, "--rate")) {
+        } else if (StrEQ(*argv, "--rate")) {
             const char* cstr = PopArg(argc, argv, true);
             CK::gRate = StrToFlt(cstr);
             if (CK::gRate <= 0) {
                 if (errmsg) *errmsg = "--rate argument must be positive. Was " + string(cstr);
                 return false;
             }
-        } else if (strEQ(*argv, "--time")) {
+        } else if (StrEQ(*argv, "--time")) {
             const char* tstr = PopArg(argc,argv,true);
             if (!tstr) {
                 if (errmsg) *errmsg = "Missing argument to --time";

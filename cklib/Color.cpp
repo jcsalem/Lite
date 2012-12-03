@@ -4,6 +4,7 @@
 #include <string>
 #include <math.h>
 #include <stdio.h>
+#include <iostream>
 
 //--------------------------------------------------------------------------
 // Utilities
@@ -41,11 +42,11 @@ bool ParseOneComponent(csref str, float* fptr, string* errmsg, bool ignoreRangeE
         return false;
     }
 
-    if (str.find_first_not_of("0123456789.eE+-") != string::npos) {
-        if (errmsg) *errmsg = "Invalid color number (must be valid floating point)";
+    if (! StrToFlt(str, fptr)) {
+        if (errmsg) *errmsg = "Invalid color number (must be valid floating point): " + ErrorCodeString();
         return false;
     }
-    *fptr = atof(str.c_str());
+    //*fptr = StrToFlt()atof(str.c_str());
     if (!ignoreRangeErrors && *fptr < 0) {
         if (errmsg) *errmsg = "Negative color component";
         return false;
@@ -76,6 +77,7 @@ bool ParseColorComponents(csref strarg, float* a, float* b, float* c, string* er
 
     // Second component
     startpos = SkipToNextComponent(strarg, pos, errmsg);
+    if (startpos == string::npos) return false;
     pos = str.find_first_of(" ,", startpos);
     if (pos == string::npos) {
         if (errmsg) *errmsg = "Color must be specified with 3 components.";
@@ -86,6 +88,7 @@ bool ParseColorComponents(csref strarg, float* a, float* b, float* c, string* er
 
     // Third component
     startpos = SkipToNextComponent(strarg, pos, errmsg);
+    if (startpos == string::npos) return false;
     if (! ParseOneComponent(str.substr(startpos), c, errmsg, ignoreRangeErrors))
         return false;
 
@@ -148,7 +151,7 @@ struct NameToColor_t {string name; RGBColor color;} gNameToColor[] = {
 bool ParseNamedColor(csref str, float* r, float* g, float* b) {
     int num = sizeof(gNameToColor) / sizeof(struct NameToColor_t);
     for (int i = 0; i < num; ++i) {
-        if (strEQ(str, gNameToColor[i].name)) {
+        if (StrEQ(str, gNameToColor[i].name)) {
             *r = gNameToColor[i].color.r;
             *g = gNameToColor[i].color.g;
             *b = gNameToColor[i].color.b;
@@ -162,14 +165,14 @@ Color* Color::AllocFromString(csref strarg, string* errmsg, bool ignoreRangeErro
     string str = TrimWhitespace(strarg);
     float a, b, c;
     RGBColor rgb;
-    if (strStartsWith(str, "RGB")) {
+    if (StrStartsWith(str, "RGB")) {
         str = CheckAndRemoveParens(str.substr(3), errmsg);
         if (str.empty()) return false;
         if (ParseColorComponents(str, &a, &b, &c, errmsg, ignoreRangeErrors))
             return new RGBColor(a,b,c);
         else
             return NULL;
-    } else if (strStartsWith(str, "HSV")) {
+    } else if (StrStartsWith(str, "HSV")) {
         str = CheckAndRemoveParens(str.substr(3), errmsg);
         if (str.empty()) return false;
         if (ParseColorComponents(str, &a, &b, &c, errmsg, ignoreRangeErrors))
@@ -505,21 +508,34 @@ RGBColor RandomColor() {
 }
 
 namespace CK {
-bool ParseColorMode(csref str, string* errmsg) {
-    RGBColor rgb;
+bool ParseColorMode(csref strarg, string* errmsg) {
+    string str = TrimWhitespace(strarg);
     string localError;
-    if (RGBColor::FromString(str, &rgb, &localError)) {
+
+    if (str.empty()) {
+        if (errmsg) *errmsg = "Empty color parameter";
+        return false;
+    }
+
+    Color* color = Color::AllocFromString(str, &localError);
+    if (color) {
         CK::gRandomColorMode = CK::kRandomColorExact;
-        CK::gRandomColor2 = rgb;
+        color->ToRGBColor(&CK::gRandomColor2);
+        delete color;
         return true;
     }
-    if      (strEQ(str, "RealStar"))            CK::gRandomColorMode = CK::kRandomColorRealStar;
-    else if (strEQ(str, "Starry"))              CK::gRandomColorMode = CK::kRandomColorStarry;
-    else if (strEQ(str, "RGB"))                 CK::gRandomColorMode = CK::kRandomColorRGB;
-    else if (strEQ(str, "Halloween"))           CK::gRandomColorMode = CK::kRandomColorHalloween;
-    else if (strEQ(str, "Bright"))              CK::gRandomColorMode = CK::kRandomColorBright;
+    if      (StrEQ(str, "RealStar"))            CK::gRandomColorMode = CK::kRandomColorRealStar;
+    else if (StrEQ(str, "Starry"))              CK::gRandomColorMode = CK::kRandomColorStarry;
+    else if (StrEQ(str, "RGB"))                 CK::gRandomColorMode = CK::kRandomColorRGB;
+    else if (StrEQ(str, "Halloween"))           CK::gRandomColorMode = CK::kRandomColorHalloween;
+    else if (StrEQ(str, "Bright"))              CK::gRandomColorMode = CK::kRandomColorBright;
     else {
-        if (errmsg) *errmsg = "Invalid color parameter: " + str + ". " + localError;
+        if (errmsg) {
+            *errmsg = "Invalid color parameter: " + str + ". ";
+            // Add in the other error if it's a type we recognize
+            if (isdigit(str[0]) || str[0] == '.' || StrStartsWith(str,"rgb") || StrStartsWith(str,"hsv"))
+                *errmsg += localError;
+        }
         return false;
     }
     return true;

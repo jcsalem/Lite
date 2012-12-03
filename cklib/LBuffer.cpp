@@ -1,6 +1,7 @@
 #include "utils.h"
 #include "LBuffer.h"
 #include "Color.h"
+#include "LFilter.h"
 #include <vector>
 #include <algorithm>
 

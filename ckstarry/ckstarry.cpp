@@ -28,10 +28,10 @@ typedef enum {kSparkleError = -1, kSparkleDefault = 0, kSparkleSparkle = 1, kSpa
 SparkleMode_t gSparkleMode = kSparkleSlow;
 
 SparkleMode_t StrToSparkle(csref str) {
-    if      (strEQ(str, "default"))     return kSparkleDefault;
-    else if (strEQ(str, "sparkle"))     return kSparkleSparkle;
-    else if (strEQ(str, "firefly"))     return kSparkleFirefly;
-    else if (strEQ(str, "slow"))        return kSparkleSlow;
+    if      (StrEQ(str, "default"))     return kSparkleDefault;
+    else if (StrEQ(str, "sparkle"))     return kSparkleSparkle;
+    else if (StrEQ(str, "firefly"))     return kSparkleFirefly;
+    else if (StrEQ(str, "slow"))        return kSparkleSlow;
     else return kSparkleError;
 }
 
@@ -78,7 +78,7 @@ LobjBase* SparkleAlloc(int idx, const void* ignore) {
 
 void RestartExpired(LobjBase* objarg, const void* ignore) {
     LobjSparkle* obj = dynamic_cast<LobjSparkle*>(objarg);
-    if (! obj || !obj->IsOutOfTime(gTime)) return;
+    if (! obj || !obj->IsOutOfTime()) return;
     InitializeOneStar(obj, obj->pos.x);
 }
 

@@ -27,19 +27,19 @@ string TrimWhitespace(csref str)
     return str.substr(spos, epos - spos + 1);
 }
 
-bool strEQ(csref a, csref b)
+bool StrEQ(csref a, csref b)
 {
     return strcasecmp(a.c_str(), b.c_str()) == 0;
 }
 
-bool strStartsWith(csref str, csref matchString)
+bool StrStartsWith(csref str, csref matchString)
 {
     if (matchString.empty()) return true;
     if (matchString.length() > str.length()) return false;
     return strncasecmp(str.c_str(), matchString.c_str(), matchString.length()) == 0;
 }
 
-string strReplace(csref str, csref match, csref subst) {
+string StrReplace(csref str, csref match, csref subst) {
     string retval;
     size_t startpos = 0;
     size_t pos;
@@ -58,7 +58,7 @@ bool StrToFlt(csref str, float* result) {
     errno = 0;
     float val = strtof(str.c_str(), NULL);
     if (result) *result = val;
-    return errno != 0;
+    return errno == 0;
 }
 
 float StrToFlt(csref str) {
@@ -73,7 +73,7 @@ bool StrToInt(csref str, int* result) {
     if (val < INT_MIN) {val = INT_MIN; errno = ERANGE;}
     if (val > INT_MAX) {val = INT_MAX; errno = ERANGE;}
     if (result) *result = val;
-    return errno != 0;
+    return errno == 0;
 }
 
 int StrToInt(csref str) {

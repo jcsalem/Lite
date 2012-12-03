@@ -51,7 +51,7 @@ void DisplayDevice(const CKinfo& devInfo) {
     cout << "Universe: " << devInfo.universe << " NumPorts: " << devInfo.numports<< endl;
     cout << " Name: " << devInfo.name << endl;
     string info = devInfo.info;
-    info = strReplace(info, "\n", "\n ");
+    info = StrReplace(info, "\n", "\n ");
     cout << " " << info << endl;
 }
 
