@@ -78,7 +78,7 @@ private:
 class LobjBase {
   public:
      // Constructor
-    LobjBase(Milli_t currentTime = 0) : width(0), color(BLACK), lastTime(currentTime) {}
+    LobjBase(Milli_t currentTime = Milliseconds()) : width(0), color(BLACK), lastTime(currentTime) {}
     virtual ~LobjBase() {}
 
     // Instance variables
@@ -124,7 +124,7 @@ class Lsparkle {
 class LobjSparkle : public LobjBase {
   public:
      // Constructor
-    LobjSparkle(Milli_t currentTime = 0) : LobjBase(currentTime), sparkle() {}
+    LobjSparkle(Milli_t currentTime = Milliseconds()) : LobjBase(currentTime), sparkle() {}
     virtual ~LobjSparkle() {}
 
     // Variables

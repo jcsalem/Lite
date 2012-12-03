@@ -5,6 +5,7 @@
 #include "Color.h"
 #include "cklib.h"
 #include "Lobj.h"
+#include "Lfilter.h"
 #include "utilsRandom.h"
 #include "stdOptions.h"
 #include <iostream>
@@ -14,7 +15,7 @@
 // Configuration
 Milli_t     gFrameDuration  = 40;    // duration of each frame of animation (in MS)
 float       gDensity        = 0.8;  // Average density of stars
-
+float       gFade           = 1.0;  // Fade in/out time in seconds
 //----------------------------------------------------------------
 // Utilities
 //----------------------------------------------------------------
@@ -41,8 +42,8 @@ Lsparkle RandomSparkle () {
 
     switch (gSparkleMode) {
         case kSparkleSlow:
-            si.attack   = 1000/CK::gRate;
-            si.hold     = RandomMax(3, 15000, 300000)/CK::gRate;
+            si.attack   = RandomInt(1000/CK::gRate);
+            si.hold     = RandomMax(3, 10000, 100000)/CK::gRate;
             si.release  = RandomInt(100, 250);
             si.sleepTime= RandomNormalBounded(333, 250, 50, 10000);
             break;
@@ -93,7 +94,13 @@ void StarryLoop()
 {
     Milli_t startTime = Milliseconds();
 //    int lastSec = startTime / 1000;
-    Milli_t endTimeMilli =  CK::gRunTime > 0 ? startTime + (Milli_t) (CK::gRunTime * 1000 + .5) : 0;
+    Milli_t endTime =  CK::gRunTime > 0 ? startTime + (Milli_t) (CK::gRunTime * 1000 + .5) : 0;
+    LFilterList filters;
+    if (gFade > 0) {
+        filters.AddFilter(LFilterFadeIn(false,startTime, startTime + gFade * 1000));
+        if (endTime)
+            filters.AddFilter(LFilterFadeOut(false,endTime - gFade * 1000, endTime));
+    }
 
     while (true) {
         gTime = Milliseconds();
@@ -116,12 +123,12 @@ void StarryLoop()
 
         // Render
         CK::gOutputBuffer->Clear();
-        gObjs.RenderAll(CK::gOutputBuffer);
+        gObjs.RenderAll(CK::gOutputBuffer, filters);
         CK::gOutputBuffer->Update();
 
         // Exit if out of time, else delay until next frame
         Milli_t currentTime = Milliseconds();
-        if (endTimeMilli != 0 && MilliLE(endTimeMilli, currentTime)) break;
+        if (endTime != 0 && MilliLE(endTime, currentTime)) break;
 
         Milli_t elapsedSinceFrameStart = MilliDiff(currentTime, gTime);
         if (gFrameDuration > elapsedSinceFrameStart)
@@ -135,10 +142,12 @@ void StarryLoop()
 void Usage(const char* progname, csref msg = "")
     {
     if (! msg.empty()) cerr << msg << endl;
-    cerr << "Usage: " << progname << CK::kStdOptionsArgs << " [--density densityval] [--sparkle sparklemode]" << endl;
+    cerr << "Usage: " << progname << CK::kStdOptionsArgs << " [--density densityval] [--sparkle sparklemode] [--fade fadeduration]" << endl;
     cerr << "Where:" << endl;
     cerr << CK::kStdOptionsArgsDoc << endl;
-    cerr << "  rateval - Rate of sparkle creation (default is 1.0)" << endl;
+    cerr << "  densityval - Density of sparkles (default is 0.8)" << endl;
+    cerr << "  sparkemode is SlowSparkle, Sparkle, or Firefly (default is SlowSparkle)" << endl;
+    cerr << "  fadeduration is the time to fade in and out in seconds (default is 1.0)" << endl;
     exit (EXIT_FAILURE);
     }
 
@@ -147,9 +156,9 @@ struct option longOpts[] =
         {"help",    no_argument,        0, 'h'},
         {"sparkle", required_argument,  0, 's'},
         {"density", required_argument,  0, 'd'},
+        {"fade",    required_argument,  0, 'f'},
         {0,0,0,0}
     };
-
 
 void ParseArgs(const char* progname, int* argc, char** argv)
 {
@@ -172,9 +181,14 @@ void ParseArgs(const char* progname, int* argc, char** argv)
             case 'h':
                 Usage(progname);
             case 'd':
-                gDensity = atof(optarg);
+                gDensity = StrToFlt(optarg);
                 if (gDensity <= 0 || gDensity > 1)
                     Usage(progname, "--density argument must be between 0 and 1. Was " + string(optarg));
+                break;
+            case 'f':
+                gFade = StrToFlt(optarg);
+                if (gFade < 0)
+                    Usage(progname, "--fade argument must be non-negative. Was " + string(optarg));
                 break;
             case 's':
                 gSparkleMode = StrToSparkle(optarg);

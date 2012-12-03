@@ -97,7 +97,7 @@ void SparkleLoop()
 {
     Milli_t startTime = Milliseconds();
 //    int lastSec = startTime / 1000;
-    Milli_t endTimeMilli =  CK::gRunTime > 0 ? startTime + (Milli_t) (CK::gRunTime * 1000 + .5) : 0;
+    Milli_t endTime =  CK::gRunTime > 0 ? startTime + (Milli_t) (CK::gRunTime * 1000 + .5) : 0;
 
     while (true) {
         gTime = Milliseconds();
@@ -124,7 +124,7 @@ void SparkleLoop()
 
         // Exit if out of time, else delay until next frame
         Milli_t currentTime = Milliseconds();
-        if (endTimeMilli != 0 && MilliLE(endTimeMilli, currentTime)) break;
+        if (endTime != 0 && MilliLE(endTime, currentTime)) break;
 
         Milli_t elapsedSinceFrameStart = MilliDiff(currentTime, gTime);
         if (gFrameDuration > elapsedSinceFrameStart)

@@ -9,12 +9,12 @@
 
 class LFilter {
 public:
-    LFilter();
+    LFilter() {}
     virtual ~LFilter() {}
 
     // These are the key functions that each filter must provide
     virtual LFilter* Duplicate() const = 0; // Makes a copy of the filter
-    virtual RGBColor Apply(const RGBColor& rgb, Milli_t currentTime) = 0;
+    virtual RGBColor Apply(const RGBColor& rgb, Milli_t currentTime) const = 0;
 };
 
 class LFilterFade : public LFilter {
@@ -24,9 +24,9 @@ public:
     virtual ~LFilterFade() {}
 
     virtual LFilter* Duplicate() const {return new LFilterFade(*this);}
-    virtual RGBColor Apply(const RGBColor& rgb, Milli_t currentTime);
+    virtual RGBColor Apply(const RGBColor& rgb, Milli_t currentTime) const;
 private:
-    bool    iType;
+    Type_t  iType;
     Milli_t iStartTime;
     Milli_t iEndTime;
 };
@@ -55,7 +55,8 @@ public:
     int AddFilter(const LFilter& filter);
     bool ReplaceFilter(int handle, const LFilter& filter);
     bool DeleteFilter(int handle);
-    RGBColor Apply(const RGBColor& rgb, Milli_t currentTime);
+
+    RGBColor Apply(const RGBColor& rgb, Milli_t currentTime) const;
 
 private:
     int iNextHandle;

@@ -105,6 +105,8 @@ void ObjRender(const LobjBase* obj, LBuffer* buffer, const LFilterList& filters)
     // Position is the middle of the object
 
     RGBColor rgb = obj->GetCurrentColor();
+    rgb = filters.Apply(rgb, obj->lastTime);
+
 //    cout << "Render: " << rgb.ToString() << " at " << pos.x << "," << pos.y << endl;
     float   width   = obj->width;
     Lxy     pos     = obj->pos;
@@ -211,9 +213,14 @@ void Lgroup::FreeIf(Lobj::FreeIfFcn_t fcn, const void* info) {
 //void Lgroup::FreeIfOutOfBounds(Lxy MinBound, Lxy maxBound) const;
 
 // Common functions
+
 void Lgroup::RenderAll(LBuffer* buffer) const {
+    RenderAll(buffer, gDummyFilterList);
+}
+
+void Lgroup::RenderAll(LBuffer* buffer, const LFilterList& filters) const {
     for (const_iterator i = begin(); i != end(); ++i)
-        ObjRender(*i, buffer,gDummyFilterList);
+        ObjRender(*i, buffer, filters);
 }
 
 void Lgroup::MoveAll(Milli_t newTime) const {
