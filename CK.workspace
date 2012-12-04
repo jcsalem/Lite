@@ -2,7 +2,7 @@
 <CodeBlocks_workspace_file>
 	<Workspace title="Workspace">
 		<Project filename="cklib/cklib.cbp" />
-		<Project filename="cktool/cktool.cbp">
+		<Project filename="cktool/cktool.cbp" active="1">
 			<Depends filename="cklib/cklib.cbp" />
 		</Project>
 		<Project filename="ckfirefly/ckfirefly.cbp">
@@ -14,8 +14,9 @@
 		<Project filename="cksparkle/cksparkle.cbp">
 			<Depends filename="cklib/cklib.cbp" />
 		</Project>
-		<Project filename="ckstarry/ckstarry.cbp" active="1">
+		<Project filename="ckstarry/ckstarry.cbp">
 			<Depends filename="cklib/cklib.cbp" />
 		</Project>
+		<Project filename="testmix/testmix.cbp" />
 	</Workspace>
 </CodeBlocks_workspace_file>
