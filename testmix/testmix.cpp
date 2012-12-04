@@ -35,7 +35,6 @@ Key_t GetOneChar() {
     if (numread != 1) return kNop;
     if (inrec.EventType != KEY_EVENT) return kNop;
     if (! inrec.Event.KeyEvent.bKeyDown) return kNop;
-    cout <<"0x"<< hex << inrec.Event.KeyEvent.wVirtualKeyCode << dec << endl;
     switch (inrec.Event.KeyEvent.wVirtualKeyCode) {
         case VK_UP:         return kUp;
         case VK_DOWN:       return kDown;
