@@ -36,44 +36,51 @@ SparkleMode_t StrToSparkle(csref str) {
     else return kSparkleError;
 }
 
-Lsparkle RandomSparkle () {
+Lsparkle RandomSparkle (Milli_t currentTime, bool isFirstTime) {
     Lsparkle si;
-    si.startTime = gTime;
 
     switch (gSparkleMode) {
         case kSparkleSlow:
             si.attack   = RandomInt(1000/CK::gRate);
             si.hold     = RandomMax(3, 10000, 100000)/CK::gRate;
-            si.release  = RandomInt(100, 250);
-            si.sleepTime= RandomNormalBounded(333, 250, 50, 10000);
+            si.release  = RandomInt(1500/CK::gRate);
+            si.sleep    = RandomNormalBounded(333, 250, 50, 10000);
             break;
         case kSparkleFirefly:
             si.attack   = RandomInt(100, 450);
             si.hold     = si.attack * 2 + RandomInt(si.attack) + RandomInt(si.attack);
             si.release  = RandomMin(2, 0, 800) + 400;
-            si.sleepTime= RandomMin(3, 750, 3000);
+            si.sleep    = RandomMin(3, 750, 3000);
             break;
         case kSparkleSparkle:
         default:
             si.attack   = min(RandomInt(100), RandomInt(150));
             si.hold     = si.attack/2 + RandomInt(200);
             si.release  = 10;
-            si.sleepTime= 100;
+            si.sleep    = 100;
             break;
+    }
+
+    if (isFirstTime) {
+        si.startTime = currentTime - RandomInt(si.GetEndTime());
+    } else {
+        si.startTime = currentTime;
     }
 
     return si;
 }
 
-void InitializeOneStar(LobjSparkle* lobj, int idx) {
+void InitializeOneStar(LobjSparkle* lobj, int idx, bool firstTime = false) {
     lobj->pos.x = (idx != -1) ? idx : RandomInt(CK::gOutputBuffer->GetCount());
     lobj->color = (RandomFloat() < gDensity) ? RandomColor() : BLACK;
-    lobj->sparkle = RandomSparkle();
+    lobj->sparkle = RandomSparkle(gTime, firstTime);
 }
+
+const void* kIsFirstTime = (void*) -1;
 
 LobjBase* SparkleAlloc(int idx, const void* ignore) {
     LobjSparkle* lobj = new LobjSparkle();
-    InitializeOneStar(lobj, idx);
+    InitializeOneStar(lobj, idx, true);
     return lobj;
 }
 

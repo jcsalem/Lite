@@ -270,8 +270,8 @@ RGBColor Lsparkle::ComputeColor(const RGBColor& referenceColor, Milli_t currentT
         return BLACK;
 }
 
-bool Lsparkle::IsOutOfTime(Milli_t currentTime) const {
-    return MilliLT(startTime + attack + hold + release + sleepTime, currentTime);
+Milli_t Lsparkle::GetEndTime() const {
+    return startTime + attack + hold + release + sleep;
 }
 
 bool LobjSparkle::IsOutOfTime() const {

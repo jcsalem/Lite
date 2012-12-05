@@ -110,15 +110,16 @@ class LobjBase {
 // This describes a sparkly light of some kind
 class Lsparkle {
   public:
-    Lsparkle() : attack(0), hold(0), release(0), startTime(0), sleepTime(0) {}
+    Lsparkle() : startTime(0), attack(0), hold(0), release(0), sleep(0) {}
+    Milli_t startTime;
     Milli_t attack;
     Milli_t hold;
     Milli_t release;
-    Milli_t startTime;
-    Milli_t sleepTime;
+    Milli_t sleep;
 
     RGBColor    ComputeColor(const RGBColor& referenceColor, Milli_t currentTime) const;
-    bool        IsOutOfTime(Milli_t currentTime) const;
+    bool        IsOutOfTime(Milli_t currentTime) const {return MilliLT(GetEndTime(), currentTime);}
+    Milli_t     GetEndTime() const;
 };
 
 class LobjSparkle : public LobjBase {
