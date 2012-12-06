@@ -167,14 +167,14 @@ Color* Color::AllocFromString(csref strarg, string* errmsg, bool ignoreRangeErro
     RGBColor rgb;
     if (StrStartsWith(str, "RGB")) {
         str = CheckAndRemoveParens(str.substr(3), errmsg);
-        if (str.empty()) return false;
+        if (str.empty()) return NULL;
         if (ParseColorComponents(str, &a, &b, &c, errmsg, ignoreRangeErrors))
             return new RGBColor(a,b,c);
         else
             return NULL;
     } else if (StrStartsWith(str, "HSV")) {
         str = CheckAndRemoveParens(str.substr(3), errmsg);
-        if (str.empty()) return false;
+        if (str.empty()) return NULL;
         if (ParseColorComponents(str, &a, &b, &c, errmsg, ignoreRangeErrors))
             return new HSVColor(a,b,c);
         else
@@ -196,7 +196,11 @@ RGBColor::RGBColor(const Color& color) : Color() {
 }
 
 bool RGBColor::FromString(csref str, RGBColor* rgb, string* errmsg, bool ignoreRangeErrors) {
-    return ParseColorComponents(str, &(rgb->r), &(rgb->g), &(rgb->b), errmsg, ignoreRangeErrors);
+    Color* color = Color::AllocFromString(str, errmsg, ignoreRangeErrors);
+    if (! color) return false;
+    if (rgb) color->ToRGBColor(rgb);
+    delete color;
+    return true;
 }
 
 string RGBColor::ToString() const {
@@ -402,11 +406,19 @@ HSVColor::HSVColor(const Color& color) : Color() {
 }
 
 bool HSVColor::FromString(csref str, HSVColor* hsv, string* errmsg, bool ignoreRangeErrors) {
-    return ParseColorComponents(str, &(hsv->h), &(hsv->s), &(hsv->v), errmsg, ignoreRangeErrors);
+    Color* color = Color::AllocFromString(str, errmsg, ignoreRangeErrors);
+    if (! color) return false;
+    if (hsv) {
+        RGBColor rgb;
+        color->ToRGBColor(&rgb);
+        hsv->SetFromRGB(rgb);
+    }
+    delete color;
+    return true;
 }
 
 string HSVColor::ToString() const {
-    char buffer[50];
+    char buffer[64];
     sprintf(buffer, "HSV(%.3f,%.3f,%.3f)", h, s, v);
     return string(buffer);
 }

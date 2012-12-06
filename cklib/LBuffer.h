@@ -10,16 +10,22 @@
 class LBuffer
     {
   public:
-    void        Alloc(int count);
+    void        Alloc(int count); // erases the old map
     int         GetCount(void)      const {return iBuffer.size();}
-    RGBColor    GetRGB(int idx)     const {if (idx >= 0 && idx < (int) iBuffer.size()) return iBuffer[idx]; else return BLACK;}
+    bool        InBounds(int coord) const {return coord >= 0 && coord < (int) iBuffer.size();}
+    RGBColor    GetRGB(int coord)   const {if (InBounds(coord)) return GetRawRGB(MapCoord(coord)); else return BLACK;}
 
     // Writes
     void Clear(void) {SetAll(BLACK);}
-    void SetRGB(int idx, const RGBColor& rgb)   {if (idx >= 0 && idx < (int) iBuffer.size()) iBuffer[idx] = rgb;}
-    void AddRGB(int idx, const RGBColor& rgb)   {SetRGB(idx, GetRGB(idx) + rgb);}
-    void SetColor(int idx, const Color& color);
+    void SetColor(int coord, const Color& color);
     void SetAll(const Color& color);
+    void SetRGB(int coord, const RGBColor& rgb)   {if (InBounds(coord)) SetRawRGB(MapCoord(coord), rgb);}
+    void AddRGB(int coord, const RGBColor& rgb)   {SetRGB(coord, GetRGB(coord) + rgb);}
+
+    // Mapping functions
+    void RandomizeMap();
+    void ClearMap();  // 1 to 1 mapping
+    bool SetMap(const vector<int>& lmap); // mapping from coordinate to the light's index on the device
 
     // Filters
     //void AttachFilter(const LFilter& filter); // adds a processing filter
@@ -48,7 +54,12 @@ class LBuffer
     LBuffer(int count = 0) : iBuffer(count) {}
     vector<RGBColor>    iBuffer;
     string              iLastError;
-    //vector<LFilter*>    iFilters;
+    vector<int>         iMap;
+
+    int MapCoord(int coord) const   {if (iMap.size() == 0) return coord; else return iMap[coord];}
+    // Functions for writing directly to the buffer
+    void        SetRawRGB(int idx, const RGBColor& rgb)   {iBuffer[idx] = rgb;}
+    RGBColor    GetRawRGB(int idx)     const {return iBuffer[idx];}
 
     // Disallow copy construction because it doesn't work reliably for the derived class
     LBuffer(const LBuffer&);

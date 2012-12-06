@@ -61,6 +61,8 @@ const char* PopArg(int* argc, char** argv, bool hasParameter = false)
 bool StdOptionsParse(int* argc, char** argv, string* errmsg)
 {
     bool foundPDS = false;
+    const int kOutMapRandom = -1;
+    int outputMapping = 0;
 
     // Initialize CK::gOutputBuffer
     if (CK::gOutputBuffer) {delete CK::gOutputBuffer; CK::gOutputBuffer = NULL;}
@@ -80,6 +82,15 @@ bool StdOptionsParse(int* argc, char** argv, string* errmsg)
         } else if (StrEQ(*argv, "--verbose")) {
             CK::gVerbose = true;
             PopArg(argc,argv,false);
+        } else if (StrEQ(*argv, "--outmap")) {
+            const char* cstr = PopArg(argc, argv, true);
+            if      (StrEQ(cstr, "normal")) outputMapping = 0;
+            else if (StrEQ(cstr, "random")) outputMapping = kOutMapRandom;
+            else {
+                if (errmsg) *errmsg = "--outmap given unknown option. Was " + string(cstr);
+                return false;
+            }
+
         } else if (StrEQ(*argv, "--color")) {
             const char* cstr = PopArg(argc, argv, true);
             if (! CK::ParseColorMode(cstr, errmsg))
@@ -139,6 +150,9 @@ bool StdOptionsParse(int* argc, char** argv, string* errmsg)
         if (errmsg) *errmsg = "Not output device specified and couldn't locate one on network.";
         return false;
     }
+
+    if (outputMapping == kOutMapRandom)
+        ckbuffer->RandomizeMap();
 
     if (CK::gVerbose)
         cout << CK::gOutputBuffer->GetDescription() << endl;

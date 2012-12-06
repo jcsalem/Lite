@@ -8,6 +8,7 @@
 void LBuffer::Alloc(int count)
 {
     iBuffer.resize(count);
+    ClearMap();
 }
 
 void LBuffer::SetAll(const Color& color)
@@ -25,9 +26,40 @@ void LBuffer::SetColor(int idx, const Color& color)
 }
 
 void LBuffer::Rotate(int incr) {
-    incr = incr % GetCount();
-    if (incr < 0) incr = GetCount() + incr;
-    rotate(iBuffer.begin(), iBuffer.begin() + incr, iBuffer.end());
+    if (GetCount() == 0 || incr == 0) return;
+    vector<RGBColor> newBuffer(GetCount());
+    for (int i = 0; i < GetCount(); ++i) {
+        int coord = (i + incr) % GetCount();
+        if (coord < 0) coord = GetCount() - coord;
+        newBuffer[i] = GetRGB(coord);
+    }
+    for (int i = 0; i < GetCount(); ++i) {
+        SetRGB(i, newBuffer[i]);
+    }
+}
+
+// Map stuff
+void LBuffer::RandomizeMap() {
+    vector<int> lmap(GetCount());
+    for (int i = 0; i < GetCount(); ++i)
+        lmap[i] = i;
+    random_shuffle(lmap.begin(), lmap.end());
+    iMap = lmap;
+    }
+
+void LBuffer::ClearMap() {
+// Just use a 1 to 1 mapping
+    iMap.clear();
+    }
+
+bool LBuffer::SetMap(const vector<int>& lmap) {
+    // mapping from coordinate to the light's index on the device
+    if ((int) lmap.size() != GetCount()) return false;
+    for (int i = 0; i < GetCount(); ++i) {
+        if (! InBounds(lmap[i])) return false;
+    }
+    iMap = lmap;
+    return true;
 }
 
 // Default info about LBuffer
@@ -38,3 +70,4 @@ string LBuffer::GetPath() const {
 string LBuffer::GetDescription() const {
     return "LBuffer::" + GetPath();
 }
+

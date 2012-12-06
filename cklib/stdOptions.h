@@ -16,6 +16,7 @@ extern float       gRunTime;
 // See color.h for the latest random color definitions
 // --rate
 extern float       gRate;
+// --outmap   Output mapping function (used in creating the output buffer)
 
 // Parses and initialize all of the standard options.  Modifies argc and argv
 bool StdOptionsParse(int* argc, char** argv, string* errmsg = NULL);
