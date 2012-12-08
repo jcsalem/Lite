@@ -16,7 +16,8 @@
 // Utilities
 //----------------------------------------------------------------
 RGBColor    gColor1 = RED;
-RGBColor    gColor2 = BLUE;
+RGBColor    gColor2 = GREEN;
+RGBColor    gColor3 = BLUE;
 float       gWidth = 5;
 
 typedef enum {kUp, kDown, kQuit, kNop} Key_t;
@@ -74,6 +75,9 @@ void Usage(const char* progname, csref msg = "")
 struct option longOpts[] =
     {
         {"help",    no_argument,        0, 'h'},
+        {"color1",  required_argument,  0, '1'},
+        {"color2",  required_argument,  0, '2'},
+        {"color3",  required_argument,  0, '3'},
         {0,0,0,0}
     };
 
@@ -98,6 +102,15 @@ void ParseArgs(const char* progname, int* argc, char** argv)
             {
             case 'h':
                 Usage(progname);
+            case '1':
+                if (! RGBColor::FromString(optarg, &gColor1, &errmsg)) Usage(progname, "Bad --color1 argument: " + string(optarg) + errmsg);
+                break;
+            case '2':
+                if (! RGBColor::FromString(optarg, &gColor2, &errmsg)) Usage(progname, "Bad --color2 argument: " + errmsg);
+                break;
+            case '3':
+                if (! RGBColor::FromString(optarg, &gColor3, &errmsg)) Usage(progname, "Bad --color3 argument: " + errmsg);
+                break;
             default:
                 cerr << "Internal error - unknown option: " << c << endl;
                 Usage(progname);
