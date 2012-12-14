@@ -124,7 +124,8 @@ RandomSeed_t RandomGenerateSeed() {
 }
 #elif defined(__posix__) || defined(OS_LINUX)
 #include <unistd.h>
-#inclide <stdio.h>
+#include <stdio.h>
+
 namespace{
 RandomSeed_t _ReadURandom() {
     FILE* file = fopen("/dev/urandom", "rb");
@@ -134,7 +135,20 @@ RandomSeed_t _ReadURandom() {
     fclose(file);
     return seed;
 }
-); // namespace
+
+#ifdef OS_LINUX
+#include <sys/syscall.h>
+pid_t my_gettid() {
+    return (pid_t) syscall(SYS_gettid);
+}
+#else
+pid_t my_gettid() {
+    retun gettid();
+}
+#endif
+
+
+}; // namespace
 
 RandomSeed_t RandomGenerateSeed() {
     RandomSeed_t seed = _ReadURandom();
@@ -142,7 +156,7 @@ RandomSeed_t RandomGenerateSeed() {
 
     // No /dev/urandom.  Fall back to something simple
     pid_t pid = getpid();
-    pid_t tid = gettid(); // If this isn't defined syscall(SYS_gettid) can be used or pthread_self()
+    pid_t tid = my_gettid(); // If this isn't defined syscall(SYS_gettid) can be used or pthread_self()
     if (tid != pid) pid ^= tid;
     seed ^= pid;
     seed ^= gethostid();

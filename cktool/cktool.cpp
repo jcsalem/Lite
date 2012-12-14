@@ -51,7 +51,7 @@ void ParseArgs(const char* progname, int* argc, char** argv)
         int optIndex;
         char c = getopt_long (*argc, argv, "", longOpts, &optIndex);
 
-        if (c == -1) break; // Done parsing
+        if (c == (char) -1) break; // Done parsing
 
         switch (c)
             {

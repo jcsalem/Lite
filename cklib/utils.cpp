@@ -5,7 +5,8 @@
 #include "utils.h"
 #include <sstream>
 #include <iomanip>
-#include "limits.h"
+#include <limits.h>
+#include <strings.h>
 
 #ifdef OS_WINDOWS
 #include "Windows.h"
@@ -168,14 +169,30 @@ string ErrorCodeStringInternal(int err)
     return message;
     }
 #else
+#include <errno.h>
+#include <string.h>
 // Mac and Linux
 string ErrorCodeStringInternal(int err)
     {
-	if (err < 0 || err >= sys_nerr)
-		return "Unknown Error";
-	else
-		return sys_errlist[errno];
+    const int kbuflen = 255;
+    char buf[kbuflen];
+    buf[0] = 0;
+    char* retval = buf;
+#if (_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600) && ! _GNU_SOURCE
+    // XSI version
+    if  (strerror_r(errno, buf, kbuflen) == -1)
+        return "Unknown Error Code";
+#else
+    retval = strerror_r(errno, buf, kbuflen);
+    if (retval == NULL || retval == (char*)-1)
+        return "Unknown Error Code";
+#endif
+    if (retval[0])
+        return retval;
+    else
+        return "Missing Error Code";
 	}
+
 #endif //WIN32
 
 string ErrorCodeString(int err)

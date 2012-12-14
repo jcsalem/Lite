@@ -3,6 +3,7 @@
 #include "utils.h"
 #include "utilsIP.h"
 #include <sstream>
+#include <string.h>
 
 
 //-----------------------------------------------------

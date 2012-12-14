@@ -3,6 +3,7 @@
 //  For multi-thread, make net initialize code and SocketErrorCode reentrant
 
 #include "utilsSocket.h"
+#include <string.h>
 
 //----------------------------------------------------------------------------
 // Platform specific

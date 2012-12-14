@@ -7,6 +7,7 @@
 #define _KINET_H_
 
 #include "utils.h"
+#include "string.h" // for memset
 
 // Protocol is apparently little endian (even though network byte order is typically big endian).
 // This code assume little endian and isn't endian-aware. So it will work on x86 and default ARM architectures.

@@ -51,7 +51,7 @@ void ParseArgs(const char* progname, int* argc, char** argv)
     {
         int optIndex;
         char c = getopt_long (*argc, argv, "", longOpts, &optIndex);
-        if (c == -1) break; // Done parsing
+        if (c == (char) -1) break; // Done parsing
         switch (c)
             {
             case 'h':
@@ -81,9 +81,9 @@ void TestLights()
             CK::gOutputBuffer->SetRGB(pos, c);
         }
         CK::gOutputBuffer->Update();
-        Sleep(10);
+        SleepMilli(10);
     }
-    Sleep(250);
+    SleepMilli(250);
     CK::gOutputBuffer->Clear();
     CK::gOutputBuffer->Update();
 }

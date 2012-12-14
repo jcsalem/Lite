@@ -16,6 +16,6 @@ inline bool MilliGT(Milli_t a, Milli_t b) {return MilliLT(b, a);}
 inline bool MilliGE(Milli_t a, Milli_t b) {return MilliLE(b, a);}
 
 void SleepMilli(Milli_t milliseconds);
-void SleepSec(Milli_t milliseconds);
+void SleepSec(float seconds);
 
 #endif // _UTILSTIME_H

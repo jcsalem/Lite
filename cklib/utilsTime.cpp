@@ -16,7 +16,7 @@ Milli_t MilliDiff(Milli_t newTime, Milli_t oldTime)
     }
 }
 
-void SleepSec(int secs) {
+void SleepSec(float secs) {
     SleepMilli(secs * 1000);
 }
 

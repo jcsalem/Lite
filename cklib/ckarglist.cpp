@@ -1,6 +1,6 @@
 #include "utils.h"
 #include "cklib.h"
-#include "color.h"
+#include "Color.h"
 #include <iostream>
 
 namespace CK {
