@@ -72,6 +72,7 @@ void SleepMilli(Milli_t millis) {
 // POSIX version
 #include <time.h>
 #include <unistd.h>
+#include <assert.h>
 
 void SleepMilli(Milli_t millis) {
     usleep(millis * 1000);
@@ -82,7 +83,7 @@ Milli_t Milliseconds()
     struct timespec current;
     int status = clock_gettime(CLOCK_MONOTONIC, &current);
     assert(status==0); // error if clock_gettime doesn't work
-    Milli_t val = current.tv_sec * 1000 + current.tv_nsec / 1000;
+    Milli_t val = current.tv_sec * 1000 + current.tv_nsec / 1000000;
     return val;
 }
 
