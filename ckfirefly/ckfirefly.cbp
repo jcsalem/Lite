@@ -39,7 +39,7 @@
 			<Add option="../cklib/bin/$(TARGET_NAME)/libcklib.a -static-libgcc -static-libstdc++ $(#extralibs)" />
 		</Linker>
 		<ExtraCommands>
-			<Add after="cp bin/$(TARGET_NAME)/$(TARGET_OUTPUT_BASENAME).exe ../bin/$(TARGET_OUTPUT_BASENAME).exe" />
+			<Add after="cp bin/$(TARGET_NAME)/$(TARGET_OUTPUT_BASENAME)$(#FILEXT) ../bin/$(TARGET_OUTPUT_BASENAME)$(#FILEXT)" />
 		</ExtraCommands>
 		<Unit filename="ckfirefly.cpp" />
 		<Extensions>
