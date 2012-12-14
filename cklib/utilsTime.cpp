@@ -70,17 +70,28 @@ void SleepMilli(Milli_t millis) {
 
 #else
 // POSIX version
-#include <ctime>
+#include <time.h>
 #include <unistd.h>
-const Milli_t kClocksToMillis = 1000 / CLOCKS_PER_SEC;
-Milli_t Milliseconds()
-{
-     Milli_t c = clock();
-     return c * kClocksToMillis;
-}
 
 void SleepMilli(Milli_t millis) {
     usleep(millis * 1000);
 }
+
+Milli_t Milliseconds()
+{
+    struct timespec current;
+    int status = clock_gettime(CLOCK_MONOTONIC, &current);
+    assert(status==0); // error if clock_gettime doesn't work
+    Milli_t val = current.tv_sec * 1000 + current.tv_nsec / 1000;
+    return val;
+}
+
+// OBSOLETE Version (always returns 0 on XSI compatible clocks where CLOCKS_PER_SEC is 1000000)
+// const Milli_t kClocksToMillis = 1000 / CLOCKS_PER_SEC;
+//Milli_t Milliseconds()
+//{
+//     Milli_t c = clock();
+//     return c * kClocksToMillis;
+//}
 
 #endif
