@@ -44,7 +44,7 @@ Key_t GetOneChar() {
     }
 }
 
-#elif defined(OS_LINUX)
+#elif defined(OS_LINUX) || defined(OS_MAC)
 // For getch
 #include <curses.h>
 

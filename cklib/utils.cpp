@@ -178,7 +178,7 @@ string ErrorCodeStringInternal(int err)
     char buf[kbuflen];
     buf[0] = 0;
     char* retval = buf;
-#if (_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600) && ! _GNU_SOURCE
+#if (_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600 || __DARWIN_C_LEVEL >= 200112L) && ! _GNU_SOURCE
     // XSI version
     if  (strerror_r(errno, buf, kbuflen) == -1)
         return "Unknown Error Code";

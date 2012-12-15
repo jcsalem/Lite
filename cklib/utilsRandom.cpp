@@ -122,7 +122,7 @@ RandomSeed_t RandomGenerateSeed() {
 RandomSeed_t RandomGenerateSeed() {
     return 0x12345678;
 }
-#elif defined(__posix__) || defined(OS_LINUX)
+#elif defined(__posix__) || defined(OS_LINUX) || defined(OS_MAC)
 #include <unistd.h>
 #include <stdio.h>
 
@@ -141,9 +141,13 @@ RandomSeed_t _ReadURandom() {
 pid_t my_gettid() {
     return (pid_t) syscall(SYS_gettid);
 }
+#elif defined(OS_MAC)
+pid_t my_gettid() {
+    return 0; // Could use pthread_self but that's more work
+}
 #else
 pid_t my_gettid() {
-    retun gettid();
+    return gettid();
 }
 #endif
 

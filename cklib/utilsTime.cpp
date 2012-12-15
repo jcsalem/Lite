@@ -67,6 +67,30 @@ void SleepMilli(Milli_t millis) {
     Sleep(millis);
 }
 
+#elif defined(OS_MAC)
+// #include <CoreServices/CoreServices.h>
+#include <mach/mach.h>
+#include <mach/mach_time.h>
+// #include <unistd.h>
+
+void SleepMilli(Milli_t millis) {
+    usleep(millis * 1000);
+}
+
+
+Milli_t Milliseconds()
+{
+    static mach_timebase_info_data_t timebaseInfo;
+    static bool timebaseInfoReady = false;
+    if (! timebaseInfoReady) {
+        mach_timebase_info(&timebaseInfo);
+        timebaseInfoReady = true;
+    }
+
+    uint64_t abstime = mach_absolute_time();
+    abstime = abstime * timebaseInfo.numer / timebaseInfo.denom / 1000000;
+    return (Milli_t) abstime;
+}
 
 #else
 // POSIX version
