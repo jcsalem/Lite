@@ -6,7 +6,7 @@
 #include "cklib.h"
 #include "Lobj.h"
 #include "utilsRandom.h"
-#include "stdOptions.h"
+#include "LFramework.h"
 #include <iostream>
 #include <getopt.h>
 #include <stdio.h>
@@ -23,9 +23,9 @@ void SetupNextCycle(LobjOld* lobj, Milli_t startTime);
 void Usage(const char* progname, csref msg = "")
     {
     if (! msg.empty()) cerr << msg << endl;
-    cerr << "Usage: " << progname << CK::kStdOptionsArgs << endl;
+    cerr << "Usage: " << progname << L::kStdOptionsArgs << endl;
     cerr << "Where:" << endl;
-    cerr << CK::kStdOptionsArgsDoc << endl;
+    cerr << L::kStdOptionsArgsDoc << endl;
     exit (EXIT_FAILURE);
     }
 
@@ -40,7 +40,7 @@ void ParseArgs(const char* progname, int* argc, char** argv)
 {
     // Parse stamdard options
     string errmsg;
-    bool success = CK::StdOptionsParse(argc, argv, &errmsg);
+    bool success = L::StdOptionsParse(argc, argv, &errmsg);
     if (! success)
         Usage(progname, errmsg);
 
@@ -68,24 +68,24 @@ void ParseArgs(const char* progname, int* argc, char** argv)
 
 void TestLights()
 {
-    int count = CK::gOutputBuffer->GetCount();
+    int count = L::gOutputBuffer->GetCount();
 
     for (int i = count-1; i >= 0; --i)
     {
-        CK::gOutputBuffer->Clear();
+        L::gOutputBuffer->Clear();
         for (int j = 0; j < count; ++j)
         {
             RGBColor c = WHITE;
             c *= ((float) j) / count;
             int pos = (i + j) % count;
-            CK::gOutputBuffer->SetRGB(pos, c);
+            L::gOutputBuffer->SetRGB(pos, c);
         }
-        CK::gOutputBuffer->Update();
+        L::gOutputBuffer->Update();
         SleepMilli(10);
     }
     SleepMilli(250);
-    CK::gOutputBuffer->Clear();
-    CK::gOutputBuffer->Update();
+    L::gOutputBuffer->Clear();
+    L::gOutputBuffer->Update();
 }
 
 //----------------------------------------------------------------
@@ -94,7 +94,7 @@ void TestLights()
 Milli_t gTime;
 
 int MaxFireflies () {
-    return max(1, CK::gOutputBuffer->GetCount() / 20);
+    return max(1, L::gOutputBuffer->GetCount() / 20);
 }
 
 // fwd decls
@@ -113,13 +113,13 @@ float RandomBell(float bnum, float mmin = 0.0, float mmax = 1.0) {
 }
 
 float RandomSpeed() {
-    return CK::gRate * RandomBell(2, .005, .4);
+    return L::gRate * RandomBell(2, .005, .4);
 }
 
 LobjOld* FireflyAlloc(void) {
   LobjOld* lobj = LobjOld::Alloc();
   if (! lobj) return NULL;
-  lobj->pos = RandomFloat(CK::gOutputBuffer->GetCount());
+  lobj->pos = RandomFloat(L::gOutputBuffer->GetCount());
   lobj->speed = RandomSpeed();
   lobj->velocity = RandomFloat(-lobj->speed, lobj->speed);
   lobj->maxColor = RandomColor();
@@ -141,7 +141,7 @@ void FireflyMove(void) {
 void FireflyClip(void) {
   for (short i = 0; i < LobjOld::GetNum();) {
     LobjOld* lobj = LobjOld::GetNth(i);
-    if (lobj->pos <= -2 || lobj->pos >= CK::gOutputBuffer->GetCount() + 1)
+    if (lobj->pos <= -2 || lobj->pos >= L::gOutputBuffer->GetCount() + 1)
      LobjOld::Free(lobj);
     else
      ++i;
@@ -221,7 +221,7 @@ void FireflyDim(void) {
 void FireflyLoop()
 {
     Milli_t startTime = Milliseconds();
-    Milli_t runTimeMilli = CK::gRunTime * 1000 + .5;
+    Milli_t runTimeMilli = L::gRunTime * 1000 + .5;
 
     while (true) {
         gTime = Milliseconds();
@@ -233,9 +233,9 @@ void FireflyLoop()
           FireflyAlloc();
         FireflyDim();
         // Render
-        CK::gOutputBuffer->Clear();
-        LobjOld::RenderAll(CK::gOutputBuffer);
-        CK::gOutputBuffer->Update();
+        L::gOutputBuffer->Clear();
+        LobjOld::RenderAll(L::gOutputBuffer);
+        L::gOutputBuffer->Update();
         // Exit if out of time, else delay until next frame
         Milli_t currentTime = Milliseconds();
         if (runTimeMilli != 0 && runTimeMilli < MilliDiff(currentTime, startTime))

@@ -121,9 +121,9 @@ public:
 #define ORANGE  RGBColor(1.0,.33,  0)
 #define PURPLE  RGBColor(.63,.13,.94)
 
-// Random color utilities (really part of stdOptions.h)
+// Random color utilities (really part of LFramework.h)
 // --color option
-namespace CK {
+namespace L {
 typedef enum {kRandomColorDefault = 0, kRandomColorBright = 1, kRandomColorRGB = 2,
             kRandomColorHalloween = 3, kRandomColorStarry = 4, kRandomColorRealStar = 5, kRandomColorRange = 6, kRandomColorExact = 7, kRandomColorChristmas = 8}
     RandomColorMode_t;

@@ -7,19 +7,13 @@
 #include "Lobj.h"
 #include "LFilter.h"
 #include "utilsRandom.h"
-#include "stdOptions.h"
+#include "LFramework.h"
 #include <iostream>
 #include <getopt.h>
 #include <stdio.h>
 
 // Configuration
-Milli_t     gFrameDuration  = 40;    // duration of each frame of animation (in MS)
 float       gDensity        = 0.8;  // Average density of stars
-float       gFade           = 1.0;  // Fade in/out time in seconds
-//----------------------------------------------------------------
-// Utilities
-//----------------------------------------------------------------
-Milli_t gTime;
 
 //----------------------------------------------------------------------
 // Creating Sparkle
@@ -41,9 +35,9 @@ Lsparkle RandomSparkle (Milli_t currentTime, bool isFirstTime) {
 
     switch (gSparkleMode) {
         case kSparkleSlow:
-            si.attack   = RandomInt(1000/CK::gRate);
-            si.hold     = RandomMax(3, 10000, 100000)/CK::gRate;
-            si.release  = RandomInt(1500/CK::gRate);
+            si.attack   = RandomInt(1000/L::gRate);
+            si.hold     = RandomMax(3, 10000, 100000)/L::gRate;
+            si.release  = RandomInt(1500/L::gRate);
             si.sleep    = RandomNormalBounded(333, 250, 50, 10000);
             break;
         case kSparkleFirefly:
@@ -71,9 +65,9 @@ Lsparkle RandomSparkle (Milli_t currentTime, bool isFirstTime) {
 }
 
 void InitializeOneStar(LobjSparkle* lobj, int idx, bool firstTime = false) {
-    lobj->pos.x = (idx != -1) ? idx : RandomInt(CK::gOutputBuffer->GetCount());
+    lobj->pos.x = (idx != -1) ? idx : RandomInt(L::gOutputBuffer->GetCount());
     lobj->color = (RandomFloat() < gDensity) ? RandomColor() : BLACK;
-    lobj->sparkle = RandomSparkle(gTime, firstTime);
+    lobj->sparkle = RandomSparkle(L::gTime, firstTime);
 }
 
 const void* kIsFirstTime = (void*) -1;
@@ -93,55 +87,20 @@ void RestartExpired(LobjBase* objarg, const void* ignore) {
 Lgroup gObjs;
 
 void InitializeStars() {
-    int numLights = CK::gOutputBuffer->GetCount();
+    int numLights = L::gOutputBuffer->GetCount();
     gObjs.Add(numLights, SparkleAlloc, NULL);
     }
 
-void StarryLoop()
+
+void StarryCallback(Lgroup& objGroup)
 {
-    Milli_t startTime = Milliseconds();
-//    int lastSec = startTime / 1000;
-    Milli_t endTime =  CK::gRunTime > 0 ? startTime + (Milli_t) (CK::gRunTime * 1000 + .5) : 0;
-    LFilterList filters;
-    if (gFade > 0) {
-        filters.AddFilter(LFilterFadeIn(false,startTime, startTime + gFade * 1000));
-        if (endTime)
-            filters.AddFilter(LFilterFadeOut(false,endTime - gFade * 1000, endTime));
-    }
+    // Restart expired stars
+    objGroup.Map(RestartExpired, NULL);
 
-    while (true) {
-        gTime = Milliseconds();
-
-        // Restart expired stars
-        gObjs.Map(RestartExpired, NULL);
-//        FreeIf(HasNoSparkleLeft, NULL);
-//        if (IsTimeToAlloc())
-//            gObjs.Add(SparkleAlloc());
-
-        // Move (needed for time update
-        gObjs.MoveAll(gTime);
-
-        // Describe
-//        if (CK::gVerbose && lastSec != int(gTime/1000)) {
-//            lastSec = gTime/1000;
-//            int sinceSec = lastSec - (startTime/1000);
-//            cout << sinceSec << ": " << gObjs.GetDescription(CK::gVerbose) << endl;
-//        }
-
-        // Render
-        CK::gOutputBuffer->Clear();
-        gObjs.RenderAll(CK::gOutputBuffer, filters);
-        CK::gOutputBuffer->Update();
-
-        // Exit if out of time, else delay until next frame
-        Milli_t currentTime = Milliseconds();
-        if (endTime != 0 && MilliLE(endTime, currentTime)) break;
-
-        Milli_t elapsedSinceFrameStart = MilliDiff(currentTime, gTime);
-        if (gFrameDuration > elapsedSinceFrameStart)
-            SleepMilli(gFrameDuration - elapsedSinceFrameStart);
-    }
+    // Move (needed for time update
+    objGroup.MoveAll(L::gTime);
 }
+
 
 //----------------------------------------------------------------
 // Argument Parsing
@@ -149,12 +108,11 @@ void StarryLoop()
 void Usage(const char* progname, csref msg = "")
     {
     if (! msg.empty()) cerr << msg << endl;
-    cerr << "Usage: " << progname << CK::kStdOptionsArgs << " [--density densityval] [--sparkle sparklemode] [--fade fadeduration]" << endl;
+    cerr << "Usage: " << progname << L::kStdOptionsArgs << " [--density densityval] [--sparkle sparklemode]" << endl;
     cerr << "Where:" << endl;
-    cerr << CK::kStdOptionsArgsDoc << endl;
+    cerr << L::kStdOptionsArgsDoc << endl;
     cerr << "  densityval - Density of sparkles (default is 0.8)" << endl;
     cerr << "  sparkemode is SlowSparkle, Sparkle, or Firefly (default is SlowSparkle)" << endl;
-    cerr << "  fadeduration is the time to fade in and out in seconds (default is 1.0)" << endl;
     exit (EXIT_FAILURE);
     }
 
@@ -163,7 +121,6 @@ struct option longOpts[] =
         {"help",    no_argument,        0, 'h'},
         {"sparkle", required_argument,  0, 's'},
         {"density", required_argument,  0, 'd'},
-        {"fade",    required_argument,  0, 'f'},
         {0,0,0,0}
     };
 
@@ -171,7 +128,7 @@ void ParseArgs(const char* progname, int* argc, char** argv)
 {
     // Parse stamdard options
     string errmsg;
-    bool success = CK::StdOptionsParse(argc, argv, &errmsg);
+    bool success = L::StdOptionsParse(argc, argv, &errmsg);
     if (! success)
         Usage(progname, errmsg);
 
@@ -192,11 +149,6 @@ void ParseArgs(const char* progname, int* argc, char** argv)
                 if (gDensity <= 0 || gDensity > 1)
                     Usage(progname, "--density argument must be between 0 and 1. Was " + string(optarg));
                 break;
-            case 'f':
-                gFade = StrToFlt(optarg);
-                if (gFade < 0)
-                    Usage(progname, "--fade argument must be non-negative. Was " + string(optarg));
-                break;
             case 's':
                 gSparkleMode = StrToSparkle(optarg);
                 if (gSparkleMode == kSparkleError)
@@ -215,8 +167,9 @@ int main(int argc, char** argv)
     if (argc > 0 && argv != NULL && argv[0] != NULL)
         progname = argv[0];
 
-    // Change the default for this
-    CK::gRandomColorMode = CK::kRandomColorRealStar;
+    // Change the defaults for this
+    L::gRandomColorMode = L::kRandomColorRealStar;
+    L::gFade = 1.0;
 
     // Parse arguments
     ParseArgs(progname, &argc, argv);
@@ -228,11 +181,9 @@ int main(int argc, char** argv)
         Usage(progname);
     }
 
-    // Test everything
-    // TestLights();
-
-    gTime = Milliseconds();
+    L::Startup();
     InitializeStars();
-
-    StarryLoop();
+    L::Run(gObjs, StarryCallback);
+    L::Cleanup();
+    exit(0);
 }

@@ -476,31 +476,31 @@ HSVColor HSVColorRange::GetRandomColor() const {
 // Picking a random color
 //--------------------------------------------------------------------------
 
-CK::RandomColorMode_t CK::gRandomColorMode = CK::kRandomColorDefault;
-RGBColor CK::gRandomColor1 = BLACK;
-RGBColor CK::gRandomColor2 = WHITE;
+L::RandomColorMode_t L::gRandomColorMode = L::kRandomColorDefault;
+RGBColor L::gRandomColor1 = BLACK;
+RGBColor L::gRandomColor2 = WHITE;
 
 RGBColor RandomColor() {
     RGBColor rgb;
     HSVColor hsv;
     float temp;
 
-    switch (CK::gRandomColorMode) {
-        case CK::kRandomColorExact:
-            return CK::gRandomColor2;
-        case CK::kRandomColorRealStar:
+    switch (L::gRandomColorMode) {
+        case L::kRandomColorExact:
+            return L::gRandomColor2;
+        case L::kRandomColorRealStar:
             temp = RandomFloat(-.1, .1);
             hsv.h = temp < 0 ? temp + 1 : temp; // pick something in the red or blue spectrum
             hsv.s = RandomMin(4, .05, .3);
             hsv.v = RandomExponential(6, 1.0);
             return hsv.ToRGBColor();
-        case CK::kRandomColorStarry:
+        case L::kRandomColorStarry:
             temp = RandomFloat(.333);
             hsv.h = (temp > .1666) ? temp + .5 : temp; // pick something in the red or blue spectrum
             hsv.s = RandomMin(4, 0, .5);
             hsv.v = RandomFloat(1.0);
             return hsv.ToRGBColor();
-        case CK::kRandomColorChristmas:
+        case L::kRandomColorChristmas:
             if (RandomInt(1)) // pick red or green
                 temp = RandomNormalBounded(0, .01, -.025, .05);
             else
@@ -509,17 +509,17 @@ RGBColor RandomColor() {
             hsv.s = RandomMax(3, .9, 1);
             hsv.v = RandomExponential(2, 1.0);
             return hsv.ToRGBColor();
-        case CK::kRandomColorRGB:
+        case L::kRandomColorRGB:
             rgb.r = RandomMax(2);
             rgb.g = RandomMax(2);
             rgb.b = RandomMax(2);
             return rgb;
-        case CK::kRandomColorHalloween:
+        case L::kRandomColorHalloween:
             rgb.r = RandomMax(2, 0.5, 1.0);
             rgb.g = RandomFloat (0.0, 0.4);
             rgb.b = RandomFloat (0.0, 0.1);
             return rgb;
-        case CK::kRandomColorBright:
+        case L::kRandomColorBright:
         default:
             hsv.h = RandomFloat(1.0);
             hsv.s = RandomMax(2);
@@ -528,7 +528,7 @@ RGBColor RandomColor() {
     }
 }
 
-namespace CK {
+namespace L {
 bool ParseColorMode(csref strarg, string* errmsg) {
     string str = TrimWhitespace(strarg);
     string localError;
@@ -540,17 +540,17 @@ bool ParseColorMode(csref strarg, string* errmsg) {
 
     Color* color = Color::AllocFromString(str, &localError);
     if (color) {
-        CK::gRandomColorMode = CK::kRandomColorExact;
-        color->ToRGBColor(&CK::gRandomColor2);
+        L::gRandomColorMode = L::kRandomColorExact;
+        color->ToRGBColor(&L::gRandomColor2);
         delete color;
         return true;
     }
-    if      (StrEQ(str, "RealStar"))            CK::gRandomColorMode = CK::kRandomColorRealStar;
-    else if (StrEQ(str, "Starry"))              CK::gRandomColorMode = CK::kRandomColorStarry;
-    else if (StrEQ(str, "RGB"))                 CK::gRandomColorMode = CK::kRandomColorRGB;
-    else if (StrEQ(str, "Halloween"))           CK::gRandomColorMode = CK::kRandomColorHalloween;
-    else if (StrEQ(str, "Bright"))              CK::gRandomColorMode = CK::kRandomColorBright;
-    else if (StrEQ(str, "xmas") || StrEQ(str, "Christmas")) CK::gRandomColorMode = CK::kRandomColorChristmas;
+    if      (StrEQ(str, "RealStar"))            L::gRandomColorMode = L::kRandomColorRealStar;
+    else if (StrEQ(str, "Starry"))              L::gRandomColorMode = L::kRandomColorStarry;
+    else if (StrEQ(str, "RGB"))                 L::gRandomColorMode = L::kRandomColorRGB;
+    else if (StrEQ(str, "Halloween"))           L::gRandomColorMode = L::kRandomColorHalloween;
+    else if (StrEQ(str, "Bright"))              L::gRandomColorMode = L::kRandomColorBright;
+    else if (StrEQ(str, "xmas") || StrEQ(str, "Christmas")) L::gRandomColorMode = L::kRandomColorChristmas;
     else {
         if (errmsg) {
             *errmsg = "Invalid color parameter: " + str + ". ";

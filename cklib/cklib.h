@@ -16,7 +16,6 @@ namespace CK
 {
     // Mapping of the lights into the CKbuffer;
     typedef enum {kNormal, kReverse} Layout_t;
-    extern const string kPDSinfoHelp;  // A help string describing the PDSInfo
     const int kDefaultPollTimeout =  250; // default timeout in MS
 };
 
@@ -104,6 +103,7 @@ public:
     virtual string  GetLastError()   const;
     virtual string  GetDescription() const;
     virtual bool    Update();
+    virtual bool    PortSync();
 
     // Alternative creation methods
     static bool    CreateFromArglist(CKbuffer* buffer, int* argc, char** argv);
