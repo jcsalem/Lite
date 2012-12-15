@@ -6,7 +6,7 @@
 #include "cklib.h"
 #include "Lobj.h"
 #include "utilsRandom.h"
-#include "stdOptions.h"
+#include "LFramework.h"
 #include <iostream>
 #include <stdio.h>
 #include <getopt.h>
@@ -66,9 +66,9 @@ Key_t GetOneChar() {
 void Usage(const char* progname, csref msg = "")
     {
     if (! msg.empty()) cerr << msg << endl;
-    cerr << "Usage: " << progname << CK::kStdOptionsArgs << "" << endl;
+    cerr << "Usage: " << progname << L::kStdOptionsArgs << "" << endl;
     cerr << "Where:" << endl;
-    cerr << CK::kStdOptionsArgsDoc << endl;
+    cerr << L::kStdOptionsArgsDoc << endl;
     exit (EXIT_FAILURE);
     }
 
@@ -86,7 +86,7 @@ void ParseArgs(const char* progname, int* argc, char** argv)
 {
     // Parse stamdard options
     string errmsg;
-    bool success = CK::StdOptionsParse(argc, argv, &errmsg);
+    bool success = L::StdOptionsParse(argc, argv, &errmsg);
     if (! success)
         Usage(progname, errmsg);
 
@@ -127,7 +127,7 @@ void MoveOne(LobjBase* obj, int incr){
 
 void Loop()
 {
-    int numLights = CK::gOutputBuffer->GetCount();
+    int numLights = L::gOutputBuffer->GetCount();
 
     LobjBase* left = new LobjBase();
     LobjBase* right = new LobjBase();
@@ -145,9 +145,9 @@ void Loop()
     bool endLoop = false;
     while (!endLoop) {
         // Render
-        CK::gOutputBuffer->Clear();
-        gObjs.RenderAll(CK::gOutputBuffer);
-        CK::gOutputBuffer->Update();
+        L::gOutputBuffer->Clear();
+        gObjs.RenderAll(L::gOutputBuffer);
+        L::gOutputBuffer->Update();
 
         // Pause for input
         switch (GetOneChar()) {

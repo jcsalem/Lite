@@ -6,18 +6,10 @@
 #include "cklib.h"
 #include "Lobj.h"
 #include "utilsRandom.h"
-#include "stdOptions.h"
+#include "LFramework.h"
 #include <iostream>
 #include <getopt.h>
 #include <stdio.h>
-
-// Configuration
-Milli_t     gFrameDuration  = 40;    // duration of each frame of animation (in MS)
-
-//----------------------------------------------------------------
-// Utilities
-//----------------------------------------------------------------
-Milli_t gTime;
 
 //----------------------------------------------------------------------
 // Creating Sparkle
@@ -35,7 +27,7 @@ SparkleMode_t StrToSparkle(csref str) {
 
 Lsparkle RandomSparkle () {
     Lsparkle si;
-    si.startTime = gTime;
+    si.startTime = L::gTime;
 
     switch (gSparkleMode) {
         case kSparkleFirefly:
@@ -56,7 +48,7 @@ Lsparkle RandomSparkle () {
 
 LobjSparkle* SparkleAlloc(void) {
     LobjSparkle* lobj = new LobjSparkle();
-    lobj->pos.x = RandomInt(CK::gOutputBuffer->GetCount());
+    lobj->pos.x = RandomInt(L::gOutputBuffer->GetCount());
     lobj->color = RandomColor();
     lobj->sparkle = RandomSparkle();
     return lobj;
@@ -69,14 +61,14 @@ bool HasNoSparkleLeft(LobjBase* objarg, const void* ignore) {
 }
 
 bool IsTimeToAlloc() {
-    static Milli_t lastTime = gTime;
-    Milli_t millisSinceLast = MilliDiff(gTime,lastTime);
-    lastTime = gTime;
+    static Milli_t lastTime = L::gTime;
+    Milli_t millisSinceLast = MilliDiff(L::gTime,lastTime);
+    lastTime = L::gTime;
 
     // Default probability is that every light has a 50% chance to flash every 10 seconds
     float lightProb = (millisSinceLast / 20000.0F);
-    lightProb *= CK::gOutputBuffer->GetCount();
-    lightProb *= CK::gRate;
+    lightProb *= L::gOutputBuffer->GetCount();
+    lightProb *= L::gRate;
 
     switch (gSparkleMode) {
         case kSparkleFirefly:
@@ -91,45 +83,15 @@ bool IsTimeToAlloc() {
     return lightProb > RandomFloat();
 }
 
-Lgroup gObjs;
-
-void SparkleLoop()
+void SparkleCallback(Lgroup& objgroup)
 {
-    Milli_t startTime = Milliseconds();
-//    int lastSec = startTime / 1000;
-    Milli_t endTime =  CK::gRunTime > 0 ? startTime + (Milli_t) (CK::gRunTime * 1000 + .5) : 0;
+    // Deallocate and Allocate
+    objgroup.FreeIf(HasNoSparkleLeft, NULL);
+    if (IsTimeToAlloc())
+        objgroup.Add(SparkleAlloc());
 
-    while (true) {
-        gTime = Milliseconds();
-
-        // Deallocate and Allocate
-        gObjs.FreeIf(HasNoSparkleLeft, NULL);
-        if (IsTimeToAlloc())
-            gObjs.Add(SparkleAlloc());
-
-        // Move (needed for time update
-        gObjs.MoveAll(gTime);
-
-        // Describe
-//        if (CK::gVerbose && lastSec != int(gTime/1000)) {
-//            lastSec = gTime/1000;
-//            int sinceSec = lastSec - (startTime/1000);
-//            cout << sinceSec << ": " << gObjs.GetDescription(CK::gVerbose) << endl;
-//        }
-
-        // Render
-        CK::gOutputBuffer->Clear();
-        gObjs.RenderAll(CK::gOutputBuffer);
-        CK::gOutputBuffer->Update();
-
-        // Exit if out of time, else delay until next frame
-        Milli_t currentTime = Milliseconds();
-        if (endTime != 0 && MilliLE(endTime, currentTime)) break;
-
-        Milli_t elapsedSinceFrameStart = MilliDiff(currentTime, gTime);
-        if (gFrameDuration > elapsedSinceFrameStart)
-            SleepMilli(gFrameDuration - elapsedSinceFrameStart);
-    }
+    // Move (needed for time update
+    objgroup.MoveAll(L::gTime);
 }
 
 //----------------------------------------------------------------
@@ -138,9 +100,9 @@ void SparkleLoop()
 void Usage(const char* progname, csref msg = "")
     {
     if (! msg.empty()) cerr << msg << endl;
-    cerr << "Usage: " << progname << CK::kStdOptionsArgs << " [--sparkle sparklemode]" << endl;
+    cerr << "Usage: " << progname << L::kStdOptionsArgs << " [--sparkle sparklemode]" << endl;
     cerr << "Where:" << endl;
-    cerr << CK::kStdOptionsArgsDoc << endl;
+    cerr << L::kStdOptionsArgsDoc << endl;
     exit (EXIT_FAILURE);
     }
 
@@ -156,7 +118,7 @@ void ParseArgs(const char* progname, int* argc, char** argv)
 {
     // Parse stamdard options
     string errmsg;
-    bool success = CK::StdOptionsParse(argc, argv, &errmsg);
+    bool success = L::StdOptionsParse(argc, argv, &errmsg);
     if (! success)
         Usage(progname, errmsg);
 
@@ -191,7 +153,7 @@ int main(int argc, char** argv)
         progname = argv[0];
 
     // Change the default for this
-    CK::gRandomColorMode = CK::kRandomColorStarry;
+    L::gRandomColorMode = L::kRandomColorStarry;
 
     // Parse arguments
     ParseArgs(progname, &argc, argv);
@@ -203,8 +165,8 @@ int main(int argc, char** argv)
         Usage(progname);
     }
 
-    // Test everything
-    // TestLights();
-
-    SparkleLoop();
+    Lgroup objs;
+    L::Startup();
+    L::Run(objs, SparkleCallback);
+    L::Cleanup();
 }

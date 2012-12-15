@@ -258,6 +258,26 @@ bool CKbuffer::AddDevice(csref devstrarg)
     return success;
 }
 
+bool CKbuffer::PortSync()
+{
+    const int maxLen = 2048;
+    char outbuf[maxLen];
+
+    // Initialize header
+    KiNETportOutSync* header = (KiNETportOutSync*) outbuf;
+    *header = KiNETportOutSync();
+    int len = KiNETportOutSync::GetSize();
+    for (size_t i = 0; i < iDevices.size(); ++i)
+    {
+    if (! iDevices[i].Write(outbuf, len))
+        {
+            cerr << "Update failed on " << iDevices[i].GetDescription() << ": " << iDevices[i].GetLastError() << endl;
+        }
+    }
+
+    return !HasError();
+}
+
 bool CKbuffer::Update()
     {
     const int maxLen = 2048;
@@ -289,6 +309,8 @@ bool CKbuffer::Update()
         }
         bufIter += len;
     }
+
+    PortSync();
 
     return !HasError();
     }

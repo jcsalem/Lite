@@ -2,7 +2,7 @@
 #include "Color.h"
 #include "cklib.h"
 #include "utilsTime.h"
-#include "stdOptions.h"
+#include "LFramework.h"
 #include <iostream>
 #include <getopt.h>
 
@@ -13,10 +13,10 @@
 void Usage(const char* progname, csref msg = "")
     {
     if (! msg.empty()) cerr << msg << endl;
-    cerr << "Usage: " << progname << CK::kStdOptionsArgs
+    cerr << "Usage: " << progname << L::kStdOptionsArgs
             << " command args" << endl;
     cerr << "Where:" << endl;
-    cerr << CK::kStdOptionsArgsDoc << endl;
+    cerr << L::kStdOptionsArgsDoc << endl;
     cerr << "  numsecs is the time the command should run for in seconds " << endl;
     cerr << "  command is one of: " << endl;
     cerr << "    clear " << endl;
@@ -40,7 +40,7 @@ void ParseArgs(const char* progname, int* argc, char** argv)
 {
     // Parse stamdard options
     string errmsg;
-    bool success = CK::StdOptionsParse(argc, argv, &errmsg);
+    bool success = L::StdOptionsParse(argc, argv, &errmsg);
     if (! success)
         Usage(progname, errmsg);
 
@@ -144,50 +144,50 @@ int main(int argc, char** argv)
     if (doWash && !color2) Usage(progname, errmsg);
 
     // Print summary
-    if (CK::gVerbose) {
+    if (L::gVerbose) {
         cout << "Cmd: " << command << "   Color: " << color->ToString();
         if (doWash)
             cout << " Color2: " << color2->ToString();
         if (idx != -1)
             cout << "  Index: " << idx;
-        if (CK::gRunTime != 0)
-            cout << "  Time: " << CK::gRunTime << " seconds";
-        if (defaultRotateDelay != 0 && CK::gRate != 1)
-            cout << "  Rate: " << CK::gRate;
+        if (L::gRunTime != 0)
+            cout << "  Time: " << L::gRunTime << " seconds";
+        if (defaultRotateDelay != 0 && L::gRate != 1)
+            cout << "  Rate: " << L::gRate;
         cout << endl;
     }
 
     // Set and update the lights
     if (doWash) {
         HSVColorRange range(*color, *color2);
-        int numLights = CK::gOutputBuffer->GetCount();;
+        int numLights = L::gOutputBuffer->GetCount();;
         float stepSize = 1.0f / numLights;
         for (int i = 0; i < numLights; ++i) {
             HSVColor col = range.GetColor(i * stepSize);
-            CK::gOutputBuffer->SetColor(i, col);
+            L::gOutputBuffer->SetColor(i, col);
         }
     } else
     if (idx == -1)
-        CK::gOutputBuffer->SetAll(*color);
+        L::gOutputBuffer->SetAll(*color);
     else
-        CK::gOutputBuffer->SetColor(idx, *color);
-    CK::gOutputBuffer->Update();
+        L::gOutputBuffer->SetColor(idx, *color);
+    L::gOutputBuffer->Update();
 
      // Handle rotation and/or timedelay
-    Milli_t duration = CK::gRunTime * 1000;
+    Milli_t duration = L::gRunTime * 1000;
     if (defaultRotateDelay != 0) {
         Milli_t startTime = Milliseconds();
-        Milli_t sleepBetween = defaultRotateDelay / CK::gRate;
+        Milli_t sleepBetween = defaultRotateDelay / L::gRate;
         while (true) {
-            CK::gOutputBuffer->Rotate();
-            CK::gOutputBuffer->Update();
-            if (CK::gOutputBuffer->HasError()) {
-                cerr << "Update error: " << CK::gOutputBuffer->GetLastError() << endl;
+            L::gOutputBuffer->Rotate();
+            L::gOutputBuffer->Update();
+            if (L::gOutputBuffer->HasError()) {
+                cerr << "Update error: " << L::gOutputBuffer->GetLastError() << endl;
                 exit(EXIT_FAILURE);
             }
 
             SleepMilli(sleepBetween);
-            if (duration > 0 && MilliDiff(Milliseconds(),  startTime) > (Milli_t) CK::gRunTime * 1000) break;
+            if (duration > 0 && MilliDiff(Milliseconds(),  startTime) > (Milli_t) L::gRunTime * 1000) break;
 
         }
     } else
