@@ -391,6 +391,8 @@ void HSVColor::SetFromRGB(const RGBColor& rgb)
         hue = 4 + (red   - green) / chroma;
     }
     h = hue / 6.0f;
+
+    cout << "(" << red << "," << green << "," << blue << ") hue=" << h << endl;
 }
 
 // Constructors
@@ -465,6 +467,7 @@ HSVColor HSVColorRange::GetColor(float index) const {
     if (hsv.h > 1) hsv.h = hsv.h - 1;
     hsv.s = (c2.s - c1.s) * index + c1.s;
     hsv.v = (c2.v - c1.v) * index + c1.v;
+    cout << "h " << hsv.h << "s" << hsv.s << " v " << hsv.v << " c1.h " << c1.h << " c2.h " << c2.h << endl;
     return hsv;
 }
 
@@ -519,6 +522,11 @@ RGBColor RandomColor() {
             rgb.g = RandomFloat (0.0, 0.4);
             rgb.b = RandomFloat (0.0, 0.1);
             return rgb;
+        case L::kRandomColorRange:
+            {
+            HSVColorRange range(L::gRandomColor1, L::gRandomColor2);
+            return range.GetRandomColor().ToRGBColor();
+            }
         case L::kRandomColorBright:
         default:
             hsv.h = RandomFloat(1.0);
@@ -545,6 +553,38 @@ bool ParseColorMode(csref strarg, string* errmsg) {
         delete color;
         return true;
     }
+    cout << "11111111HEREHERHEHEREHRE" << endl;
+    if (StrStartsWith(str,"range:"))
+        {
+        L::gRandomColorMode = L::kRandomColorRange;
+        string cs1 = str.substr(6);
+        size_t semipos = cs1.find(';');
+        if (semipos == string::npos) {
+            if (errmsg) *errmsg = "Missing semicolon in color range: " + str;
+            return false;
+        }
+        string cs2 = cs1.substr(semipos+1);
+        cs1 = cs1.substr(0,semipos);
+        Color* color = Color::AllocFromString(cs1, &localError);
+        if (color) {
+            color->ToRGBColor(&L::gRandomColor1);
+            cout << color->ToString() << " 1 " << L::gRandomColor1.ToString() << endl;
+            delete color;
+            color = Color::AllocFromString(cs2, &localError);
+            if (color) {
+                color->ToRGBColor(&L::gRandomColor2);
+                cout << color->ToString() << " 2 " << L::gRandomColor2.ToString() << endl;
+                delete color;
+                return true;
+                }
+            }
+        // If we get here the color parsing failed
+        if (errmsg) *errmsg = "Error parsing color range: " + localError;
+        return false;
+        }
+
+    cout << "HEREHERHEHEREHRE" << endl;
+
     if      (StrEQ(str, "RealStar"))            L::gRandomColorMode = L::kRandomColorRealStar;
     else if (StrEQ(str, "Starry"))              L::gRandomColorMode = L::kRandomColorStarry;
     else if (StrEQ(str, "RGB"))                 L::gRandomColorMode = L::kRandomColorRGB;

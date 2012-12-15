@@ -5,10 +5,20 @@
 		<Project filename="cktool/cktool.cbp">
 			<Depends filename="cklib/cklib.cbp" />
 		</Project>
-		<Project filename="ckfirefly/ckfirefly.cbp" />
-		<Project filename="ckinfo/ckinfo.cbp" />
-		<Project filename="cksparkle/cksparkle.cbp" />
-		<Project filename="ckstarry/ckstarry.cbp" />
-		<Project filename="testmix/testmix.cbp" active="1" />
+		<Project filename="ckfirefly/ckfirefly.cbp">
+			<Depends filename="cklib/cklib.cbp" />
+		</Project>
+		<Project filename="ckinfo/ckinfo.cbp">
+			<Depends filename="cklib/cklib.cbp" />
+		</Project>
+		<Project filename="cksparkle/cksparkle.cbp">
+			<Depends filename="cklib/cklib.cbp" />
+		</Project>
+		<Project filename="ckstarry/ckstarry.cbp" active="1">
+			<Depends filename="cklib/cklib.cbp" />
+		</Project>
+		<Project filename="testmix/testmix.cbp">
+			<Depends filename="cklib/cklib.cbp" />
+		</Project>
 	</Workspace>
 </CodeBlocks_workspace_file>

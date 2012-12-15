@@ -6,4 +6,5 @@
 *.layout
 *.o
 obj/
-bin/
+bin/ck*
+
