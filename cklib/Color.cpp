@@ -42,8 +42,14 @@ bool ParseOneComponent(csref str, float* fptr, string* errmsg, bool ignoreRangeE
         return false;
     }
 
+    if (str.find_first_not_of("0123456789+-.eE") != string::npos) {
+        if (errmsg) *errmsg = "Invalid color: " + str + " (must be valid floating point)";
+
+        return false;
+    }
+
     if (! StrToFlt(str, fptr)) {
-        if (errmsg) *errmsg = "Invalid color number (must be valid floating point): " + ErrorCodeString();
+        if (errmsg) *errmsg = "Invalid color: " + str + " (must be valid floating point): " + ErrorCodeString();
         return false;
     }
     //*fptr = StrToFlt()atof(str.c_str());
@@ -391,8 +397,6 @@ void HSVColor::SetFromRGB(const RGBColor& rgb)
         hue = 4 + (red   - green) / chroma;
     }
     h = hue / 6.0f;
-
-    cout << "(" << red << "," << green << "," << blue << ") hue=" << h << endl;
 }
 
 // Constructors
@@ -467,7 +471,6 @@ HSVColor HSVColorRange::GetColor(float index) const {
     if (hsv.h > 1) hsv.h = hsv.h - 1;
     hsv.s = (c2.s - c1.s) * index + c1.s;
     hsv.v = (c2.v - c1.v) * index + c1.v;
-    cout << "h " << hsv.h << "s" << hsv.s << " v " << hsv.v << " c1.h " << c1.h << " c2.h " << c2.h << endl;
     return hsv;
 }
 
@@ -492,9 +495,9 @@ RGBColor RandomColor() {
         case L::kRandomColorExact:
             return L::gRandomColor2;
         case L::kRandomColorRealStar:
-            temp = RandomFloat(-.1, .1);
+            temp = RandomFloat(0, .2);
             hsv.h = temp < 0 ? temp + 1 : temp; // pick something in the red or blue spectrum
-            hsv.s = RandomMin(4, .05, .3);
+            hsv.s = RandomMin(2, .05, .4);
             hsv.v = RandomExponential(6, 1.0);
             return hsv.ToRGBColor();
         case L::kRandomColorStarry:
@@ -553,7 +556,7 @@ bool ParseColorMode(csref strarg, string* errmsg) {
         delete color;
         return true;
     }
-    cout << "11111111HEREHERHEHEREHRE" << endl;
+
     if (StrStartsWith(str,"range:"))
         {
         L::gRandomColorMode = L::kRandomColorRange;
@@ -568,12 +571,10 @@ bool ParseColorMode(csref strarg, string* errmsg) {
         Color* color = Color::AllocFromString(cs1, &localError);
         if (color) {
             color->ToRGBColor(&L::gRandomColor1);
-            cout << color->ToString() << " 1 " << L::gRandomColor1.ToString() << endl;
             delete color;
             color = Color::AllocFromString(cs2, &localError);
             if (color) {
                 color->ToRGBColor(&L::gRandomColor2);
-                cout << color->ToString() << " 2 " << L::gRandomColor2.ToString() << endl;
                 delete color;
                 return true;
                 }
@@ -582,8 +583,6 @@ bool ParseColorMode(csref strarg, string* errmsg) {
         if (errmsg) *errmsg = "Error parsing color range: " + localError;
         return false;
         }
-
-    cout << "HEREHERHEHEREHRE" << endl;
 
     if      (StrEQ(str, "RealStar"))            L::gRandomColorMode = L::kRandomColorRealStar;
     else if (StrEQ(str, "Starry"))              L::gRandomColorMode = L::kRandomColorStarry;
