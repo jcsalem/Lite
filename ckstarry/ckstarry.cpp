@@ -105,6 +105,12 @@ void StarryCallback(Lgroup& objGroup)
 //----------------------------------------------------------------
 // Argument Parsing
 //----------------------------------------------------------------
+
+DefProgramUsage("Creates a starry night effect.");
+DefOption(density, SetDensity, "densityval", "controls the density of sparkles (default it 0.8)");
+DefOption(sparkle, SetSparkle, "sparklemode", "is one of SlowSparkle, Sparkle or Firefly (default is SlowSparkle)");
+
+
 void Usage(const char* progname, csref msg = "")
     {
     if (! msg.empty()) cerr << msg << endl;

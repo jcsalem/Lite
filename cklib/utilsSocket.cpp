@@ -212,7 +212,7 @@ bool SocketUDPClient::MultiWrite(const Buffer* buffers, int count)
 
     // How many bytes were planned to write and how many were actually written
 	unsigned long totalBytes = 0;
-	unsigned long bytesWritten = 0;
+	long bytesWritten = 0;
 
 
 #ifdef WIN32
