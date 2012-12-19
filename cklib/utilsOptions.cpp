@@ -143,13 +143,13 @@ string phGetHelp(bool verbose) {
 
 void phHelpExit(bool verbose) {
     cerr << phGetHelp(verbose);
-    exit(0);
+    exit(EXIT_SUCCESS);
 }
 
 void phErrorExit(csref errmsg, bool showOptions = false) {
     cerr << errmsg << endl;
     cerr << ProgramHelp::GetUsage(showOptions);
-    exit (1);
+    exit (EXIT_FAILURE);
 }
 //---------------------------------------------------------------------
 // Parsing the argument list

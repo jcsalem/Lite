@@ -4,90 +4,49 @@
 #include "utilsTime.h"
 #include "LFramework.h"
 #include <iostream>
-#include <getopt.h>
 
 //----------------------------------------------------------------------------
-// Option Parsing
+// Options
 //----------------------------------------------------------------------------
 
-void Usage(const char* progname, csref msg = "")
-    {
-    if (! msg.empty()) cerr << msg << endl;
-    cerr << "Usage: " << progname << L::kStdOptionsArgs
-            << " command args" << endl;
-    cerr << "Where:" << endl;
-    cerr << L::kStdOptionsArgsDoc << endl;
-    cerr << "  numsecs is the time the command should run for in seconds " << endl;
-    cerr << "  command is one of: " << endl;
-    cerr << "    clear " << endl;
-    cerr << "    all color" << endl;
-    cerr << "    rotate color" << endl;
-    cerr << "    rotwash color1 color2" << endl;
-    cerr << "    set idx color" << endl;
-    cerr << "    wash color1 color2" << endl;
-    cerr << "  color is \"r,g,b\" or \"HSV(h,s,v)\" or a named color, etc.  All components are scaled from 0.0 to 1.0" << endl;
-    exit (EXIT_FAILURE);
-    }
-
-struct option longOpts[] =
-    {
-        {"help",    no_argument,        0, 'h'},
-        {0,0,0,0}
-    };
-
-
-void ParseArgs(const char* progname, int* argc, char** argv)
-{
-    // Parse stamdard options
-    string errmsg;
-    bool success = L::StdOptionsParse(argc, argv, &errmsg);
-    if (! success)
-        Usage(progname, errmsg);
-
-    optind = 0; // avoid warning
-
-    while (true)
-    {
-        int optIndex;
-        char c = getopt_long (*argc, argv, "", longOpts, &optIndex);
-
-        if (c == (char) -1) break; // Done parsing
-
-        switch (c)
-            {
-            case 'h':
-                Usage(progname);
-                break;
-            default:
-                cerr << "Internal error - unknown option: " << c << endl;
-                Usage(progname);
-            }
-    }
+void Usage(csref msg = "")    {
+    if (!msg.empty())
+        cerr << ProgramHelp::GetString(kPHprogram) << ": " << msg << endl;
+    cerr << ProgramHelp::GetUsage();
+    exit(EXIT_FAILURE);
 }
 
-void ValidateNumArgs(csref command, int numArgs, const char* progname, int argc, char** argv)
+void ValidateNumArgs(csref command, int numArgs, int argc, int argp)
     {
-        if (argc == optind + numArgs)
+        if (argc == argp + numArgs)
             // Everything is correct
             return;
-        cerr << command << " expected " << numArgs << " parameters but got " << argc - optind << endl;
-        Usage(progname);
+        Usage(command + " expected " + IntToStr(numArgs) + " parameters but got " + IntToStr(argc - 2));
     }
+
+DefProgramHelp(kPHprogram, "cktool");
+DefProgramHelp(kPHusage, "Performs various lighting commands: clear, all, set, rotate, rotwash");
+DefProgramHelp(kPHadditionalArgs, "command [colorargs...]");
+DefProgramHelp(kPHhelp, "command is one of:\n"
+    "    clear \n"
+    "    all color\n"
+    "    rotate color\n"
+    "    rotwash color1 color2\n"
+    "    set idx color\n"
+    "    wash color1 color2\n"
+    "  color is \"r,g,b\" or \"HSV(h,s,v)\" or a named color, etc.  All components are scaled from 0.0 to 1.0\n"
+    );
 
 int main(int argc, char** argv)
 {
-    const char* progname = "cktool";
-    if (argc > 0 && argv != NULL && argv[0] != NULL)
-        progname = argv[0];
-
     // Parse arguments
-    ParseArgs(progname, &argc, argv);
+    Option::ParseArglist(&argc, argv, Option::kVariable);
 
-    // Parse command
-    if (optind == argc)
-        // No command argument
-        Usage(progname);
-    string command = argv[optind++];
+    if (argc <= 1) Usage("Missing command");
+
+    int argp = 1;
+
+    string command = argv[argp++];
     string errmsg;
     int idx = -1;  // if -1 all colors should be set
     Color* color;
@@ -97,51 +56,50 @@ int main(int argc, char** argv)
 
     if (command == "clear")
     {
-        ValidateNumArgs(command, 0, progname, argc, argv);
+        ValidateNumArgs(command, 0, argc, argp);
         color = new BLACK;
     }
     else if (command == "set")
     {
-        ValidateNumArgs(command, 2, progname, argc, argv);
-        idx   = atoi(argv[optind++]);
-        color = Color::AllocFromString(argv[optind++], &errmsg);
+        ValidateNumArgs(command, 2, argc, argp);
+        idx   = atoi(argv[argp++]);
+        color = Color::AllocFromString(argv[argp++], &errmsg);
     }
     else if (command == "all")
     {
-        ValidateNumArgs(command, 1, progname, argc, argv);
-        color = Color::AllocFromString(argv[optind++], &errmsg);
+        ValidateNumArgs(command, 1, argc, argp);
+        color = Color::AllocFromString(argv[argp++], &errmsg);
     }
     else if (command == "rotate")
     {
-        ValidateNumArgs(command, 1, progname, argc, argv);
+        ValidateNumArgs(command, 1, argc, argp);
         idx = 0;
-        color = Color::AllocFromString(argv[optind++], &errmsg);
+        color = Color::AllocFromString(argv[argp++], &errmsg);
         defaultRotateDelay = 50;
     }
     else if (command == "wash")
     {
-        ValidateNumArgs(command, 2, progname, argc, argv);
-        color = Color::AllocFromString(argv[optind++], &errmsg);
-        color2 = color ? Color::AllocFromString(argv[optind++], &errmsg) : NULL;
+        ValidateNumArgs(command, 2, argc, argp);
+        color = Color::AllocFromString(argv[argp++], &errmsg);
+        color2 = color ? Color::AllocFromString(argv[argp++], &errmsg) : NULL;
         doWash = true;
     }
     else if (command == "rotwash")
     {
-        ValidateNumArgs(command, 2, progname, argc, argv);
-        color = Color::AllocFromString(argv[optind++], &errmsg);
-        color2 = color ? Color::AllocFromString(argv[optind++], &errmsg) : NULL;
+        ValidateNumArgs(command, 2, argc, argp);
+        color = Color::AllocFromString(argv[argp++], &errmsg);
+        color2 = color ? Color::AllocFromString(argv[argp++], &errmsg) : NULL;
         doWash = true;
         defaultRotateDelay = 25;
     }
     else
     {
-        cerr << argv[0] << ": Unknown command \"" << command << "\"" << endl;
-        Usage(progname);
+        Usage("Unknown command \"" + command + "\"");
     }
 
     // Validate the colors
-    if (! color) Usage(progname, errmsg);
-    if (doWash && !color2) Usage(progname, errmsg);
+    if (! color) Usage(errmsg);
+    if (doWash && !color2) Usage(errmsg);
 
     // Print summary
     if (L::gVerbose) {
