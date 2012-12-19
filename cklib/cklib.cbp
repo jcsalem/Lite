@@ -7,9 +7,9 @@
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="Debug">
-				<Option output="bin/Debug/libcklib" prefix_auto="1" extension_auto="1" />
+				<Option output="bin\Debug\cklib" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="" />
-				<Option object_output="obj/Debug/" />
+				<Option object_output="obj\Debug\" />
 				<Option type="2" />
 				<Option compiler="gcc" />
 				<Option createDefFile="1" />
@@ -19,9 +19,9 @@
 				</Compiler>
 			</Target>
 			<Target title="Release">
-				<Option output="bin/Release/libcklib" prefix_auto="1" extension_auto="1" />
+				<Option output="bin\Release\cklib" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="" />
-				<Option object_output="obj/Release/" />
+				<Option object_output="obj\Release\" />
 				<Option type="2" />
 				<Option compiler="gcc" />
 				<Option createDefFile="1" />
@@ -43,6 +43,8 @@
 		<Unit filename="LFilter.h" />
 		<Unit filename="LFramework.cpp" />
 		<Unit filename="LFramework.h" />
+		<Unit filename="LSparkle.cpp" />
+		<Unit filename="LSparkle.h" />
 		<Unit filename="Lobj.cpp" />
 		<Unit filename="Lobj.h" />
 		<Unit filename="cklib.cpp" />
@@ -53,6 +55,7 @@
 		<Unit filename="utilsFile.h" />
 		<Unit filename="utilsIP.cpp" />
 		<Unit filename="utilsIP.h" />
+		<Unit filename="utilsOptions.cpp" />
 		<Unit filename="utilsOptions.h" />
 		<Unit filename="utilsPrecomp.h" />
 		<Unit filename="utilsRandom.cpp" />

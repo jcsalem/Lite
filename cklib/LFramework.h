@@ -3,6 +3,7 @@
 #ifndef LFRAMEWORK_H_INCLUDED
 #define LFRAMEWORK_H_INCLUDED
 #include "utilsTime.h"
+#include "utilsOptions.h"
 
 class LBuffer;
 class Lgroup;
@@ -29,6 +30,7 @@ extern Milli_t     gEndTime;
 
 // Standard loop functions
 typedef void (*Callback_t) (Lgroup& objGroup);
+void Startup(int *argc, char** argv, int numPositionalArgs = 0);
 void Startup();
 void Run(Lgroup& objgroup, Callback_t fcn);
 void Cleanup(bool eraseAtEnd = true);

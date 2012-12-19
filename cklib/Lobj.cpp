@@ -250,30 +250,3 @@ string Lgroup::GetDescription(bool verbose) const {
     }
     return retval;
 }
-
-//----------------------------------------------------------------------
-// Sparkle definitions
-//----------------------------------------------------------------------
-
-RGBColor Lsparkle::ComputeColor(const RGBColor& referenceColor, Milli_t currentTime) const {
-//    cout << "Color: " << referenceColor.ToString() << " start: " << startTime << " currentTime: " << currentTime << "  attack: " << attack << "  hold: " << hold << endl;
-
-    if (MilliGE(startTime, currentTime))
-        return BLACK;
-    else if (MilliGT(startTime + attack, currentTime))
-        return referenceColor * ((float)(currentTime - startTime) / attack);
-    else if (MilliGE(startTime + attack + hold, currentTime))
-        return referenceColor;
-    else if (MilliGT(startTime + attack + hold + release, currentTime))
-        return referenceColor * ((float) (release - (currentTime - startTime - attack - hold)) / release);
-    else
-        return BLACK;
-}
-
-Milli_t Lsparkle::GetEndTime() const {
-    return startTime + attack + hold + release + sleep;
-}
-
-bool LobjSparkle::IsOutOfTime() const {
-    return sparkle.IsOutOfTime(lastTime);
-}

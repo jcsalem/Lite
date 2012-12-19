@@ -3,6 +3,7 @@
 #include "Color.h"
 #include "LFramework.h"
 #include "LFilter.h"
+#include "utilsOptions.h"
 #include "Lobj.h"
 #include <iostream>
 
@@ -187,10 +188,20 @@ bool StdOptionsParse(int* argc, char** argv, string* errmsg)
 
 void Startup()
 {
+    // Sanity testing
+    if (! gOutputBuffer || gOutputBuffer->GetCount() == 0)
+    {
+        cerr << ProgramHelp::GetString(kPHprogram) + ": Missing or empty output display" << endl;
+        cerr << ProgramHelp::GetUsage();
+        exit(1);
+    }
+
+    // Set up time variables
     gStartTime  = gTime = Milliseconds();
     gEndTime = 0; // Runs forever
     if (gRunTime > 0)
         gEndTime = gStartTime + (Milli_t) (gRunTime * 1000 + .5);
+
     // Handle fade effect (this should really be automated from a list of filters added during arg parsing
     if (gFade > 0) {
         gFilters.AddFilter(LFilterFadeIn(false,gStartTime, gStartTime + gFade * 1000));
@@ -198,6 +209,14 @@ void Startup()
             gFilters.AddFilter(LFilterFadeOut(false,gEndTime - gFade * 1000, gEndTime));
     }
 }
+
+void Startup(int *argc, char** argv, int numPositionalArgs)
+{
+    // Parse the argument list
+    Option::ParseArglist(argc, argv, numPositionalArgs);
+    Startup();
+}
+
 
 void Cleanup(bool eraseAtEnd)
 {

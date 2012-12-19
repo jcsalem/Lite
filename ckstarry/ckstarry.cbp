@@ -12,6 +12,7 @@
 				<Option external_deps="../cklib/bin/Debug/libcklib.a;" />
 				<Option type="1" />
 				<Option compiler="gcc" />
+				<Option parameters='--PDS=&quot;172.24.22.51/1,172.24.22.51/2r&quot;' />
 				<Compiler>
 					<Add option="-g" />
 				</Compiler>

@@ -107,41 +107,6 @@ class LobjBase {
     virtual string GetDescription(bool verbose = false) const;
 };
 
-// This describes a sparkly light of some kind
-class Lsparkle {
-  public:
-    Lsparkle() : startTime(0), attack(0), hold(0), release(0), sleep(0) {}
-    Milli_t startTime;
-    Milli_t attack;
-    Milli_t hold;
-    Milli_t release;
-    Milli_t sleep;
-
-    RGBColor    ComputeColor(const RGBColor& referenceColor, Milli_t currentTime) const;
-    bool        IsOutOfTime(Milli_t currentTime) const {return MilliLT(GetEndTime(), currentTime);}
-    Milli_t     GetEndTime() const;
-};
-
-class LobjSparkle : public LobjBase {
-  public:
-     // Constructor
-    LobjSparkle(Milli_t currentTime = Milliseconds()) : LobjBase(currentTime), sparkle() {}
-    virtual ~LobjSparkle() {}
-
-    // Variables
-    Lsparkle    sparkle;
-
-    // Operations
-    virtual void Clear() {*this = LobjSparkle();}
-    virtual bool IsOutOfTime() const;
-
-    // Allocate function
-    static LobjSparkle* Alloc(int,const void*) {return new LobjSparkle();}
-
-    virtual RGBColor GetCurrentColor() const {return sparkle.ComputeColor(color, lastTime);}
-
-};
-
 // Obsolete
 
 class LobjOld {
