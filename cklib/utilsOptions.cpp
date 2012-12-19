@@ -14,7 +14,7 @@ class OptionList { // local to this file
 public:
     OptionList() {}
     static void AddOption(const Option& option) {GetOptions().push_back(option);}
-    static void DeleteOption(csref name);
+    static bool DeleteOption(csref name);
 
     typedef vector<Option>::const_iterator const_iterator;
     static const_iterator begin() {return GetOptions().begin();}
@@ -31,6 +31,17 @@ vector<Option>& OptionList::GetOptions() {
     return allOptions;
     }
 
+bool OptionList::DeleteOption(csref namearg) {
+    string name = StrToLower(namearg);
+    for (vector<Option>::iterator i = GetOptions().begin(); i != GetOptions().end(); ++i) {
+        if (i->GetName() == name) {
+            GetOptions().erase(i);
+            return true;
+        }
+    }
+    return false;
+}
+
 //---------------------------------------------------------------------
 // Option class
 //---------------------------------------------------------------------
@@ -44,6 +55,9 @@ Option::Option(csref name, OptionParserFcn_t parserCallback, csref paramName, cs
     OptionList::AddOption(*this);
 }
 
+bool Option::DeleteOption(csref name) {
+    return OptionList::DeleteOption(name);
+}
 //---------------------------------------------------------------------
 // Program Help support
 //---------------------------------------------------------------------

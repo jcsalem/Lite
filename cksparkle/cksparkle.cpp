@@ -63,10 +63,14 @@ void SparkleCallback(Lgroup& objgroup)
 // Main loop
 //----------------------------------------------------------------
 
+DefProgramHelp(kPHprogram, "cksparkle");
+DefProgramHelp(kPHusage, "Displays a sparkly effect.");
+
 int main(int argc, char** argv)
 {
     // Change the default for this
     L::gRandomColorMode = L::kRandomColorStarry;
+    Option::DeleteOption("rate");
 
     Lgroup objs;
     L::Startup(&argc, argv);
