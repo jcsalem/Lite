@@ -131,6 +131,7 @@ extern RandomColorMode_t    gRandomColorMode;
 extern RGBColor             gRandomColor1;
 extern RGBColor             gRandomColor2;
 bool ParseColorMode(csref str, string* errmsg = NULL);
+string CurrentColorModeAsString();
 };
 
 RGBColor RandomColor();

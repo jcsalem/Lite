@@ -602,4 +602,18 @@ bool ParseColorMode(csref strarg, string* errmsg) {
     return true;
 }
 
+string CurrentColorModeAsString() {
+    switch (gRandomColorMode) {
+        case kRandomColorRealStar:      return "realstar";
+        case kRandomColorStarry:        return "starry";
+        case kRandomColorRGB:           return "RGB";
+        case kRandomColorHalloween:     return "Halloween";
+        case kRandomColorChristmas:     return "Christmas";
+        case kRandomColorBright:        return "Bright";
+        case kRandomColorRange:         return "Range";
+        case kRandomColorExact:         return "Exact";
+        default: return "UnknownMode";
+        }
+}
+
 };//namespace

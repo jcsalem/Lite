@@ -11,36 +11,32 @@ class Lgroup;
 namespace L {
 // --pds
 // --outmap   Output mapping function (used in creating the output buffer)
-extern LBuffer*    gOutputBuffer;
+extern LBuffer*     gOutputBuffer;
 // --verbose
-extern bool        gVerbose;
+extern bool         gVerbose;
 // --time
-extern float       gRunTime;
+extern float        gRunTime;
 // --color
 // See color.h for the latest random color definitions
 // --rate
-extern float       gRate;
+extern float        gRate;
+void AllowNegativeRate(); //Call this to allow negative values
 // --fade
-extern float       gFade;  // Fade in/out time in seconds
+extern float        gFade;  // Fade in/out time in seconds
+// --outmap
+extern int          gOutMap; // Output mapping
 
 // Global time variables
-extern Milli_t     gTime;                  // Current time
-extern Milli_t     gStartTime;
-extern Milli_t     gEndTime;
+extern Milli_t      gTime;                  // Current time
+extern Milli_t      gStartTime;
+extern Milli_t      gEndTime;
 
 // Standard loop functions
 typedef void (*Callback_t) (Lgroup& objGroup);
 void Startup(int *argc, char** argv, int numPositionalArgs = 0);
-void Startup();
+//void Startup(); // Must have already initialized gOutputBuffer to call this one
 void Run(Lgroup& objgroup, Callback_t fcn);
 void Cleanup(bool eraseAtEnd = true);
-
-// Parses and initialize all of the standard options.  Modifies argc and argv
-bool StdOptionsParse(int* argc, char** argv, string* errmsg = NULL);
-
-// Help
-extern const char*    kStdOptionsArgs;
-extern const char*    kStdOptionsArgsDoc;
 
 }; // namespace L
 #endif // LFRAMEWORK_H_INCLUDED

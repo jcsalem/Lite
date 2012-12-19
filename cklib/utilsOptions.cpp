@@ -99,7 +99,7 @@ string phGetOptionDoc() {
         if (i->HasParam())
             r += i->GetParam();
         else
-            r += "--" + i->GetParam();
+            r += "--" + i->GetName();
         r += " ";
         r += StrReplace(i->GetDoc(), "\n", "\n  "); // indent
         if (i->HasParam() && i->GetDefaulter())
@@ -127,15 +127,17 @@ string ProgramHelp::GetUsage(bool showOptions) {
     }
 
 string phGetHelp(bool verbose) {
-    string r = phGetUsageLine() + "\n";
+    string r;
+    r += ProgramHelp::GetString(kPHusage) + "\n";
+    r += phGetUsageLine() + "\n";
     // Show argument list and help
     r += "Options: " + phGetOptions() + "\n";
     if (verbose) {
         r += phGetOptionDoc();
         // Append help
-        string temp = ProgramHelp::GetString(kPHpreHelp);
+        string temp = ProgramHelp::GetString(kPHhelp);
         if (!temp.empty()) r += temp + "\n";
-        temp = ProgramHelp::GetString(kPHhelp);
+        temp = ProgramHelp::GetString(kPHpostHelp);
         if (!temp.empty()) r += temp + "\n";
     }
     return r;
@@ -175,8 +177,6 @@ string PopArg(int* argc, char** argv, bool hasParameter)
     return retval;
 }
 
-#include "LFramework.h" // temporary
-
 string RemoveDir(csref str) {
     size_t pos = str.find_last_of("\\/");
     if (pos == string::npos)
@@ -193,10 +193,6 @@ void Option::ParseArglist(int *argc, char** argv, int numPositionalArgs) {
     }
 
     string errmsg;
-    //Temporary til everything uses new option system
-    if (! L::StdOptionsParse(argc, argv, &errmsg))
-        phErrorExit(errmsg, false);
-
     string arg;
     while (*argv) {
         arg = *argv;

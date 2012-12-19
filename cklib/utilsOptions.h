@@ -35,7 +35,7 @@ private:
     OptionDefaultFcn_t  iDefaulter;
 };
 
-typedef enum {kPHprogram=0,kPHusage=1,kPHadditionalArgs=2,kPHhelp=3,kPHpreHelp=4, _kPHlimit=5} HelpType_t; // Help limit should always be +1 of the last help type
+typedef enum {kPHprogram=0,kPHusage=1,kPHadditionalArgs=2,kPHhelp=3,kPHpostHelp=4, _kPHlimit=5} HelpType_t; // Help limit should always be +1 of the last help type
 
 
 class ProgramHelp {
@@ -48,7 +48,7 @@ public:
 #define DefOption(name,parseCallback,paramName,docString, defaultValueCallback) \
   Option gOption_ ## name(#name, parseCallback, paramName, docString, defaultValueCallback)
 
-#define DefOptionBool(name,parseCallback,docString) DefOption(name,callback,"",docString, NULL)
+#define DefOptionBool(name,parseCallback,docString) DefOption(name,parseCallback,"",docString, NULL)
 
 #define DefProgramHelp(helpKeyword, help) \
   ProgramHelp gProgramUsage ## helpKeyword(helpKeyword, help)

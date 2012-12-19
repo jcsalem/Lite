@@ -6,19 +6,15 @@
 #include "cklib.h"
 #include "Lobj.h"
 #include "utilsRandom.h"
+#include "utilsOptions.h"
 #include "LFramework.h"
 #include <iostream>
 #include <stdio.h>
-#include <getopt.h>
 #include <math.h>
 
 //----------------------------------------------------------------
 // Utilities
 //----------------------------------------------------------------
-RGBColor    gColor1 = RED;
-RGBColor    gColor2 = GREEN;
-RGBColor    gColor3 = BLUE;
-float       gWidth = 5;
 
 typedef enum {kUp, kDown, kQuit, kNop} Key_t;
 #ifdef OS_WINDOWS
@@ -63,60 +59,39 @@ Key_t GetOneChar() {
 //----------------------------------------------------------------
 // Argument Parsing
 //----------------------------------------------------------------
-void Usage(const char* progname, csref msg = "")
-    {
-    if (! msg.empty()) cerr << msg << endl;
-    cerr << "Usage: " << progname << L::kStdOptionsArgs << "" << endl;
-    cerr << "Where:" << endl;
-    cerr << L::kStdOptionsArgsDoc << endl;
-    exit (EXIT_FAILURE);
-    }
+float       gWidth = 5;
+RGBColor    gColor1 = RED;
+RGBColor    gColor2 = GREEN;
+RGBColor    gColor3 = BLUE;
 
-struct option longOpts[] =
-    {
-        {"help",    no_argument,        0, 'h'},
-        {"color1",  required_argument,  0, '1'},
-        {"color2",  required_argument,  0, '2'},
-        {"color3",  required_argument,  0, '3'},
-        {0,0,0,0}
-    };
-
-
-void ParseArgs(const char* progname, int* argc, char** argv)
-{
-    // Parse stamdard options
-    string errmsg;
-    bool success = L::StdOptionsParse(argc, argv, &errmsg);
-    if (! success)
-        Usage(progname, errmsg);
-
-    // Parse remaining
-    optind = 0; // avoid warning
-
-    while (true)
-    {
-        int optIndex;
-        char c = getopt_long (*argc, argv, "", longOpts, &optIndex);
-        if (c == (char) -1) break; // Done parsing
-        switch (c)
-            {
-            case 'h':
-                Usage(progname);
-            case '1':
-                if (! RGBColor::FromString(optarg, &gColor1, &errmsg)) Usage(progname, "Bad --color1 argument: " + string(optarg) + errmsg);
-                break;
-            case '2':
-                if (! RGBColor::FromString(optarg, &gColor2, &errmsg)) Usage(progname, "Bad --color2 argument: " + errmsg);
-                break;
-            case '3':
-                if (! RGBColor::FromString(optarg, &gColor3, &errmsg)) Usage(progname, "Bad --color3 argument: " + errmsg);
-                break;
-            default:
-                cerr << "Internal error - unknown option: " << c << endl;
-                Usage(progname);
-            }
-    }
+RGBColor* GetColorRef(csref name) {
+    if (name == "color1") return &gColor1;
+    if (name == "color2") return &gColor2;
+    if (name == "color3") return &gColor3;
+    return &gColor3; // set the least important if we get a bad string
 }
+
+string ParseColorCallback(csref name, csref val) {
+    RGBColor* colorRef = GetColorRef(name);
+    string errmsg;
+
+    if (RGBColor::FromString(val, colorRef, &errmsg))
+        return "";
+    else
+        return "Bad --" + name + " argument: " + val + ". " + errmsg;
+}
+
+string DefaultColorCallback(csref name) {
+    return GetColorRef(name)->ToString();
+}
+
+DefOption(color1, ParseColorCallback, "color", "is the first  color to mix", DefaultColorCallback);
+DefOption(color2, ParseColorCallback, "color", "is the second color to mix", DefaultColorCallback);
+DefOption(color3, ParseColorCallback, "color", "is the third  color to mix", DefaultColorCallback);
+
+//----------------------------------------------------------------
+// Movement code
+//----------------------------------------------------------------
 
 Lgroup gObjs;
 
@@ -165,26 +140,16 @@ void Loop()
             case kNop:
             default:;
         }
-
     }
 }
 
+DefProgramHelp(kPHprogram, "testmix");
+DefProgramHelp(kPHusage, "Tests the mixing code");
+
 int main(int argc, char** argv)
 {
-    const char* progname = "ckunknown";
-    if (argc > 0 && argv != NULL && argv[0] != NULL)
-        progname = argv[0];
-
-    // Parse arguments
-    ParseArgs(progname, &argc, argv);
-
-    // Parse command
-    if (optind != argc)
-    {
-        cerr << "Too many arguments." << endl;
-        Usage(progname);
-    }
-
+    Option::DeleteOption("rate");
+    L::Startup(&argc, argv);
     // Test everything
     // TestLights();
     InitializeConsole();

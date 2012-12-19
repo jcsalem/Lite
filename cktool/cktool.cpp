@@ -39,8 +39,9 @@ DefProgramHelp(kPHhelp, "command is one of:\n"
 
 int main(int argc, char** argv)
 {
-    // Parse arguments
-    Option::ParseArglist(&argc, argv, Option::kVariable);
+    // Initialize and Parse arguments
+    //L::AllowNegativeRate();
+    L::Startup(&argc, argv, Option::kVariable);
 
     if (argc <= 1) Usage("Missing command");
 

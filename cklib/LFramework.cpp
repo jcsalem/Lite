@@ -13,9 +13,6 @@ namespace L {
 //---------------------------------------------------------------
 const char* kStdOptionsArgs = " --pds pdsinfo1 [--pds pdsinfo2 ...] [--verbose] [--time duration] [--rate rateval] [--color colorinfo] [--fade fadeduration]  [--outmap random|normal]";
 const char* kStdOptionsArgsDoc =
-    "  pdsinfo describes the PDS IP and fixture port in the format IP/port(count)\n"
-    "    For example, 172.24.22.51/1  or  172.24.22.51/2r(50).  'r' means reverse the order of those lights\n"
-    "    If no PDS devices are specified, then they are auto detected.\n"
     "  duration is the running time in seconds. By default, animation continues forever.\n"
     "  rateval is the relative speed of the effect. Default is 1.0\n"
     "  colorinfo is description of a random mode.\n"
@@ -26,11 +23,6 @@ const char* kStdOptionsArgsDoc =
 //---------------------------------------------------------------
 // Global variables
 //---------------------------------------------------------------
-LBuffer*    gOutputBuffer   = NULL;
-bool        gVerbose        = false;
-float       gRunTime        = 0.0;
-float       gRate           = 1.0;
-float       gFade           = 0.0;  // Fade in/out time in seconds
 
 // Global time variables
 Milli_t     gTime;                   // Current time
@@ -50,151 +42,204 @@ struct UninitAtExit {
 
 UninitAtExit _gUninitAtExit;
 
-
 //---------------------------------------------------------------
-// Parse command line arguments
+// Output Device Parsing
 //---------------------------------------------------------------
 
-const char* PopArg(int* argc, char** argv, bool hasParameter = false)
-// Argv points to the first element of the shifted array
-{
-    int amount = 1;
-    const char* retval = NULL;
-    if (hasParameter && *argc >= 2) {
-        // Has a parameter (otherwise return NULL)
-        retval = *(argv+1);
-        amount = 2;
+LBuffer*    gOutputBuffer   = NULL;
+
+string InitializeOneDevice(csref devstr) {
+    // TO DO: Add support for comma separated values and autock
+    if (! StrStartsWith(devstr, "ck://"))
+        return "Unknown output device: " + devstr + " (For a ColorKinetics PDS device start with CK://)";
+    CKbuffer *ckbuffer = dynamic_cast<CKbuffer*>(gOutputBuffer);
+    if (gOutputBuffer == NULL) gOutputBuffer = ckbuffer = new CKbuffer();
+    if (! ckbuffer->AddDevice(devstr.substr(5)))
+        return ckbuffer->GetLastError();
+    // All good
+    return "";
     }
 
-    while (*(argv+amount))
-    {
-        *argv = *(argv + amount);
-        ++argv;
+string InitializeOutputDevice(csref devstrarg) {
+    string errmsg;
+    string devstr = TrimWhitespace(devstrarg);
+    if (StrEQ(devstr, "autock")) {
+        vector<CKdevice> devices = CKpollForDevices(&errmsg);
+        CKbuffer *ckbuffer = dynamic_cast<CKbuffer*>(gOutputBuffer);
+        if (! gOutputBuffer) gOutputBuffer = ckbuffer = new CKbuffer();
+        for (size_t i = 0; i < devices.size(); ++i)
+            ckbuffer->AddDevice(devices[i]);
+        if (! errmsg.empty())
+            errmsg = "Error discovering CK devices: " + errmsg;
+        }
+    else {
+        while (! devstr.empty()) {
+            size_t commapos = devstr.find(',');
+            string onedev = TrimWhitespace(devstr.substr(0, commapos));
+            if (commapos == string::npos)
+                devstr = "";
+            else
+                devstr = devstr.substr(commapos+1);
+            errmsg = InitializeOneDevice(onedev);
+            if (! errmsg.empty()) break;
+            }
     }
-    *argv = NULL;
-    *argc = *argc - amount;
-    return retval;
+    return errmsg;
 }
 
-bool StdOptionsParse(int* argc, char** argv, string* errmsg)
+string DeviceCallback(csref name, csref val) {
+    return InitializeOutputDevice(val);
+}
+
+DefOption(dev, DeviceCallback, "deviceURLs", "is a comma separated list of URLs describing the output devices", NULL);
+
+DefProgramHelp(kPHpostHelp, "If --dev is not specified, the environment variable LDEV is checked.\n"
+                "A deviceURL begins with a protocol name.  Supported protocols and their URL format are:\n"
+                "   ck://ipaddress/port(size) A ColorKinetics device. Port can be followed by 'r' to reverse the port mapping\n"
+                "         For example, ck://172.24.22.51/1  or  ck://172.24.22.51/2r(50).\n"
+                "   autock  Automatically configures all CK devices on the local area network."
+                );
+
+//---------------------------------------------------------------
+// Other command line options
+//---------------------------------------------------------------
+
+bool        gVerbose        = false;
+
+string VerboseCallback(csref name, csref val) {
+    gVerbose = true;
+    return "";
+    }
+DefOptionBool(verbose, VerboseCallback, "enables verbose status messages");
+
+//------------
+enum {kOutMapNormal = 0, kOutMapRandom = 1};
+int gOutMap = kOutMapNormal;
+
+string OutMapDefaultCallback(csref name) {
+    if (gOutMap == kOutMapRandom) return "random";
+    return "normal";
+}
+
+string OutMapCallback(csref name, csref val) {
+    if      (StrEQ(val, "random")) gOutMap = kOutMapRandom;
+    else if (StrEQ(val, "normal")) gOutMap = kOutMapNormal;
+    else return "Invalid --outmap value: " + val + " (should be normal or random)";
+    return "";
+}
+
+DefOption(outmap, OutMapCallback, "outmap", "Enables mapping the order of the output pixels to something else. Either normal or random.", OutMapDefaultCallback);
+
+//------------
+string ColorDefaultCallback(csref name)
 {
-    bool foundPDS = false;
-    const int kOutMapRandom = -1;
-    int outputMapping = 0;
+    return CurrentColorModeAsString();
+}
 
-    // Initialize gOutputBuffer
-    if (gOutputBuffer) {delete gOutputBuffer; gOutputBuffer = NULL;}
-    CKbuffer* ckbuffer = new CKbuffer();
-    gOutputBuffer = ckbuffer;
+string ColorCallback(csref name, csref val) {
+    string errmsg;
+    ParseColorMode(val, &errmsg);
+    return errmsg;
+}
 
-    while (*argv)
-    {
-        if (StrEQ(*argv, "--pds")) {
-            const char* pds = PopArg(argc, argv, true);
-            if (!pds) {
-                if (errmsg) *errmsg = "Missing argument to --pds";
-                return false;
-            }
-            ckbuffer->AddDevice(string(pds));
-            foundPDS = true;
-        } else if (StrEQ(*argv, "--verbose")) {
-            gVerbose = true;
-            PopArg(argc,argv,false);
-        } else if (StrEQ(*argv, "--outmap")) {
-            const char* cstr = PopArg(argc, argv, true);
-            if      (StrEQ(cstr, "normal")) outputMapping = 0;
-            else if (StrEQ(cstr, "random")) outputMapping = kOutMapRandom;
-            else {
-                if (errmsg) *errmsg = "--outmap given unknown option. Was " + string(cstr);
-                return false;
-            }
+DefOption(color, ColorCallback, "colormode", "identifies the type of color. Options: bright, halloween, realstar, starry, etc.", ColorDefaultCallback);
 
-        } else if (StrEQ(*argv, "--color")) {
-            const char* cstr = PopArg(argc, argv, true);
-            if (! ParseColorMode(cstr, errmsg))
-                return false;
-        } else if (StrEQ(*argv, "--rate")) {
-            const char* cstr = PopArg(argc, argv, true);
-            gRate = StrToFlt(cstr);
-            if (gRate <= 0) {
-                if (errmsg) *errmsg = "--rate argument must be positive. Was " + string(cstr);
-                return false;
-            }
-        } else if (StrEQ(*argv, "--fade")) {
-            const char* cstr = PopArg(argc, argv, true);
-            gFade = StrToFlt(cstr);
-            if (gFade < 0) {
-                if (errmsg) *errmsg = "--fade argument must be zero or greater. Was " + string(cstr);
-                return false;
-            }
-        } else if (StrEQ(*argv, "--time")) {
-            const char* tstr = PopArg(argc,argv,true);
-            if (!tstr) {
-                if (errmsg) *errmsg = "Missing argument to --time";
-                return false;
-            }
-            gRunTime = atof(tstr);
-            if (gRunTime <= 0) {
-                if (errmsg) *errmsg = "--time argument must be positive. Was " + string(tstr);
-                return false;
-            }
-        } else
-            ++argv;
+//------------
+float gRunTime        = 0.0;
+
+string TimeCallback(csref name, csref val) {
+    string errmsg;
+    if (! StrToFlt(val, &gRunTime))
+        return "The --" + name + " parameter, " + val + ", was not a number.";
+    if (gRunTime < 0)
+        return "--" + name + " cannot be less than zero.";
+    return "";
+}
+
+DefOption(time, TimeCallback, "duration", "is the running time in seconds. By default, animation continues forever.", NULL);
+
+//------------
+float gRate           = 1.0;
+bool gAllowNegativeRate = false;
+
+string RateDefaultCallback(csref name) {
+    return FltToStr(gRate);
     }
 
-    // If no --pds, try environment variable
-    if (!foundPDS) {
-        const char* envval = getenv("PDS");
-        string devstr = TrimWhitespace(string(envval ? envval : ""));
-        if (! devstr.empty()) {
-            foundPDS = true;
-            ckbuffer->AddDevice(devstr);
+string RateCallback(csref name, csref val) {
+    string errmsg;
+    if (! StrToFlt(val, &gRate))
+        return "The --" + name + " parameter, " + val + ", was not a number.";
+    if (gRate <= 0 && !gAllowNegativeRate)
+        return "--" + name + " must be positive.";
+    return "";
+}
+
+void AllowNegativeRate() {
+    gAllowNegativeRate = true;
+}
+
+DefOption(rate, RateCallback, "rateval", " is the relative speed of the effect.", RateDefaultCallback);
+
+//------------
+
+float       gFade           = 0.0;  // Fade in/out time in seconds
+string FadeDefaultCallback(csref name) {
+    return FltToStr(gFade);
+    }
+
+string FadeCallback(csref name, csref val) {
+    string errmsg;
+    if (! StrToFlt(val, &gFade))
+        return "The --" + name + " parameter, " + val + ", was not a number.";
+    if (gFade < 0)
+        return "--" + name + " cannot be less than zero.";
+    return "";
+}
+
+DefOption(fade, FadeCallback, "fadeduration", " is the time to fade in and out in seconds.", FadeDefaultCallback);
+
+
+
+//---------------------------------------------------------------
+// Startup
+//---------------------------------------------------------------
+
+void errorExit(csref msg) {
+    cerr << ProgramHelp::GetString(kPHprogram) << ": " << msg << endl;
+    cerr << ProgramHelp::GetUsage();
+    exit(EXIT_FAILURE);
+    }
+
+void Startup(int *argc, char** argv, int numPositionalArgs) {
+    // Parse the argument list
+    Option::ParseArglist(argc, argv, numPositionalArgs);
+
+    // If no --dev, try LDEV environment variable
+    if (! gOutputBuffer) {
+        const char* envval = getenv("LDEV");
+        if (envval && envval[0] != '\0') {
+            string errmsg = InitializeOutputDevice(envval);
+            if (! errmsg.empty()) errorExit(errmsg);
         }
     }
 
-    // Poll for PDS if necessary
-    if (!foundPDS) {
-        string myerrmsg;
-        string* errmsgarg = errmsg ? errmsg : &myerrmsg;
-        vector<CKdevice> devices = CKpollForDevices(errmsgarg);
-        for (size_t i = 0; i < devices.size(); ++i) {
-            ckbuffer->AddDevice(devices[i]);
-        }
-        if (! errmsgarg->empty()) {
-            if (errmsg) *errmsg = "Error finding CK devices: " + *errmsg;
-            return false;
-        }
-    }
+    // Check for valid output buffer
+    if (! gOutputBuffer)
+        errorExit("No output device was specified via --dev or the LDEV environment variable.");
 
-    if (ckbuffer->HasError()) {
-        if (errmsg) *errmsg = ckbuffer->GetLastError();
-        return false;
-    }
+    if (gOutputBuffer->HasError())
+        errorExit(gOutputBuffer->GetLastError());
 
-    if (ckbuffer->GetCount() == 0) {
-        if (errmsg) *errmsg = "Not output device specified and couldn't locate one on network.";
-        return false;
-    }
-
-    if (outputMapping == kOutMapRandom)
-        ckbuffer->RandomizeMap();
+    if (gOutputBuffer->GetCount() == 0)
+        errorExit("Empty output device.");
 
     if (gVerbose)
         cout << gOutputBuffer->GetDescription() << endl;
 
-    return true;
-}
-
-
-void Startup()
-{
-    // Sanity testing
-    if (! gOutputBuffer || gOutputBuffer->GetCount() == 0)
-    {
-        cerr << ProgramHelp::GetString(kPHprogram) + ": Missing or empty output display" << endl;
-        cerr << ProgramHelp::GetUsage();
-        exit(1);
-    }
+    // Other random setup
+    if (gOutMap == kOutMapRandom)
+        gOutputBuffer->RandomizeMap();
 
     // Set up time variables
     gStartTime  = gTime = Milliseconds();
@@ -209,14 +254,6 @@ void Startup()
             gFilters.AddFilter(LFilterFadeOut(false,gEndTime - gFade * 1000, gEndTime));
     }
 }
-
-void Startup(int *argc, char** argv, int numPositionalArgs)
-{
-    // Parse the argument list
-    Option::ParseArglist(argc, argv, numPositionalArgs);
-    Startup();
-}
-
 
 void Cleanup(bool eraseAtEnd)
 {

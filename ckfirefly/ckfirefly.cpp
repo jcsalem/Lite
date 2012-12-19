@@ -6,9 +6,9 @@
 #include "cklib.h"
 #include "Lobj.h"
 #include "utilsRandom.h"
+#include "utilsOptions.h"
 #include "LFramework.h"
 #include <iostream>
-#include <getopt.h>
 #include <stdio.h>
 
 // Configuration
@@ -17,51 +17,6 @@ Milli_t     gFrameDuration  = 40;    // duration of each frame of animation (in 
 // Fwd decls
 void SetupNextCycle(LobjOld* lobj, Milli_t startTime);
 
-//----------------------------------------------------------------
-// Argument Parsing
-//----------------------------------------------------------------
-void Usage(const char* progname, csref msg = "")
-    {
-    if (! msg.empty()) cerr << msg << endl;
-    cerr << "Usage: " << progname << L::kStdOptionsArgs << endl;
-    cerr << "Where:" << endl;
-    cerr << L::kStdOptionsArgsDoc << endl;
-    exit (EXIT_FAILURE);
-    }
-
-struct option longOpts[] =
-    {
-        {"help",    no_argument,        0, 'h'},
-        {0,0,0,0}
-    };
-
-
-void ParseArgs(const char* progname, int* argc, char** argv)
-{
-    // Parse stamdard options
-    string errmsg;
-    bool success = L::StdOptionsParse(argc, argv, &errmsg);
-    if (! success)
-        Usage(progname, errmsg);
-
-    // Parse remaining
-    optind = 0; // avoid warning
-
-    while (true)
-    {
-        int optIndex;
-        char c = getopt_long (*argc, argv, "", longOpts, &optIndex);
-        if (c == (char) -1) break; // Done parsing
-        switch (c)
-            {
-            case 'h':
-                Usage(progname);
-            default:
-                cerr << "Internal error - unknown option: " << c << endl;
-                Usage(progname);
-            }
-    }
-}
 //----------------------------------------------------------------
 // Light Testing
 //----------------------------------------------------------------
@@ -248,21 +203,12 @@ void FireflyLoop()
     }
 }
 
+DefProgramHelp(kPHprogram, "ckfirefly");
+DefProgramHelp(kPHusage, "Display a firefly effect");
+
 int main(int argc, char** argv)
 {
-    const char* progname = "ckfirefly";
-    if (argc > 0 && argv != NULL && argv[0] != NULL)
-        progname = argv[0];
-
-    // Parse arguments
-    ParseArgs(progname, &argc, argv);
-
-    // Parse command
-    if (optind != argc)
-    {
-        cerr << "Too many arguments." << endl;
-        Usage(progname);
-    }
+    L::Startup(&argc, argv);
 
     // Test everything
     // TestLights();
