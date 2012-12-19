@@ -26,6 +26,9 @@ typedef const string&       csref;
 // String functions
 inline bool IsWhitespace(char c) {return c == ' ' || c == '\n' || c == '\r' || c == '\t';}
 string TrimWhitespace(csref s);
+string StrToLower(csref s);
+string StrToUpper(csref s);
+
 
 bool StrEQ(csref a, csref b); // Caseless string compare
 bool StrStartsWith(csref str, csref matchString); // Caseless compare to beginning of string

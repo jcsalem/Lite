@@ -28,6 +28,23 @@ string TrimWhitespace(csref str)
     return str.substr(spos, epos - spos + 1);
 }
 
+string StrToLower(csref s) {
+    string r(s);
+
+    for (size_t i = 0; i < s.length(); ++i)
+        r[i] = tolower(s[i]);
+    return r;
+}
+
+string StrToUpper(csref s) {
+    string r(s);
+    for (size_t i = 0; i < s.length(); ++i)
+        r[i] = toupper(s[i]);
+    return r;
+}
+
+
+
 bool StrEQ(csref a, csref b)
 {
     return strcasecmp(a.c_str(), b.c_str()) == 0;

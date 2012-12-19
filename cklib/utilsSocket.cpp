@@ -212,10 +212,10 @@ bool SocketUDPClient::MultiWrite(const Buffer* buffers, int count)
 
     // How many bytes were planned to write and how many were actually written
 	unsigned long totalBytes = 0;
-	long bytesWritten = 0;
 
 
 #ifdef WIN32
+	unsigned long bytesWritten = 0;
 	// Build up the WSABUF list
 	WSABUF bufs[kSocketMaxWriteBuffers];
 
@@ -241,8 +241,8 @@ bool SocketUDPClient::MultiWrite(const Buffer* buffers, int count)
         }
 #else // WIN32
     // Mac and Linux version
-
     // Prepare the buffer
+	long bytesWritten = 0;
     void* bufptr;
     if (count == 1) {
         bufptr = const_cast<void*>(buffers[0].ptr);
