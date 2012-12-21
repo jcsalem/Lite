@@ -157,6 +157,7 @@ CKdevice::CKdevice(csref devstrArg) : iUniverse(0), iPort(1), iCount(50), iLayou
 string CKdevice::GetPath() const
 {
     string r;
+    r += "CK://";
     r += iIP.GetString();
     r += "/";
     r += IntToStr(iPort);
@@ -171,7 +172,6 @@ string CKdevice::GetPath() const
 string CKdevice::GetDescription() const
 {
     string r;
-    r += "PDS:";
     r += GetPath();
     return r;
 }

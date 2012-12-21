@@ -44,13 +44,20 @@ Key_t GetOneChar() {
 // For getch
 #include <curses.h>
 
-void InitializeConsole() {}
+void InitializeConsole() {
+    setlocale(LC_ALL, "");
+    initscr();
+    cbreak();
+    noecho();
+    keypad(stdscr, TRUE);
+}
 Key_t GetOneChar() {
-    char c = getch();
+    int c = getch();
     switch (c) {
-        case 'q': return kQuit;
-        case 'Q': return kQuit;
-        case '\0': return kNop;
+        case 'q':       return kQuit;
+        case 'Q':       return kQuit;
+        case KEY_UP:    return kUp;
+        case KEY_DOWN:  return kDown;
         default:    return kUp;
     }
 }
@@ -140,6 +147,9 @@ void Loop()
             case kNop:
             default:;
         }
+
+        if (L::gVerbose)
+            cout << "L(" << left->pos.x << ", " << left->pos.y << ")  R(" << right ->pos.x << ", " << right->pos.y << ")" << endl;
     }
 }
 

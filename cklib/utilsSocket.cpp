@@ -278,7 +278,7 @@ bool SocketUDPClient::MultiWrite(const Buffer* buffers, int count)
 		return false;
 		}
 
-    if (bytesWritten != totalBytes)
+    if ((unsigned long) bytesWritten != totalBytes)
 		{
 		iLastError = "Partial write.  Only " + IntToStr(bytesWritten) + " out of " + IntToStr(totalBytes);
 		return false;
