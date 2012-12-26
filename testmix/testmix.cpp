@@ -43,14 +43,12 @@ Key_t GetOneChar() {
 #elif defined(OS_LINUX) || defined(OS_MAC)
 // For getch
 #include <curses.h>
+#include "CursesBuffer.h"
 
 void InitializeConsole() {
-    setlocale(LC_ALL, "");
-    initscr();
-    cbreak();
-    noecho();
-    keypad(stdscr, TRUE);
+    MaybeInitializeCurses();
 }
+
 Key_t GetOneChar() {
     int c = getch();
     switch (c) {

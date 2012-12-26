@@ -72,11 +72,31 @@ ProgramHelp::ProgramHelp(HelpType_t helpType, csref help) {
         getProgramHelp()[helpType] = help;
 }
 
+vector<ProgramHelp::PostHelpFcn_t>& getPostHelpFcns() {
+    static vector<ProgramHelp::PostHelpFcn_t> postHelpVector;
+    return postHelpVector;
+}
+
+ProgramHelp::ProgramHelp(PostHelpFcn_t fcn)
+    {
+    getPostHelpFcns().push_back(fcn);
+    }
+
 string ProgramHelp::GetString(HelpType_t helpType) {
+    string r;
     if (helpType >= 0 && helpType < _kPHlimit)
-        return getProgramHelp()[helpType];
+        r = getProgramHelp()[helpType];
     else
-        return "";
+        r = "";
+    // Handle the post help functions
+    if (helpType == kPHpostHelp) {
+        vector<PostHelpFcn_t>& fcns = getPostHelpFcns();
+        for (size_t i = 0; i < fcns.size(); ++i) {
+            if (! r.empty() && r[r.size()-1] != '\n') r += "\n";
+            r += fcns[i]();
+        }
+    }
+    return r;
 }
 
 string phGetOptions() {

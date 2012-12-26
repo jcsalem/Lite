@@ -4,6 +4,7 @@
 #include "utilsTime.h"
 #include "LFramework.h"
 #include <iostream>
+#include <cmath>
 
 //----------------------------------------------------------------------------
 // Options
@@ -40,7 +41,7 @@ DefProgramHelp(kPHhelp, "command is one of:\n"
 int main(int argc, char** argv)
 {
     // Initialize and Parse arguments
-    //L::AllowNegativeRate();
+    L::SetRateMode(L::kRateNonZero);
     L::Startup(&argc, argv, Option::kVariable);
 
     if (argc <= 1) Usage("Missing command");
@@ -136,9 +137,9 @@ int main(int argc, char** argv)
     Milli_t duration = L::gRunTime * 1000;
     if (defaultRotateDelay != 0) {
         Milli_t startTime = Milliseconds();
-        Milli_t sleepBetween = defaultRotateDelay / L::gRate;
+        Milli_t sleepBetween = defaultRotateDelay / fabs(L::gRate);
         while (true) {
-            L::gOutputBuffer->Rotate();
+            L::gOutputBuffer->Rotate(L::gRate < 0 ? -1 : 1);
             L::gOutputBuffer->Update();
             if (L::gOutputBuffer->HasError()) {
                 cerr << "Update error: " << L::gOutputBuffer->GetLastError() << endl;

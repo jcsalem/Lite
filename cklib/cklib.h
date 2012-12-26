@@ -55,8 +55,7 @@ public:
     CKdevice(csref devstr);
     bool        HasError()          const {return !iLastError.empty();}
     string      GetLastError()      const {return iLastError;}
-    string      GetPath()           const;
-    string      GetDescription()    const;
+    string      GetDescriptor()     const;
     bool        Update();
 
     // Specific to this device
@@ -89,7 +88,6 @@ vector<CKinfo>      CKpollForInfo   (string* errmsg = NULL, int timeoutInMS = CK
 vector<CKdevice>    CKpollForDevices(string* errmsg = NULL, int timeoutInMS = CK::kDefaultPollTimeout);
 vector<CKdevice>    CKpollForDevices(const vector<CKinfo>& infos, string* errmsg = NULL);
 
-class CKxmldoc; // fwd decl of generic xml doc
 class CKbuffer : public LBuffer
 {
 public:
@@ -97,17 +95,16 @@ public:
     CKbuffer(const CKdevice& dev) : LBuffer() {AddDevice(dev);}
     virtual ~CKbuffer() {}
     bool    AddDevice(const CKdevice& dev);
-    bool    AddDevice(csref desc); // May add multiple devices if desc is a comma-separated list of devices
 
     virtual bool    HasError()       const;
     virtual string  GetLastError()   const;
-    virtual string  GetDescription() const;
+    virtual string  GetDescriptor()  const;
     virtual bool    Update();
     virtual bool    PortSync();
 
     // Alternative creation methods
-    static bool    CreateFromArglist(CKbuffer* buffer, int* argc, char** argv);
-    static bool    CreateFromXML(CKbuffer* buffer, const CKxmldoc& xmldoc);
+//    static bool    CreateFromArglist(CKbuffer* buffer, int* argc, char** argv);
+//    static bool    CreateFromXML(CKbuffer* buffer, const CKxmldoc& xmldoc);
 
 private:
     typedef vector<CKdevice>::const_iterator  DevIter_t;
@@ -116,5 +113,8 @@ private:
     CKbuffer(const CKbuffer&);
     CKbuffer& operator=(const CKbuffer&);
 };
+
+// This function is defined only so LFramework can reference it and force it to be linked in. Otherwise, CKBuffer is never linked in!
+void ForceLinkCK();
 
 #endif // __CKLIB_H

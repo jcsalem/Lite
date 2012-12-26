@@ -10,9 +10,15 @@
 class LBuffer
     {
   public:
-    void        Alloc(int count); // erases the old map
+    // Creating new LBuffers
+    // The descriptor is of the format:  <type>:<details> where type defines the type of the LBuffer. Colon is optional if there are reasonable defaults
+    static LBuffer* Create(csref descriptor, string* errmsg = NULL);
+
+    // Properties
     int         GetCount(void)      const {return iBuffer.size();}
     bool        InBounds(int coord) const {return coord >= 0 && coord < (int) iBuffer.size();}
+
+    // Reads
     RGBColor    GetRGB(int coord)   const {if (InBounds(coord)) return GetRawRGB(MapCoord(coord)); else return BLACK;}
 
     // Writes
@@ -25,7 +31,7 @@ class LBuffer
     // Mapping functions
     void RandomizeMap();
     void ClearMap();  // 1 to 1 mapping
-    bool SetMap(const vector<int>& lmap); // mapping from coordinate to the light's index on the device
+    bool SetMap(const vector<int>& lmap); // mapping from an integer coordinate to the light's index in the buffer
 
     // Filters
     //void AttachFilter(const LFilter& filter); // adds a processing filter
@@ -37,8 +43,8 @@ class LBuffer
     // Things to be overridden by the specific output class
     virtual bool    HasError()          const {return !iLastError.empty();}
     virtual string  GetLastError()      const {return iLastError;}
-    virtual string  GetPath()           const; // Returns the path describing the device
-    virtual string  GetDescription()    const; // A description of the device
+    virtual string  GetDescriptor()     const = 0; // Returns a descriptor of the LBuffer that can be used to recreate the exact LBuffer
+    virtual string  GetDescription()    const; // returns a detailed description of the CKbuffer
     virtual bool    Update() = 0;              // Updates the actual device based on the buffer contents.  Must be supplied for all derived types.
 
     typedef vector<RGBColor>::const_iterator const_iterator;
@@ -52,11 +58,13 @@ class LBuffer
 
   protected:
     LBuffer(int count = 0) : iBuffer(count) {}
+
     vector<RGBColor>    iBuffer;
     string              iLastError;
     vector<int>         iMap;
 
-    int MapCoord(int coord) const   {if (iMap.size() == 0) return coord; else return iMap[coord];}
+    void        Alloc(int count); // erases the old buffer and map
+    int         MapCoord(int coord) const   {if (iMap.size() == 0) return coord; else return iMap[coord];}
     // Functions for writing directly to the buffer
     void        SetRawRGB(int idx, const RGBColor& rgb)   {iBuffer[idx] = rgb;}
     RGBColor    GetRawRGB(int idx)     const {return iBuffer[idx];}
@@ -65,5 +73,22 @@ class LBuffer
     LBuffer(const LBuffer&);
     LBuffer& operator=(const LBuffer&);
     };
+
+// Used to define the derived classes that LBuffer::Create knows how to make
+class LBufferType {
+    friend class LBuffer;
+public:
+    typedef LBuffer* (*CreateFcn_t) (csref descriptorArgString, string* errmsg);
+    LBufferType(csref name, CreateFcn_t fcn, csref formatString, csref docString);
+    static string GetDocumentation();
+private:
+    string      iName;
+    CreateFcn_t iFcn;
+    string      iFormatString;
+    string      iDocString;
+};
+
+#define DEFINE_LBUFFER_TYPE(name, fcn, formatString, docString) \
+  LBufferType LBufferType_ ## name(#name, fcn, formatString, docString)
 
 #endif // _LBUFFER_H

@@ -41,6 +41,8 @@ typedef enum {kPHprogram=0,kPHusage=1,kPHadditionalArgs=2,kPHhelp=3,kPHpostHelp=
 class ProgramHelp {
 public:
     ProgramHelp(HelpType_t helpType, csref help);
+    typedef string (*PostHelpFcn_t)();
+    ProgramHelp(PostHelpFcn_t fcn);  // Defines a function that can be used to generate
     static string GetString(HelpType_t helpType);
     static string GetUsage(bool showOptions = false);
 };
