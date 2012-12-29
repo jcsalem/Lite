@@ -8,17 +8,6 @@
 #include <iostream>
 
 namespace L {
-//---------------------------------------------------------------
-// Usage doc
-//---------------------------------------------------------------
-const char* kStdOptionsArgs = " --pds pdsinfo1 [--pds pdsinfo2 ...] [--verbose] [--time duration] [--rate rateval] [--color colorinfo] [--fade fadeduration]  [--outmap random|normal]";
-const char* kStdOptionsArgsDoc =
-    "  duration is the running time in seconds. By default, animation continues forever.\n"
-    "  rateval is the relative speed of the effect. Default is 1.0\n"
-    "  colorinfo is description of a random mode.\n"
-    "  fadeduration is the time to fade in and out in seconds (default is 1.0)\n"
-    "  outmap specifies if any special mapping is to be done."
-    ;
 
 //---------------------------------------------------------------
 // Global variables
@@ -48,57 +37,28 @@ UninitAtExit _gUninitAtExit;
 
 LBuffer*    gOutputBuffer   = NULL;
 
-string InitializeOneDevice(csref devstr) {
-    // TO DO: Add support for comma separated values and autock
-    if (! StrStartsWith(devstr, "ck://"))
-        return "Unknown output device: " + devstr + " (For a ColorKinetics PDS device start with CK://)";
-    CKbuffer *ckbuffer = dynamic_cast<CKbuffer*>(gOutputBuffer);
-    if (gOutputBuffer == NULL) gOutputBuffer = ckbuffer = new CKbuffer();
-    if (! ckbuffer->AddDevice(devstr.substr(5)))
-        return ckbuffer->GetLastError();
-    // All good
-    return "";
-    }
-
-string InitializeOutputDevice(csref devstrarg) {
+string DeviceCallback(csref name, csref val) {
     string errmsg;
-    string devstr = TrimWhitespace(devstrarg);
-    if (StrEQ(devstr, "autock")) {
-        vector<CKdevice> devices = CKpollForDevices(&errmsg);
-        CKbuffer *ckbuffer = dynamic_cast<CKbuffer*>(gOutputBuffer);
-        if (! gOutputBuffer) gOutputBuffer = ckbuffer = new CKbuffer();
-        for (size_t i = 0; i < devices.size(); ++i)
-            ckbuffer->AddDevice(devices[i]);
-        if (! errmsg.empty())
-            errmsg = "Error discovering CK devices: " + errmsg;
-        }
-    else {
-        while (! devstr.empty()) {
-            size_t commapos = devstr.find(',');
-            string onedev = TrimWhitespace(devstr.substr(0, commapos));
-            if (commapos == string::npos)
-                devstr = "";
-            else
-                devstr = devstr.substr(commapos+1);
-            errmsg = InitializeOneDevice(onedev);
-            if (! errmsg.empty()) break;
-            }
-    }
+    gOutputBuffer = LBuffer::Create(val, &errmsg);
+    if (! gOutputBuffer && errmsg.empty()) errmsg = "Error creating output buffer";
     return errmsg;
 }
 
-string DeviceCallback(csref name, csref val) {
-    return InitializeOutputDevice(val);
+DefOption(dev, DeviceCallback, "deviceInfo", "is a device descriptor beginning with the device type name (see below)", NULL);
+
+string GetDevHelp() {
+    string r = LBufferType::GetDocumentation();
+    r = StrReplace(r, "\n", "\n  ");
+
+    r = "If --dev is not specified, the environment variable LDEV is checked.\n"
+        "A device descriptor begins with a device type followed by a colon and the device's parameters.\n"
+        "The supported device types are: \n  "
+        + r;
+    return r;
 }
 
-DefOption(dev, DeviceCallback, "deviceURLs", "is a comma separated list of URLs describing the output devices", NULL);
+ProgramHelp PHDevHelp(GetDevHelp);
 
-DefProgramHelp(kPHpostHelp, "If --dev is not specified, the environment variable LDEV is checked.\n"
-                "A deviceURL begins with a protocol name.  Supported protocols and their URL format are:\n"
-                "   ck://ipaddress/port(size) A ColorKinetics device. Port can be followed by 'r' to reverse the port mapping\n"
-                "         For example, ck://172.24.22.51/1  or  ck://172.24.22.51/2r(50).\n"
-                "   autock  Automatically configures all CK devices on the local area network."
-                );
 
 //---------------------------------------------------------------
 // Other command line options
@@ -159,8 +119,8 @@ string TimeCallback(csref name, csref val) {
 DefOption(time, TimeCallback, "duration", "is the running time in seconds. By default, animation continues forever.", NULL);
 
 //------------
-float gRate           = 1.0;
-bool gAllowNegativeRate = false;
+float gRate     = 1.0;
+bool gRateMode  = kRatePositive;
 
 string RateDefaultCallback(csref name) {
     return FltToStr(gRate);
@@ -170,13 +130,20 @@ string RateCallback(csref name, csref val) {
     string errmsg;
     if (! StrToFlt(val, &gRate))
         return "The --" + name + " parameter, " + val + ", was not a number.";
-    if (gRate <= 0 && !gAllowNegativeRate)
-        return "--" + name + " must be positive.";
+    switch (gRateMode) {
+        case kRatePositive:
+            if (gRate > 0)  break;
+            else return "--" + name + " must be positive.";
+        case kRateNonZero:
+            if (gRate != 0)  break;
+            else return "--" + name + " must be non-zero.";
+        case kRateAny: break;
+    }
     return "";
 }
 
-void AllowNegativeRate() {
-    gAllowNegativeRate = true;
+void SetRateMode(RateMode_t mode) {
+    gRateMode = mode;
 }
 
 DefOption(rate, RateCallback, "rateval", " is the relative speed of the effect.", RateDefaultCallback);
@@ -219,8 +186,9 @@ void Startup(int *argc, char** argv, int numPositionalArgs) {
     if (! gOutputBuffer) {
         const char* envval = getenv("LDEV");
         if (envval && envval[0] != '\0') {
-            string errmsg = InitializeOutputDevice(envval);
-            if (! errmsg.empty()) errorExit(errmsg);
+            string errmsg;
+            gOutputBuffer = LBuffer::Create(envval, &errmsg);
+            if (!gOutputBuffer) errorExit(errmsg);
         }
     }
 
@@ -289,4 +257,5 @@ void Run(Lgroup& objGroup, L::Callback_t fcn)
 }
 
 
-}; // namespace CK
+}; // namespace L
+

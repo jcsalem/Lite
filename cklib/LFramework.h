@@ -20,7 +20,8 @@ extern float        gRunTime;
 // See color.h for the latest random color definitions
 // --rate
 extern float        gRate;
-void AllowNegativeRate(); //Call this to allow negative values
+typedef enum {kRatePositive = 0, kRateNonZero = 1, kRateAny = 2} RateMode_t;    // Default is kRatePositive
+void SetRateMode(RateMode_t mode); //Call this to allow different types of values for --rate
 // --fade
 extern float        gFade;  // Fade in/out time in seconds
 // --outmap

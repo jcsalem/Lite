@@ -41,7 +41,7 @@ int main(int argc, char** argv)
         vector<CKdevice> devices = CKpollForDevices(infos, &errmsg);
         cout << "Devices: " << endl;
         for (size_t i = 0; i < devices.size(); ++i) {
-            cout << " " << devices[i].GetDescription() << endl;
+            cout << " " << devices[i].GetDescriptor() << endl;
         }
         if (! errmsg.empty()) {
             cerr << "CKpollForDevices: " << errmsg << endl;
