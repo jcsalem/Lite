@@ -2,17 +2,24 @@
   Sparkfun documentation:
   For the data pins, please pay attention to the arrow printed on the strip. You will need to connect to
   the end that is the begining of the arrows (data connection)--->
-  
+
+  New Connectors (4-pin plus 2-pin):
+  Red = 5v
+  Blue = CKI
+  Green = SDI
+  Yellow = GND
+
   If you have a 4-pin connection:
   Blue = 5V
   Red = SDI
   Green = CKI
   Black = GND
-  
+
   If you have a split 5-pin connection:
   2-pin Red+Black = 5V/GND
   Green = CKI
   Red = SDI
+
  */
 #include "WProgram.h"
 #include "Strip.h"
@@ -56,13 +63,13 @@ StripColor RGBToStrip(const RGBColor& rgb)
   {
   StripColor scolor;
   int cval;
- 
+
   if (rgb.r <= MIN_CVAL) cval = 0;
   else {
     if (rgb.r < MAX_CVAL) cval = rgb.r;
     else cval = 0xFF;
-  }    
-#ifdef USE_GAMMA  
+  }
+#ifdef USE_GAMMA
   cval = gGamma[cval];
 #endif
   scolor = cval;
@@ -70,8 +77,8 @@ StripColor RGBToStrip(const RGBColor& rgb)
   else {
     if (rgb.g < MAX_CVAL) cval = rgb.g;
     else cval = 0xFF;
-  }    
-#ifdef USE_GAMMA  
+  }
+#ifdef USE_GAMMA
   cval = gGamma[cval];
 #endif
   scolor = (scolor << 8) | cval;
@@ -79,15 +86,15 @@ StripColor RGBToStrip(const RGBColor& rgb)
   else {
     if (rgb.b < MAX_CVAL) cval = rgb.b;
     else cval = 0xFF;
-  }    
-#ifdef USE_GAMMA  
+  }
+#ifdef USE_GAMMA
   cval = gGamma[cval];
 #endif
   scolor = (scolor << 8) | cval;
   return scolor;
-}    
+}
 
-// Std setup  
+// Std setup
 void StripInit(void)
   {
   pinMode(SDI, OUTPUT);
@@ -100,7 +107,7 @@ void StripInit(void)
   StripUpdate();
   }
 
-// Utilities   
+// Utilities
 void StripClear (void) {
   for (int i = 0; i < STRIP_LENGTH; ++i)
     gStripBuffer[i] = 0;
@@ -125,12 +132,12 @@ void StripRender(const Buffer& buffer) {
   short num = min(STRIP_LENGTH, buffer.Width);
   for (int i = 0; i < num; ++i)
     StripSet(i, buffer.colors[i][0]);
-}    
+}
 
 //Takes the current strip color array and pushes it out
 void StripUpdate (void) {
   //Each LED requires 24 bits of data
-  //MSB: R7, R6, R5..., G7, G6..., B7, B6... B0 
+  //MSB: R7, R6, R5..., G7, G6..., B7, B6... B0
   //Once the 24 bits have been delivered, the IC immediately relays these bits to its neighbor
   //Pulling the clock low for 500us or more causes the IC to post the data.
 
@@ -139,17 +146,17 @@ void StripUpdate (void) {
 
     for(byte color_bit = 23 ; color_bit != 255 ; color_bit--) {
       //Feed color bit 23 first (red data MSB)
-      
+
       digitalWrite(CKI, LOW); //Only change data when clock is low
-      
+
       long mask = 1L << color_bit;
       //The 1'L' forces the 1 to start as a 32 bit number, otherwise it defaults to 16-bit.
-      
-      if(this_led_color & mask) 
+
+      if(this_led_color & mask)
         digitalWrite(SDI, HIGH);
       else
         digitalWrite(SDI, LOW);
-  
+
       digitalWrite(CKI, HIGH); //Data is latched when clock goes high
     }
   }
