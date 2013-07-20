@@ -122,7 +122,9 @@ string LBufferType::GetDocumentation() {
 //-----------------------------------------------------------------------------------------------------
 #include "cklib.h"
 #include "CursesBuffer.h"
+#include "StripBuffer.h"
 void ForceLinking() {
     ForceLinkCK();
     ForceLinkCurses(); // This actually does nothing on Windows
+    ForceLinkStrip(); // This actually does nothing on Windows
 };

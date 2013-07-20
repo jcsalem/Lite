@@ -43,8 +43,6 @@ string StrToUpper(csref s) {
     return r;
 }
 
-
-
 bool StrEQ(csref a, csref b)
 {
     return strcasecmp(a.c_str(), b.c_str()) == 0;
@@ -55,6 +53,32 @@ bool StrStartsWith(csref str, csref matchString)
     if (matchString.empty()) return true;
     if (matchString.length() > str.length()) return false;
     return strncasecmp(str.c_str(), matchString.c_str(), matchString.length()) == 0;
+}
+
+size_t StrSearch(csref str, csref matchString, size_t start)
+	{
+	size_t	slen	= str.length();
+	size_t	wlen	= matchString.length();
+	if (wlen == 0) return 0;
+
+	const char	w0u		= toupper(matchString[0]);
+	const char	w0l		= tolower(matchString[0]);
+	const char*	sptr	= str.c_str();
+	const char*	endptr	= sptr + slen - wlen;
+	sptr += start;
+
+	while (sptr <= endptr)
+		{
+		char sc = *sptr++;
+
+		if (sc == w0l || sc == w0u)
+			// Possible match
+			{
+			if (StrStartsWith(sptr, matchString.c_str()+1))
+				return sptr - 1 - str.c_str();
+			}
+		}
+	return string::npos;
 }
 
 string StrReplace(csref str, csref match, csref subst) {
