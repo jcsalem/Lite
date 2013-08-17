@@ -18,6 +18,7 @@ namespace CK
     typedef enum {kNormal, kReverse} Layout_t;
     typedef enum {kNull = 0, kSerial = 1, kChromasic = 2, kChromasicV2 = 3} PortType_t;
     string PortTypeToString(PortType_t type);
+    const int kAnyUniverse = -1;  // This means to output to any universe on the device
     const int kDefaultPollTimeout =  250; // default timeout in MS
 };
 
@@ -38,7 +39,7 @@ const int kDefaultKiNetVersion = 2; // This is the default KiNet version to comm
 class CKdevice
 {
 public:
-    CKdevice(const IPAddr& ip, int universe = 0, int port = 1, int count = 50) :
+    CKdevice(const IPAddr& ip, int universe = CK::kAnyUniverse, int port = 1, int count = 50) :
         iIP(ip), iUniverse(universe), iPort(port), iCount(count), iKiNetVersion(kDefaultKiNetVersion), iLayout(CK::kNormal) {}
     CKdevice(csref devstr);
     bool        HasError()          const {return !iLastError.empty();}

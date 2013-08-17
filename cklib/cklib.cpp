@@ -144,7 +144,7 @@ string CK::PortTypeToString(PortType_t type) {
 // CKdevice
 //---------------------------------------------------------------------
 
-CKdevice::CKdevice(csref devstrArg) : iUniverse(0), iPort(1), iCount(50), iKiNetVersion(kDefaultKiNetVersion), iLayout(CK::kNormal)
+CKdevice::CKdevice(csref devstrArg) : iUniverse(CK::kAnyUniverse), iPort(1), iCount(50), iKiNetVersion(kDefaultKiNetVersion), iLayout(CK::kNormal)
 {
     string devstr = TrimWhitespace(devstrArg);
     size_t len = devstr.length();
@@ -175,8 +175,13 @@ CKdevice::CKdevice(csref devstrArg) : iUniverse(0), iPort(1), iCount(50), iKiNet
 
     // Port
     size_t atpos = devstr.find('/');
-    if (atpos != string::npos)
+    if (atpos == string::npos)
     {
+        // No port number, this is a v1 device
+        iKiNetVersion = 1;
+    } else
+    {
+        iKiNetVersion = 2;
         if (! isdigit(devstr[atpos+1]))
         {
             iLastError = "Device port must be a number";
@@ -198,7 +203,6 @@ CKdevice::CKdevice(csref devstrArg) : iUniverse(0), iPort(1), iCount(50), iKiNet
         iLastError = "The IP address was invalid " + devstr;
         return;
     }
-    UpdateKiNetVersion();
 }
 
 string CKdevice::GetDescriptor() const
@@ -313,8 +317,7 @@ void UpdateOneCKv1(CKdevice& device, vector<RGBColor>::const_iterator bufIter)
         *(dataPtr+i) = 0;
 
     *header = KiNETdmxOut(); // Initialize header
-    //header->universe = device.GetUniverse();
-    //cout << "Port is " << device.GetPort() << endl;
+    header->universe = device.GetUniverse();
     if (! device.Write(outbuf, hdrLen+paddedLen))
       {
        cerr << "Update failed on " << device.GetIP().GetString() << ": " << device.GetLastError() << endl;
@@ -454,8 +457,8 @@ LBuffer* CKbufferAutoCreate(csref descriptorArg, string* errmsg) {
 
 // Define the creation functions
 DEFINE_LBUFFER_TYPE(ck, CKbufferCreate, "CK:ipaddr/port(size)[,...]",
-        "Comma separated list of ColorKinetics devices. Append 'r' to port to reverse order.\n"
-        "  Examples: ck:172.16.11.23/1  or  ck:10.5.4.3/1(72),10.5.4.3/2r(72)");
+        "Comma separated list of ColorKinetics devices. If port is missing, assumes a KiNet V1 device.\n"
+        "  Examples: ck:172.16.11.23/1  or  ck:10.5.4.3/1(72),10.5.4.3/2r(72) or ck:172.16.11.54(21)");
 
 DEFINE_LBUFFER_TYPE(ckauto, CKbufferAutoCreate, "CKAUTO", "Creates a display using all of the local CK devices");
 
@@ -515,8 +518,7 @@ bool GetDevicesForInfoV1(const CKinfo& info, vector<CKdevice>* devices, string* 
     int universe = info.universe;
     // Write the GetCount request
     SocketUDPClient sock(ipaddr, KiNETudpPort);
-    KiNETgetCount1 getCountPacket;
-    getCountPacket.ipaddr = info.ipaddr;
+    KiNETblinkScan1 getCountPacket;
     sock.Write((char*) &getCountPacket, getCountPacket.GetSize());
     if (sock.HasError()) {
         if (errmsg) *errmsg = "Error writing CK getCount1 packet: " + sock.GetLastError();
@@ -526,8 +528,8 @@ bool GetDevicesForInfoV1(const CKinfo& info, vector<CKdevice>* devices, string* 
 
     // Parse the results
     if (sock.HasData(kDefaultCountTimeout) && sock.Read(buffer, buflen, &bytesRead)) {
-        if (bytesRead >= KiNETgetCount1Reply::GetSize()) {
-            KiNETgetCount1Reply* replyPtr = (KiNETgetCount1Reply*) buffer;
+        if (bytesRead >= KiNETblinkScan1CAReply::GetSize()) {
+            KiNETblinkScan1CAReply* replyPtr = (KiNETblinkScan1CAReply*) buffer;
             int count = 0;
             for (int i = 0; i < 4; ++i)
                 count += replyPtr->counts[i];
@@ -539,7 +541,7 @@ bool GetDevicesForInfoV1(const CKinfo& info, vector<CKdevice>* devices, string* 
         }
         else {
             if (errmsg)
-                *errmsg = "Error: CK getCount1Reply packet was too short. Got " + IntToStr(bytesRead) + " bytes, but was expecting at least " + IntToStr(KiNETgetCount1Reply::GetSize()) + " bytes";
+                *errmsg = "Error: CK getCount1Reply packet was too short. Got " + IntToStr(bytesRead) + " bytes, but was expecting at least " + IntToStr(KiNETblinkScan1Reply::GetSize()) + " bytes";
             sock.Close();
             return false;
         }
@@ -563,24 +565,24 @@ bool GetDevicesForInfoV2(const CKinfo& info, vector<CKdevice>* devices, string* 
     IPAddr ipaddr(info.ipaddr);
     // Write the GetCount request
     SocketUDPClient sock(ipaddr, KiNETudpPort);
-    KiNETgetCount2 getCountPacket;
+    KiNETblinkScan2 getCountPacket;
     sock.Write((char*) &getCountPacket, getCountPacket.GetSize());
     if (sock.HasError()) {
-        if (errmsg) *errmsg = "Error writing CK getCount2 packet: " + sock.GetLastError();
+        if (errmsg) *errmsg = "Error writing CK blinkScan2 packet: " + sock.GetLastError();
         sock.Close();
         return false;
     }
 
     // Parse the results
     while (sock.HasData(kDefaultCountTimeout) && sock.Read(buffer, buflen, &bytesRead)) {
-        //cout << "BytesRead=" << bytesRead << "  size " << KiNETgetCount2Reply::GetSize() << endl;
-        if (bytesRead >= KiNETgetCount2Reply::GetSize()) {
-            KiNETgetCount2Reply* replyPtr = (KiNETgetCount2Reply*) buffer;
-            if (replyPtr->replyType == KiNETgetCount2Reply::kEnd) break; // Done reading
-            if (replyPtr->replyType == KiNETgetCount2Reply::kData) {
+        //cout << "BytesRead=" << bytesRead << "  size " << KiNETblinkScan2Reply::GetSize() << endl;
+        if (bytesRead >= KiNETblinkScan2Reply::GetSize()) {
+            KiNETblinkScan2Reply* replyPtr = (KiNETblinkScan2Reply*) buffer;
+            if (replyPtr->replyType == KiNETblinkScan2Reply::kEnd) break; // Done reading
+            if (replyPtr->replyType == KiNETblinkScan2Reply::kData) {
                 // We have the count data
-                KiNETgetCount2Data* countDataPtr = (KiNETgetCount2Data*) (buffer + KiNETgetCount2Reply::GetSize());
-                KiNETgetCount2Data* countDataEnd = (KiNETgetCount2Data*) (buffer + bytesRead);
+                KiNETblinkScan2Data* countDataPtr = (KiNETblinkScan2Data*) (buffer + KiNETblinkScan2Reply::GetSize());
+                KiNETblinkScan2Data* countDataEnd = (KiNETblinkScan2Data*) (buffer + bytesRead);
                 while (countDataPtr < countDataEnd) {
                     int universe = info.universe;
                     int port = countDataPtr->portnum;
@@ -597,7 +599,7 @@ bool GetDevicesForInfoV2(const CKinfo& info, vector<CKdevice>* devices, string* 
         }
     }
     if (sock.HasError()) {
-        if (errmsg) *errmsg = "Error reading CK getCount2Reply packet: " + sock.GetLastError();
+        if (errmsg) *errmsg = "Error reading CK blinkScan2Reply packet: " + sock.GetLastError();
         sock.Close();
         return false;
     }

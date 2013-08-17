@@ -2,6 +2,7 @@
 // Sources of info on the KiNet protocol:
 //   http://code.google.com/p/open-lighting/
 //   kinet.py
+//   http://nesl.ee.ucla.edu/fw/chenni/Chenni_desktop/Documents/lights/ColorBlast_v1/lightDiscovery.py
 
 #ifndef _KINET_H_
 #define _KINET_H_
@@ -12,16 +13,14 @@
 // Protocol is apparently little endian (even though network byte order is typically big endian).
 // This code assume little endian and isn't endian-aware. So it will work on x86 and default ARM architectures.
 
-const uint16 KiNETudpPort   = 6038;
+const uint16 KiNETudpPort       = 6038;
 
-const uint32 KiNETmagic     = 0x4adc0104;
-const uint32 KiNETmagic2    = 0xdeadbeef;
-//#define KINET_MORE_MAGIC			0xdeadbeef
-//#define KINET_DEEP_MAGIC			0xc001d00d
-//#define KINET_MAGIC_HASH			0x69000420
-const uint16 KiNETversion   = 0x0001;  // Some commands are 0x0002
+const uint32 KiNETmagic         = 0x4adc0104;
+const uint32 KiNETmagic2        = 0xdeadbeef;
+const uint32 KiNETanyUniverse   = 0xFFFFFFFF; // Used to play a command on any universe
+const uint16 KiNETversion       = 0x0001;  // Some commands are 0x0002
 
-const uint16 KiNetFlagSendAcks = 0x0001;  // This is the only flag I know.
+const uint16 KiNetFlagSendAcks = 0x0001;  // This is the only flag I know and it's not supported by all commands.
 
 // KiNet packet types
 typedef enum {
@@ -30,16 +29,18 @@ typedef enum {
   KTYPE_SET_IP              = 0x0003,   // KiNet v1 and v2
   KTYPE_SET_UNIVERSE        = 0x0005,   // KiNet v1 and v2
   KTYPE_SET_NAME            = 0x0006,   // KiNet v1 and v2
+  //KTYPE_??                = 0x0008,   // Some kind of Ack or Keepalive?  Only seen from v1 devices and every 90 seconds
   KTYPE_PORT_INFO           = 0x000A,   // KiNet v2 only
   KTYPE_PORT_INFO_REPLY     = 0x000B,
   KTYPE_DMXOUT              = 0x0101,   // KiNet v1 (limitations with v2)
   KTYPE_PORTOUT             = 0x0108,   // KiNet v2 only
   KTYPE_PORTOUT_SYNC        = 0x0109,   // KiNet v2 only
-  KTYPE_GET_COUNT1          = 0x0201,   // seems to be a discovery packet (KiNet v1 only?)
+  KTYPE_BLINK_SCAN1         = 0x0201,   // Scans the attached fixtures (KiNet v1 only?)
+  KTYPE_BLINK_SCAN1_REPLY   = 0x0202,   // Returned by non Chromasic devices
   // KTYPE_??               = 0x0203,   // get dmx address?
-  KTYPE_GET_COUNT1_REPLY    = 0x0206,   // ?? (KiNet v1 only?)
-  KTYPE_GET_COUNT2          = 0x0207,   // KiNet v2 only
-  KTYPE_GET_COUNT2_REPLY    = 0x0208    // Returns the number of ports and lights on each port (KiNet v2 only)
+  KTYPE_BLINK_SCAN1_CAREPLY = 0x0206,   // Returned by Chromasic devices (KiNet v1 only)
+  KTYPE_BLINK_SCAN2          = 0x0207,   // KiNet v2 only
+  KTYPE_BLINK_SCAN2_REPLY    = 0x0208    // Returns the number of ports and lights on each port (KiNet v2 only)
 } KTYPE_t;
 
 struct KiNETheader
@@ -111,9 +112,9 @@ struct KiNETsetName : public KiNETheader
 // Poll for what KiNet power supplies are out there
 struct KiNETportInfo : public KiNETheader
     {
-    KiNETportInfo() : KiNETheader(KTYPE_PORT_INFO) {zero = 0;}
+    KiNETportInfo() : KiNETheader(KTYPE_PORT_INFO) {padding = 0;}
     static int GetSize() {return sizeof(KiNETportInfo);}
-    uint32  zero; // Not sure if this is used for anything
+    uint32  padding; // Not sure if this is used for anything
     };
 
 // The reply to the above discovery packet
@@ -135,9 +136,9 @@ struct KiNETportInfoData {
 // Normal PortOut command - Includes length
 struct KiNETportOut : public KiNETheader
     {
-    KiNETportOut() : KiNETheader(KTYPE_PORTOUT) {universe = 0; port = 1; padding = 0; flags = 0; len = 0; startcode = 0;}
+    KiNETportOut() : KiNETheader(KTYPE_PORTOUT) {universe = KiNETanyUniverse; port = 1; padding = 0; flags = 0; len = 0; startcode = 0;}
     static int GetSize() {return sizeof(KiNETportOut);}
-    uint32  universe;   // zero?
+    uint32  universe;   //
     uint8   port;       // Port number.  Generally starts at 1.
     uint8   padding;    // zero
     uint16  flags;
@@ -157,51 +158,58 @@ struct KiNETportOutSync : public KiNETheader
     };
 
 // V1 version PortOut command - send this header followed by a fixed length string of bytes (512 x 3)
-// Note that there is some disagreement on these headers.  Kinet.py has them somewhat different and in a form that doesn't make sense to me.
-// Don't know how the universe is specified.
-// For V1 gear, both ports are combined as one
+// Note that kinet.py has them wrong.
+// For V1 gear, both ports are combined as one. I don't know what the supposed port argument is supposed to do.
 struct KiNETdmxOut : public KiNETheader
     {
-    KiNETdmxOut() : KiNETheader(KTYPE_DMXOUT) {padding = 0; flags = 0; timer = 0xFFFFFFFF; dmxStartCode = 0;}
-    static int GetSize(); // Not simple since it needs to remove the extra C++ padding
-    uint16  padding;   // Not sure how this is used. It doesn't seem to really be a port number?
-    uint16  flags;      // zero
-    uint32  timer;      // Not sure how this is used.  Examples have it at 0 or -1
+    KiNETdmxOut() : KiNETheader(KTYPE_DMXOUT) {unknown=0; flags = 0; timer = 0; universe = KiNETanyUniverse; dmxStartCode = 0;}
+    static int GetSize(); // Not simple since it needs to remove the extra C++ padding around the dmxStartCode
+    uint8   unknown;    // This is supposed to be the port, but I can't see that anything pays attention to it.
+    uint8   flags;
+    uint16  timer;
+    uint32  universe;
     uint8   dmxStartCode;
     };
 
 // Poll for what KiNet devices are out there
-struct KiNETgetCount1 : public KiNETheader
+struct KiNETblinkScan1 : public KiNETheader
     {
-    KiNETgetCount1() : KiNETheader(KTYPE_GET_COUNT1) {ipaddr = 0; unknown1 = 0x728D; unknown2 = 0x1001;}
-    static int GetSize() {return sizeof(KiNETgetCount1);}
-    uint32  ipaddr;  // Don't know if this is required to be set
-    uint16  unknown1;
-    uint16  unknown2; // This could be a receive buffer length?
+    KiNETblinkScan1() : KiNETheader(KTYPE_BLINK_SCAN1) {padding = 0;}
+    static int GetSize() {return sizeof(KiNETblinkScan1);}
+    uint32  padding;
     };
 
 // The reply to the above poll packet (this is sent by the PDS)
-struct KiNETgetCount1Reply : public KiNETheader
+struct KiNETblinkScan1Reply : public KiNETheader
 {
-    KiNETgetCount1Reply() : KiNETheader(KTYPE_GET_COUNT1_REPLY) {}
-    static int GetSize() {return sizeof(KiNETgetCount1Reply);}
+    KiNETblinkScan1Reply() : KiNETheader(KTYPE_BLINK_SCAN1_REPLY) {}
+    static int GetSize() {return sizeof(KiNETblinkScan1Reply);}
+    uint32   serial;  // serial number of the fixture
+};
+
+// The reply to the above poll packet (this is sent by CA PDSes)
+struct KiNETblinkScan1CAReply : public KiNETheader
+{
+    KiNETblinkScan1CAReply() : KiNETheader(KTYPE_BLINK_SCAN1_CAREPLY) {}
+    static int GetSize() {return sizeof(KiNETblinkScan1CAReply);}
     uint8   counts[4];  // count of nodes on ports 1-4
 };
 
 // Poll for what KiNet devices are out there
-struct KiNETgetCount2 : public KiNETheader
+struct KiNETblinkScan2 : public KiNETheader
     {
-    KiNETgetCount2() : KiNETheader(KTYPE_GET_COUNT2) {zero = 0; unknown = 0x1001;}
-    static int GetSize() {return sizeof(KiNETgetCount2);}
-    uint16  zero;
-    uint16  unknown; // This could be a receive buffer length?
+    KiNETblinkScan2() : KiNETheader(KTYPE_BLINK_SCAN2) {port = 0; type = 0; padding = 0;}
+    static int GetSize() {return sizeof(KiNETblinkScan2);}
+    uint16  port;       // port to scan. 0 to scan all. Note that no other values seem to work
+    uint16  type;       // no idea what this is.
+    uint16  padding;
     };
 
 // The reply to the above poll packet (this is sent by the PDS)
-struct KiNETgetCount2Reply : public KiNETheader
+struct KiNETblinkScan2Reply : public KiNETheader
 {
-    KiNETgetCount2Reply() : KiNETheader(KTYPE_GET_COUNT2_REPLY) {char* ptr = (char*) this + sizeof(KiNETheader); size_t len = sizeof(KiNETdiscoverReply) - sizeof(KiNETheader); memset(ptr, 0, len);}
-    static int GetSize() {return sizeof(KiNETgetCount2Reply);}
+    KiNETblinkScan2Reply() : KiNETheader(KTYPE_BLINK_SCAN2_REPLY) {char* ptr = (char*) this + sizeof(KiNETheader); size_t len = sizeof(KiNETdiscoverReply) - sizeof(KiNETheader); memset(ptr, 0, len);}
+    static int GetSize() {return sizeof(KiNETblinkScan2Reply);}
     typedef enum {kStart = 0x0101, kEnd = 0x0001, kData = 0x0102 } replyType_t;
     uint16  replyType;
     uint16  zero;
@@ -209,9 +217,9 @@ struct KiNETgetCount2Reply : public KiNETheader
     // For kData this is followed by the next structure for each port
 };
 
-struct KiNETgetCount2Data {
+struct KiNETblinkScan2Data {
     uint8   portnum;
-    uint8   porttype;   // 0x02 -> Chromasic, 0x01 -> Serial, 0x00 -> Null?
+    uint8   porttype;   // 3 -> ChomasicV2 ??; 0x02 -> Chromasic, 0x01 -> Serial, 0x00 -> Null?
     uint8   length;     // number of bytes following this subheader.  Usually 4 and must be a multiple of 4
     uint8   zero;       // padding
     uint32  count;
