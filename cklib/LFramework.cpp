@@ -120,7 +120,7 @@ DefOption(time, TimeCallback, "duration", "is the running time in seconds. By de
 
 //------------
 float gRate     = 1.0;
-bool gRateMode  = kRatePositive;
+int gRateMode  = kRatePositive;
 
 string RateDefaultCallback(csref name) {
     return FltToStr(gRate);
