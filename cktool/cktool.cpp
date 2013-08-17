@@ -33,6 +33,7 @@ DefProgramHelp(kPHhelp, "command is one of:\n"
     "    all color\n"
     "    rotate color\n"
     "    rotwash color1 color2\n"
+    "    bounce color\n"
     "    set idx color\n"
     "    wash color1 color2\n"
     "  color is \"r,g,b\" or \"HSV(h,s,v)\" or a named color, etc.  All components are scaled from 0.0 to 1.0\n"
@@ -54,6 +55,7 @@ int main(int argc, char** argv)
     Color* color;
     Color* color2;
     bool doWash   = false;
+    bool bounce   = false;
     float defaultRotateDelay = 0;
 
     if (command == "clear")
@@ -72,12 +74,13 @@ int main(int argc, char** argv)
         ValidateNumArgs(command, 1, argc, argp);
         color = Color::AllocFromString(argv[argp++], &errmsg);
     }
-    else if (command == "rotate")
+    else if (command == "rotate" || command == "bounce")
     {
         ValidateNumArgs(command, 1, argc, argp);
         idx = 0;
         color = Color::AllocFromString(argv[argp++], &errmsg);
         defaultRotateDelay = 50;
+        bounce = (command == "bounce");
     }
     else if (command == "wash")
     {
@@ -138,8 +141,13 @@ int main(int argc, char** argv)
     if (defaultRotateDelay != 0) {
         Milli_t startTime = Milliseconds();
         Milli_t sleepBetween = defaultRotateDelay / fabs(L::gRate);
+        int width = L::gOutputBuffer->GetCount();
+        int count = 0;
+        int direction = L::gRate < 0 ? -1 : 1;
         while (true) {
-            L::gOutputBuffer->Rotate(L::gRate < 0 ? -1 : 1);
+            if (bounce && count != 0 && width > 1 && (count % (width-1)) == 0) direction = -direction;
+            ++count;
+            L::gOutputBuffer->Rotate(direction);
             L::gOutputBuffer->Update();
             if (L::gOutputBuffer->HasError()) {
                 cerr << "Update error: " << L::gOutputBuffer->GetLastError() << endl;
