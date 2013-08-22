@@ -99,11 +99,11 @@ vector<CKdevice>    CKdiscoverDevices(string* errmsg = NULL, int timeoutInMS = C
 vector<CKdevice>    CKdiscoverDevices(const vector<CKinfo>& infos, string* errmsg = NULL);
 vector<CKinfo>      CKdiscoverInfo   (string* errmsg = NULL, int timeoutInMS = CK::kDefaultPollTimeout);
 
-class CKbuffer : public LBuffer
+class CKbuffer : public LBufferPhys
 {
 public:
-    CKbuffer() : LBuffer() {}
-    CKbuffer(const CKdevice& dev) : LBuffer() {AddDevice(dev);}
+    CKbuffer() : LBufferPhys() {}
+    CKbuffer(const CKdevice& dev) : LBufferPhys() {AddDevice(dev);}
     virtual ~CKbuffer() {}
     bool    AddDevice(const CKdevice& dev);
 

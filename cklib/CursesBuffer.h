@@ -10,10 +10,10 @@
 #include <curses.h>
 #include "LBuffer.h"
 
-class CursesBuffer : public LBuffer
+class CursesBuffer : public LBufferPhys
 {
 public:
-    CursesBuffer(int width) : LBuffer(width) {}
+    CursesBuffer(int width) : LBufferPhys(width) {}
     virtual ~CursesBuffer() {}
 
     virtual string  GetDescriptor() const;

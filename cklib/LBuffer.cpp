@@ -6,18 +6,23 @@
 #include <algorithm>
 #include <iostream>
 
-void LBuffer::Alloc(int count)
+RGBColor LBuffer::kNullColor = BLACK; // note that this is used by functions returning references to colors
+
+void LBufferPhys::Alloc(int count)
 {
-    iBuffer.resize(count);
+  iBuffer.resize(count);
     ClearMap();
 }
 
 void LBuffer::SetAll(const Color& color)
 {
     RGBColor rgb(color);
-    int len = iBuffer.size();
-    for (int i = 0; i < len; ++i)
-        iBuffer[i] = rgb;
+    iterator iter = begin();
+    iterator endIter = end();
+    while (iter != endIter) {
+        *iter = rgb;
+        ++iter;
+    }
 }
 
 void LBuffer::SetColor(int idx, const Color& color)
@@ -122,7 +127,9 @@ string LBufferType::GetDocumentation() {
 //-----------------------------------------------------------------------------------------------------
 #include "cklib.h"
 #include "CursesBuffer.h"
+#include "MetaBuffer.h"
 void ForceLinking() {
     ForceLinkCK();
     ForceLinkCurses(); // This actually does nothing on Windows
+    ForceLinkMeta();
 };

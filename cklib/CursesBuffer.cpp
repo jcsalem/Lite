@@ -17,7 +17,7 @@ void ForceLinkCurses() {}
 //-----------------------------------------------------------------------------
 
 string CursesBuffer::GetDescriptor() const {
-    return "curses:" + IntToStr(GetCount());
+    return "console:" + IntToStr(GetCount());
 }
 
 void MaybeInitializeCurses() {
@@ -51,10 +51,10 @@ void MaybeInitializeCurses() {
 
 LBuffer* CursesBufferCreate(csref descStr, string* errmsg) {
     int width = 72;
-    if (descStr.empty()) {}
-    else if (StrEQ(descStr, "auto")) {
+    if (descStr.empty() || StrEQ(descStr, "auto")) {
         MaybeInitializeCurses();
         width = getmaxx(stdscr) - getbegx(stdscr);
+        if (width < 2) width = 10;
         }
     else if (StrToInt(descStr, &width)) {
         if (width <= 0) {
@@ -73,8 +73,8 @@ LBuffer* CursesBufferCreate(csref descStr, string* errmsg) {
 }
 
 DEFINE_LBUFFER_TYPE(console, CursesBufferCreate, "console[:size]",
-        "Outputs to the console. Size may be 'auto' (width of the screen). No size defaults to 72.\n"
-        "  Examples: console or console:50 or console:auto");
+        "Outputs to the console. No size defaults to screen width.\n"
+        "  Examples: console or console:50");
 
 //-----------------------------------------------------------------------------
 // Update function
@@ -98,7 +98,7 @@ chtype RGBColorToCursesChar(const RGBColor& color) {
 bool CursesBuffer::Update() {
     MaybeInitializeCurses();
     move(gBegYoffset, 0);
-    for (const_iterator i = begin(); i != end(); ++i) {
+    for (iterator i = begin(); i != end(); ++i) {
         addch(RGBColorToCursesChar(*i));
     }
     // Move the cursor out of the way and

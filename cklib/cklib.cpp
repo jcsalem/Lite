@@ -20,7 +20,7 @@ int KiNETdmxOut::GetSize()
 }
 
 // Returns the number of bytes copied or a negative number if there wasn't enough room.
-int CopyColorsToBuffer(char* buffer, int maxlen, vector<RGBColor>::const_iterator citer, int clen, bool reverseOrder)
+int CopyColorsToBuffer(char* buffer, int maxlen, LBuffer::const_iterator citer, int clen, bool reverseOrder)
 {
     int bytesNeeded = clen * 3;
     if (bytesNeeded > maxlen) return -bytesNeeded;
@@ -300,7 +300,7 @@ bool CKbuffer::PortSync()
     return !HasError();
 }
 
-void UpdateOneCKv1(CKdevice& device, vector<RGBColor>::const_iterator bufIter)
+void UpdateOneCKv1(CKdevice& device, LBuffer::const_iterator bufIter)
     {
     const int maxLen = 2048;
     char outbuf[maxLen];
@@ -324,7 +324,7 @@ void UpdateOneCKv1(CKdevice& device, vector<RGBColor>::const_iterator bufIter)
       }
     }
 
-void UpdateOneCKv2(CKdevice& device, vector<RGBColor>::const_iterator bufIter)
+void UpdateOneCKv2(CKdevice& device, LBuffer::const_iterator bufIter)
     {
     const int maxLen = 2048;
     char outbuf[maxLen];
@@ -349,7 +349,7 @@ void UpdateOneCKv2(CKdevice& device, vector<RGBColor>::const_iterator bufIter)
 bool CKbuffer::Update()
     {
     int numDevs = iDevices.size();
-    const_iterator bufIter = iBuffer.begin();
+    const_iterator bufIter = const_cast<const CKbuffer*>(this)->begin();
     for (int i = 0; i < numDevs; ++i)
     {
         // Force a millisecond delay. Otherwise, if we are going to the next port on the same PDS, we could lose data.
