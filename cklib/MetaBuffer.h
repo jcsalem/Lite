@@ -10,8 +10,15 @@
 class ComboBuffer : public LBuffer
 {
 public:
+    // Used by LBuffer::Create
+    static LBuffer* Create(csref descString, string* errmsg = NULL);
+    static vector<string> ParseDeviceList(csref descStr, string* errmsg = NULL);
+
+    // Constructors/Destructors
     ComboBuffer() : LBuffer(), iCount(0) {}
-    virtual ~ComboBuffer() {}
+    ComboBuffer(LBuffer* buffer);
+    ComboBuffer(const vector<LBuffer*>& buffers);
+    virtual ~ComboBuffer();  // Calls delete on each of the nested buffers
 
     virtual int     GetCount()      const {return iCount;}
     virtual string  GetDescriptor() const;
@@ -20,6 +27,7 @@ public:
 protected:
     virtual RGBColor&   GetRawRGB(int idx);
     void AddBuffer(LBuffer*);
+    void AddBuffers(const vector<LBuffer*>& buffers);
 
 private:
     int              iCount;
