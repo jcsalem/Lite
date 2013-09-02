@@ -2,6 +2,7 @@
 #include "LBuffer.h"
 #include "Color.h"
 #include "LFilter.h"
+#include "MetaBuffer.h"
 #include <vector>
 #include <algorithm>
 #include <iostream>
@@ -91,13 +92,25 @@ LBufferType::LBufferType(csref name, CreateFcn_t fcn, csref formatString, csref 
       GetAllLBufferTypes().push_back(*this);
   }
 
+LBuffer* CreateError(string* errmsgptr, csref msg) {
+    if (errmsgptr) *errmsgptr = msg;
+    return NULL;
+    }
+
 LBuffer* LBuffer::Create(csref descriptor, string* errmsg) {
     string name     = TrimWhitespace(descriptor);
+    if (name.empty()) return CreateError(errmsg, "Empty device descriptor");
+    if (name[0] == '[') {
+        if (name[name.size() - 1] != ']') return CreateError(errmsg, "Device descriptor started with a bracket but didn't end with one: " + descriptor);
+        return ComboBuffer::Create(name.substr(1, name.size()-2));
+    }
+
+    // Single device
     size_t colonpos = name.find(':');
-    string desc     = colonpos == string::npos ? "" : TrimWhitespace(name.substr(colonpos+1));
+    string desc     = (colonpos == string::npos) ? "" : TrimWhitespace(name.substr(colonpos+1));
     name = StrToLower(name.substr(0,colonpos));
     if (name.empty()) {
-        if (errmsg) *errmsg = "Missing device descriptor: " + descriptor;
+        if (errmsg) *errmsg = "Missing device type: " + descriptor;
         return NULL;
     }
 
