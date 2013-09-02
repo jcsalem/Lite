@@ -11,6 +11,8 @@
 // This ifndef is just for testing the compilation on Linux/OSX
 #ifndef OS_WINDOWS
 //#ifdef __arm__
+#include <string>
+#include "utils.h"
 
 namespace GPIO {
 // There are 54 GPIO pins on the BCM2835

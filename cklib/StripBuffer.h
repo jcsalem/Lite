@@ -36,7 +36,7 @@ class StripBufferWS2801 : public StripBuffer
 {
 public:
     StripBufferWS2801(int count, int SDIgpio, int CLKgpio) : StripBuffer(count), iSDIgpio(SDIgpio), iCLKgpio(CLKgpio) {}
-    virtual ~StripBufferWS2801();
+    virtual ~StripBufferWS2801() {}
 
     virtual bool    Update();
 private:

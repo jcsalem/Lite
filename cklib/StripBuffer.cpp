@@ -44,7 +44,7 @@ void ForceLinkStrip() {}
 LBuffer* StripBufferCreate(csref descStrArg, string* errmsg) {
     string descStr = descStrArg;
     // Parse size if it exists
-    unsigned size = 32;
+    int size = 32;
     size_t leftPos = descStr.find('(');
     size_t rightPos = descStr.find(')');
     if (leftPos != string::npos || rightPos != string::npos) {
@@ -57,7 +57,7 @@ LBuffer* StripBufferCreate(csref descStrArg, string* errmsg) {
             if (errmsg) *errmsg = "Size was not at end of strip buffer description.";
             return NULL;
         }
-        if (!StrToUnsigned(descStr.substr(leftPos+1, rightPos-leftPos-1), &size)) {
+        if (!StrToUnsigned(descStr.substr(leftPos+1, rightPos-leftPos-1), (unsigned*) &size)) {
             if (errmsg) *errmsg = "Failed to parse size of strip buffer.";
             return NULL;
         }
@@ -73,7 +73,7 @@ LBuffer* StripBufferCreate(csref descStrArg, string* errmsg) {
     // Standard names
     descStr = TrimWhitespace(descStr);
     if (descStr.empty() || StrEQ(descStr, "A")) descStr = "24/23";
-    else if (StrEQ(descStr, "B")) descStr = "22/17";)
+    else if (StrEQ(descStr, "B")) descStr = "22/17";
 
     // Now parse SDI and CLK
     size_t slashPos = descStr.find('/');
@@ -82,8 +82,8 @@ LBuffer* StripBufferCreate(csref descStrArg, string* errmsg) {
         return NULL;
     }
 
-    unsigned sdiGPIO, clkGPIO;
-    if (!StrToUnsigned(descStr.substr(0, slashPos), &sdiGPIO) || !StrToUnsigned(descStr.substr(slashPos+1), &clkGPIO)) {
+    int sdiGPIO, clkGPIO;
+    if (!StrToUnsigned(descStr.substr(0, slashPos), (unsigned*) &sdiGPIO) || !StrToUnsigned(descStr.substr(slashPos+1),  (unsigned*) &clkGPIO)) {
         if (errmsg) *errmsg = "Couldn't parse strip SDI/CLK: " + descStr;
         return NULL;
     }
@@ -100,7 +100,7 @@ LBuffer* StripBufferCreate(csref descStrArg, string* errmsg) {
     GPIO::Write(clkGPIO, 0);
     GPIO::SetModeOutput(clkGPIO);
 
-    StripBuffer* buffer = new StripBufferWS2801(count, sdiGPIO, clkGPIO);
+    StripBufferWS2801* buffer = new StripBufferWS2801(size, sdiGPIO, clkGPIO);
     buffer->SetCreateString("strip:"+descStrArg);
     buffer->SetColorFlip(flip);
     return buffer;
@@ -132,7 +132,7 @@ bool StripBufferWS2801::Update() {
     const_iterator bufEnd   = const_cast<const StripBufferWS2801*>(this)->end();
 
     for (const_iterator i = bufBegin; i != bufEnd; ++i) {
-        int colordata = PackRGB(*i, GetColorFlip());
+        int colorword = PackRGB(*i, GetColorFlip());
         for (int j = 23; j >= 0; --j) {
             // Serialize this color. Clock in the data
             int mask = 1 << j;
@@ -144,6 +144,7 @@ bool StripBufferWS2801::Update() {
     // Now wait at least 500us to latch in the data
     GPIO::Write(iCLKgpio, false);
     SleepMilli(1);
+    return true;
 }
 
 #endif // __arm__

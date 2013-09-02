@@ -47,9 +47,9 @@ bool InitializeGPIO(string* errmsgptr) {
 
     // Map the GPIO Controller address
     if ((mem_fd = open("/dev/mem", O_RDWR|O_SYNC) ) < 0) {
-        errmsg = "While initializing GPIO, failed to open /dev/mem. Rerun via 'sudo'");
+        errmsg = "While initializing GPIO, failed to open /dev/mem. Rerun via 'sudo'";
         if (errmsgptr) *errmsgptr = errmsg;
-        first_time = false;
+        firstTime = false;
         return false;
     }
 
@@ -68,14 +68,14 @@ bool InitializeGPIO(string* errmsgptr) {
     if (gpio_map == MAP_FAILED) {
         errmsg = "While initializing GPIO, mmap error " + IntToStr((int)errno);
         if (errmsgptr) *errmsgptr = errmsg;
-        first_time = false;
+        firstTime = false;
         return false;
     }
 
     // Always use volatile pointer!
     gGPIO = (volatile uint32 *)gpio_map;
     status = true;
-    first_time = false;
+    firstTime = false;
     return true;
 }
 
@@ -94,13 +94,13 @@ bool ValidateGPIO(int gpio) {
 void SetModeInput(int gpio) {
     if (! ValidateGPIO(gpio)) return;
     // Clear the GPIO fcn select (0 = Input)
-    *(gGPIO+kOffsetFcnSelect+(gpio/10)) &= ~(7<<(((gpio)%10)*3))
+    *(gGPIO+kOffsetFcnSelect+(gpio/10)) &= ~(7<<(((gpio)%10)*3));
 }
 
 void SetModeOutput(int gpio) {
     if (! ValidateGPIO(gpio)) return;
     // Clear the GPIO controls
-    *(gGPIO+kOffsetFcnSelect+(gpio/10)) &= ~(7<<((gpio%10)*3))
+    *(gGPIO+kOffsetFcnSelect+(gpio/10)) &= ~(7<<((gpio%10)*3));
     // Now set output mode
     *(gGPIO+kOffsetFcnSelect+(gpio/10)) |=  (1<<((gpio%10)*3));
 }
