@@ -70,37 +70,49 @@ void ComboBuffer::AddBuffer(LBuffer* buffer)
     iCount += count;
 }
 
-// Parses a description string into a list of devices. Handles nested square braces. No escaping (yet)
-vector<string> ComboBuffer::ParseDeviceList(csref descStr, string* errmsg)
- {
+vector<string> ComboError(string* errmsgptr, csref msg) {
+    if (errmsgptr) *errmsgptr = msg;
     vector<string> nullReturn;
+    return nullReturn;
+}
+
+// Parses a description string into a list of devices. Handles nested square braces. No escaping (yet)
+vector<string> ParseDeviceList(csref descStr, string* errmsg) {
     vector<string> descStrings;
     int startPos = 0;
     int bracketDepth = 0;
+    bool lookingForComma = false;
 
     for (size_t i = 0; i < descStr.size(); ++i) {
         switch (descStr[i])
         {
         case '[':
             ++bracketDepth;
+            if (lookingForComma) return ComboError(errmsg, "Missing comma after ']'");
             break;
         case ']':
-            if (bracketDepth == 0) {
-                if (errmsg) *errmsg = "Mismatched square brackets.";
-                return nullReturn;
-            }
+            if (bracketDepth == 0) return ComboError(errmsg, "Mismatched square brackets: Too many right brackets.");
+            if (lookingForComma)   return ComboError(errmsg, "Misplaced ']', expected a comma");
             --bracketDepth;
+            if (bracketDepth == 0) lookingForComma = true;
             break;
-        // $$$$$$ NEEDS LOTS OF WORK
+        case ',':
+            if (bracketDepth == 0) {
+                descStrings.push_back(TrimWhitespace(descStr.substr(startPos, i - startPos)));
+                startPos = i+1;
+                lookingForComma = false;
+            }
+        case ' ':
+        case '\t':
+            break;
+        default:
+            if (lookingForComma) return ComboError(errmsg, "Expected a comma after the right bracket.");
         }
-
     }
-    string lastStr = TrimWhitespace(descStr.substr(startPos, descStr.size() - startPos));
-    if (! lastStr.empty())
-        descStrings.push_back(lastStr);
+    if (bracketDepth != 0) return ComboError(errmsg, "Mismatched square brackets: Too many left brackets.");
+    descStrings.push_back(TrimWhitespace(descStr.substr(startPos, descStr.size() - startPos)));
     return descStrings;
- }
-
+}
 
 LBuffer* ComboBuffer::Create(csref descStr, string* errmsg) {
     vector<string> descStrings = ParseDeviceList(descStr, errmsg);
@@ -108,8 +120,9 @@ LBuffer* ComboBuffer::Create(csref descStr, string* errmsg) {
         if (errmsg && errmsg->empty()) *errmsg = "Empty list of devices.";
         return NULL;
     }
+//    if (descStr.size() == 1 && collapse) return LBuffer::Create(descStrings[0], errmsg);
+
     ComboBuffer* combo = new ComboBuffer();
-    vector<LBuffer*> buffers;
     for (vector<string>::const_iterator i = descStrings.begin(); i != descStrings.end(); ++i) {
         LBuffer* buffer = LBuffer::Create(*i, errmsg);
         if (!buffer) {
@@ -122,8 +135,21 @@ LBuffer* ComboBuffer::Create(csref descStr, string* errmsg) {
     return combo;
 }
 
-DEFINE_LBUFFER_TYPE(combo, ComboBuffer::Create, "[<device spec>,<device spec>,...]",
-        "Combines all devices end-to-end into a single device.");
+// Used by CreateOutputBuffer to collapse a ComboBuffer with a single buffer
+LBuffer* ComboBuffer::PopLastBuffer()
+{
+    if (iBuffers.size() == 0) return NULL;
+    iCount -= iCounts.back();
+    iCounts.pop_back();
+    LBuffer* buffer = iBuffers.back();
+    iBuffers.pop_back();
+    return buffer;
+}
+
+
+// Only used for documentation string
+DEFINE_LBUFFER_TYPE(combo_internal, ComboBuffer::Create, "[<device spec>,<device spec>,...]",
+        "Combines all devices end-to-end into a single combo device.");
 
 //-----------------------------------------------------------------------------
 // ReverseBuffer

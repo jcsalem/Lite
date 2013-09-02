@@ -132,7 +132,6 @@ class LBuffer
 
 }; // End LBuffer definitions
 
-
 class LBufferPhys : public LBuffer
     {
   public:

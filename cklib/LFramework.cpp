@@ -2,6 +2,7 @@
 #include "cklib.h"
 #include "Color.h"
 #include "LFramework.h"
+#include "MetaBuffer.h"
 #include "LFilter.h"
 #include "utilsOptions.h"
 #include "Lobj.h"
@@ -35,11 +36,29 @@ UninitAtExit _gUninitAtExit;
 // Output Device Parsing
 //---------------------------------------------------------------
 
-LBuffer*    gOutputBuffer   = NULL;
+LBuffer* gOutputBuffer   = NULL;
+
+LBuffer* CreateOutputBuffer(csref devstr, string* errmsg) {
+    LBuffer* buffer = ComboBuffer::Create(devstr, errmsg);
+    if (! buffer) return NULL;
+    ComboBuffer* cbuffer = dynamic_cast<ComboBuffer*>(buffer);
+    if (cbuffer) {// should always be true
+        switch (cbuffer->GetNumBuffers())
+        {
+        case 0: //Should never happen?
+            if (errmsg) *errmsg = "Missing device descriptor. Empty?";
+            return NULL;
+        case 1: // No combo, get rid of top-level combo
+            buffer = cbuffer->PopLastBuffer();
+            delete cbuffer;
+        }
+    }
+    return buffer;
+}
 
 string DeviceCallback(csref name, csref val) {
     string errmsg;
-    gOutputBuffer = LBuffer::Create(val, &errmsg);
+    gOutputBuffer = CreateOutputBuffer(val, &errmsg);
     if (! gOutputBuffer && errmsg.empty()) errmsg = "Error creating output buffer";
     return errmsg;
 }
@@ -187,7 +206,7 @@ void Startup(int *argc, char** argv, int numPositionalArgs) {
         const char* envval = getenv("LDEV");
         if (envval && envval[0] != '\0') {
             string errmsg;
-            gOutputBuffer = LBuffer::Create(envval, &errmsg);
+            gOutputBuffer = CreateOutputBuffer(envval, &errmsg);
             if (!gOutputBuffer) errorExit(errmsg);
         }
     }

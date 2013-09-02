@@ -9,10 +9,11 @@
 
 class ComboBuffer : public LBuffer
 {
+    friend LBuffer* CreateOutputBuffer(csref descString, string* errmsg);
 public:
     // Used by LBuffer::Create
+    // It is an error to have a combo with no devices.
     static LBuffer* Create(csref descString, string* errmsg = NULL);
-    static vector<string> ParseDeviceList(csref descStr, string* errmsg = NULL);
 
     // Constructors/Destructors
     ComboBuffer() : LBuffer(), iCount(0) {}
@@ -23,6 +24,10 @@ public:
     virtual int     GetCount()      const {return iCount;}
     virtual string  GetDescriptor() const;
     virtual bool    Update();
+
+    // Used by L::CreateOutputBuffer
+    int GetNumBuffers() const {return iBuffers.size();}
+    LBuffer* PopLastBuffer();
 
 protected:
     virtual RGBColor&   GetRawRGB(int idx);
