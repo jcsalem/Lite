@@ -2,22 +2,28 @@
 #include "LBuffer.h"
 #include "Color.h"
 #include "LFilter.h"
+#include "MetaBuffer.h"
 #include <vector>
 #include <algorithm>
 #include <iostream>
 
-void LBuffer::Alloc(int count)
+RGBColor LBuffer::kNullColor = BLACK; // note that this is used by functions returning references to colors
+
+void LBufferPhys::Alloc(int count)
 {
-    iBuffer.resize(count);
+  iBuffer.resize(count);
     ClearMap();
 }
 
 void LBuffer::SetAll(const Color& color)
 {
     RGBColor rgb(color);
-    int len = iBuffer.size();
-    for (int i = 0; i < len; ++i)
-        iBuffer[i] = rgb;
+    iterator iter = begin();
+    iterator endIter = end();
+    while (iter != endIter) {
+        *iter = rgb;
+        ++iter;
+    }
 }
 
 void LBuffer::SetColor(int idx, const Color& color)
@@ -86,13 +92,25 @@ LBufferType::LBufferType(csref name, CreateFcn_t fcn, csref formatString, csref 
       GetAllLBufferTypes().push_back(*this);
   }
 
+LBuffer* CreateError(string* errmsgptr, csref msg) {
+    if (errmsgptr) *errmsgptr = msg;
+    return NULL;
+    }
+
 LBuffer* LBuffer::Create(csref descriptor, string* errmsg) {
     string name     = TrimWhitespace(descriptor);
+    if (name.empty()) return CreateError(errmsg, "Empty device descriptor");
+    if (name[0] == '[') {
+        if (name[name.size() - 1] != ']') return CreateError(errmsg, "Device descriptor started with a bracket but didn't end with one: " + descriptor);
+        return ComboBuffer::Create(name.substr(1, name.size()-2));
+    }
+
+    // Single device
     size_t colonpos = name.find(':');
-    string desc     = colonpos == string::npos ? "" : TrimWhitespace(name.substr(colonpos+1));
+    string desc     = (colonpos == string::npos) ? "" : TrimWhitespace(name.substr(colonpos+1));
     name = StrToLower(name.substr(0,colonpos));
     if (name.empty()) {
-        if (errmsg) *errmsg = "Missing device descriptor: " + descriptor;
+        if (errmsg) *errmsg = "Missing device type: " + descriptor;
         return NULL;
     }
 
@@ -123,8 +141,10 @@ string LBufferType::GetDocumentation() {
 #include "cklib.h"
 #include "CursesBuffer.h"
 #include "StripBuffer.h"
+#include "MetaBuffer.h"
 void ForceLinking() {
     ForceLinkCK();
     ForceLinkCurses(); // This actually does nothing on Windows
     ForceLinkStrip(); // This actually does nothing on Windows
+    ForceLinkMeta();
 };

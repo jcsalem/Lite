@@ -7,25 +7,33 @@
 #include <vector>
 #include "utilsTime.h"
 
+// ToDo
+// Move mapping to special class. Remove from base class entirely
+
 class LBuffer
     {
+    friend class LBufferIter;
+    friend class LBufferConstIter;
+    friend class ComboBuffer;
+    friend class ReverseBuffer;
   public:
     // Creating new LBuffers
     // The descriptor is of the format:  <type>:<details> where type defines the type of the LBuffer. Colon is optional if there are reasonable defaults
     static LBuffer* Create(csref descriptor, string* errmsg = NULL);
+    static RGBColor kNullColor;
 
     // Properties
-    int         GetCount(void)      const {return iBuffer.size();}
-    bool        InBounds(int coord) const {return coord >= 0 && coord < (int) iBuffer.size();}
+    virtual int GetCount(void)          const = 0; // Must be defined
+    bool        InBounds(int coord)     const {return coord >= 0 && coord < GetCount();}
 
     // Reads
-    RGBColor    GetRGB(int coord)   const {if (InBounds(coord)) return GetRawRGB(MapCoord(coord)); else return BLACK;}
+    RGBColor    GetRGB(int coord)       const {if (InBounds(coord)) return const_cast<LBuffer*>(this)->GetRawRGB(MapCoord(coord)); else return BLACK;}
 
     // Writes
     void Clear(void) {SetAll(BLACK);}
     void SetColor(int coord, const Color& color);
     void SetAll(const Color& color);
-    void SetRGB(int coord, const RGBColor& rgb)   {if (InBounds(coord)) SetRawRGB(MapCoord(coord), rgb);}
+    void SetRGB(int coord, const RGBColor& rgb)   {if (InBounds(coord)) GetRawRGB(MapCoord(coord)) = rgb;}
     void AddRGB(int coord, const RGBColor& rgb)   {SetRGB(coord, GetRGB(coord) + rgb);}
 
     // Mapping functions
@@ -47,32 +55,107 @@ class LBuffer
     virtual string  GetDescription()    const; // returns a detailed description of the CKbuffer
     virtual bool    Update() = 0;              // Updates the actual device based on the buffer contents.  Must be supplied for all derived types.
 
-    typedef vector<RGBColor>::const_iterator const_iterator;
-    typedef vector<RGBColor>::iterator       iterator;
-    const_iterator  begin() const           {return iBuffer.begin();}
-    const_iterator  end()   const           {return iBuffer.end();}
-    iterator        begin()                 {return iBuffer.begin();}
-    iterator        end()                   {return iBuffer.end();}
-
     virtual ~LBuffer() {/*DeleteAllFilters();*/}
 
   protected:
-    LBuffer(int count = 0) : iBuffer(count) {}
+    LBuffer() {}
 
-    vector<RGBColor>    iBuffer;
     string              iLastError;
     vector<int>         iMap;
 
-    void        Alloc(int count); // erases the old buffer and map
-    int         MapCoord(int coord) const   {if (iMap.size() == 0) return coord; else return iMap[coord];}
-    // Functions for writing directly to the buffer
-    void        SetRawRGB(int idx, const RGBColor& rgb)   {iBuffer[idx] = rgb;}
-    RGBColor    GetRawRGB(int idx)     const {return iBuffer[idx];}
+    int                 MapCoord(int coord) const   {if (iMap.size() == 0) return coord; else return iMap[coord];}
+
+        // Buffer access functions. Idx assumed to be in bounds.
+    virtual RGBColor&   GetRawRGB(int idx) = 0;
+    RGBColor&           GetRGBRef(int coord)             {if (InBounds(coord)) return GetRawRGB(MapCoord(coord)); else return kNullColor;}
 
     // Disallow copy construction because it doesn't work reliably for the derived class
     LBuffer(const LBuffer&);
     LBuffer& operator=(const LBuffer&);
+
+  public:
+    // Iterators
+    class iterator
+    {
+        public:
+            iterator(LBuffer* buffer, int coord) : iBuffer(buffer), iCoord(coord) {}
+            RGBColor&       operator*   ()    const {return iBuffer->GetRGBRef(iCoord);}
+            RGBColor*       operator->  ()    const {return &(iBuffer->GetRGBRef(iCoord));}
+            iterator&       operator++  ()          {++iCoord; return *this;}
+            iterator&       operator--  ()          {--iCoord; return *this;}
+            iterator        operator++  (int)       {iterator r = *this; iCoord++; return r;}
+            iterator        operator--  (int)       {iterator r = *this; iCoord--; return r;}
+            iterator&       operator+=  (int incr)  {iCoord+=incr; return *this;}
+            iterator&       operator-=  (int incr)  {iCoord-=incr; return *this;}
+            const iterator  operator+   (int incr)  {return iterator(iBuffer, iCoord+incr);}
+            const iterator  operator-   (int incr)  {return iterator(iBuffer, iCoord-incr);}
+            bool            operator==  (const iterator& iter) const {return iBuffer == iter.iBuffer && iCoord == iter.iCoord;}
+            bool            operator!=  (const iterator& iter) const {return !(*this == iter);}
+            bool            operator<   (const iterator& iter) const {return iCoord < iter.iCoord;}
+            bool            operator>   (const iterator& iter) const {return iCoord > iter.iCoord;}
+            bool            operator<=  (const iterator& iter) const {return iCoord <= iter.iCoord;}
+            bool            operator>=  (const iterator& iter) const {return iCoord >= iter.iCoord;}
+        private:
+            LBuffer*    iBuffer;
+            int         iCoord;
     };
+    iterator        begin()         {return iterator(this, 0);}
+    iterator        end()           {return iterator(this, GetCount());}
+
+    class const_iterator
+    {
+        public:
+            const_iterator(const LBuffer* buffer, int coord) : iBuffer(buffer), iCoord(coord) {}
+            const RGBColor& operator*   ()    const {return const_cast<LBuffer*>(iBuffer)->GetRGBRef(iCoord);}
+            const RGBColor* operator->  ()    const {return &(**this);}
+            const_iterator&      operator++  ()          {iCoord++; return *this;}
+            const_iterator&      operator--  ()          {iCoord--; return *this;}
+            const_iterator       operator++  (int)       {const_iterator r = *this; iCoord++; return r;}
+            const_iterator       operator--  (int)       {const_iterator r = *this; iCoord--; return r;}
+            const_iterator&      operator+=  (int incr)  {iCoord+=incr; return *this;}
+            const_iterator&      operator-=  (int incr)  {iCoord-=incr; return *this;}
+            const const_iterator operator+   (int incr)  {return const_iterator(iBuffer, iCoord+incr);}
+            const const_iterator operator-   (int incr)  {return const_iterator(iBuffer, iCoord-incr);}
+            bool            operator==  (const const_iterator& iter) const {return iBuffer == iter.iBuffer && iCoord == iter.iCoord;}
+            bool            operator!=  (const const_iterator& iter) const {return !(*this == iter);}
+            bool            operator<   (const const_iterator& iter) const {return iCoord < iter.iCoord;}
+            bool            operator>   (const const_iterator& iter) const {return iCoord > iter.iCoord;}
+            bool            operator<=  (const const_iterator& iter) const {return iCoord <= iter.iCoord;}
+            bool            operator>=  (const const_iterator& iter) const {return iCoord >= iter.iCoord;}
+        private:
+            const LBuffer*  iBuffer;
+            int             iCoord;
+    };
+    const_iterator   begin() const   {return const_iterator(this, 0);}
+    const_iterator   end()   const   {return const_iterator(this, GetCount());}
+
+
+}; // End LBuffer definitions
+
+class LBufferPhys : public LBuffer
+    {
+  public:
+    virtual         ~LBufferPhys() {}
+    // Properties
+    int             GetCount(void)      const   {return iBuffer.size();}
+    virtual bool    Update() = 0;              // Updates the actual device based on the buffer contents.  Must be supplied for all derived types.
+
+  protected:
+    LBufferPhys(int count = 0) : iBuffer(count) {}
+
+    vector<RGBColor>    iBuffer;
+
+    //$$$ Temporary  this needs to go away to be replaced by the ComboBuffer
+    void        Alloc(int count); // erases the old buffer and map
+
+    // Functions for writing directly to the buffer
+    virtual RGBColor& GetRawRGB(int idx)        {return iBuffer[idx];}
+
+    // Disallow copy construction because it doesn't work reliably for the derived class
+    LBufferPhys(const LBuffer&);
+    LBufferPhys& operator=(const LBuffer&);
+    };
+
 
 // Used to define the derived classes that LBuffer::Create knows how to make
 class LBufferType {

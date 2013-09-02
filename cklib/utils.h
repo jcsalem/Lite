@@ -37,14 +37,16 @@ bool StrStartsWith(csref str, csref matchString); // Caseless compare to beginni
 string StrReplace(csref str, csref match, csref substitute);
 
 // Numeric conversions
-string IntToHex(int val, bool noprefix = false);
-string IntToStr(int val);
-string FltToStr(float  val, int maxWidth = 0);
-string DblToStr(double val, int maxWidth = 0);
-int StrToInt(csref str);
-bool StrToInt(csref str, int* i); // returns false on error
-float StrToFlt(csref str);
-bool StrToFlt(csref str, float* i); // returns false on error
+string  IntToHex(int val, bool noprefix = false);
+string  IntToStr(int val);
+string  FltToStr(float  val, int maxWidth = 0);
+string  DblToStr(double val, int maxWidth = 0);
+int     StrToInt(csref str);
+bool    StrToInt(csref str, int* i); // returns false on error
+unsigned StrToUnsigned(csref str);
+bool    StrToUnsigned(csref str, unsigned* i); // returns false on error
+float   StrToFlt(csref str);
+bool    StrToFlt(csref str, float* i); // returns false on error
 
 // Error related
 string ErrorCodeString          (int err = errno);

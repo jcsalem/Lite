@@ -40,4 +40,5 @@ void Run(Lgroup& objgroup, Callback_t fcn);
 void Cleanup(bool eraseAtEnd = true);
 
 }; // namespace L
+
 #endif // LFRAMEWORK_H_INCLUDED

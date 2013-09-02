@@ -20,7 +20,7 @@ int KiNETdmxOut::GetSize()
 }
 
 // Returns the number of bytes copied or a negative number if there wasn't enough room.
-int CopyColorsToBuffer(char* buffer, int maxlen, vector<RGBColor>::const_iterator citer, int clen, bool reverseOrder)
+int CopyColorsToBuffer(char* buffer, int maxlen, LBuffer::const_iterator citer, int clen, bool reverseOrder)
 {
     int bytesNeeded = clen * 3;
     if (bytesNeeded > maxlen) return -bytesNeeded;
@@ -60,34 +60,35 @@ const char* bufferToString (string* outString, const char* startptr, const char*
 //---------------------------------------------------------------------
 // CKinfo
 //---------------------------------------------------------------------
-// Info about a CK device
+// Info about a CK power supply
 
 void CKinfo::Clear() {
-     ipaddr = numports = serial = universe = 0;
+     ipaddr = kinetVersion = serial = universe = 0;
      macaddr.clear();
      info.clear();
      name.clear();
 }
-bool CKinfo::SetFromPollReply(const char* buffer, int buflen, string* errmsg) {
+
+bool CKinfo::SetFromDiscoverReply(const char* buffer, int buflen, string* errmsg) {
     Clear();
 
-    if (!buffer || buflen < KiNETpollReply::GetSize() + 2) {
-        if (errmsg) *errmsg = "CK poll reply was too short (" + IntToStr(buffer ? buflen : 0) + " bytes)";
+    if (!buffer || buflen < KiNETdiscoverReply::GetSize() + 2) {
+        if (errmsg) *errmsg = "CK discover reply was too short (" + IntToStr(buffer ? buflen : 0) + " bytes)";
         return false;
     }
 
-    KiNETpollReply* pollReply = (KiNETpollReply*) buffer;
-    const char* strptr = buffer + KiNETpollReply::GetSize();
+    KiNETdiscoverReply* reply = (KiNETdiscoverReply*) buffer;
+    const char* strptr = buffer + KiNETdiscoverReply::GetSize();
     const char* strend = buffer + buflen;
 
-    ipaddr = ntohl(pollReply->ip);
+    ipaddr = ntohl(reply->ip);
     char macaddrstr[20];
     sprintf(macaddrstr, "%02X:%02X:%02X:%02X:%02X:%02X",
-            pollReply->mac[0], pollReply->mac[1], pollReply->mac[2], pollReply->mac[3], pollReply->mac[4], pollReply->mac[5]);
+            reply->mac[0], reply->mac[1], reply->mac[2], reply->mac[3], reply->mac[4], reply->mac[5]);
     macaddr     = macaddrstr;
-    numports    = pollReply->numPorts; // This is a little uncertain
-    serial      = pollReply->serial;
-    universe    = pollReply->universe;
+    kinetVersion= reply->kinetVersion;
+    serial      = reply->serial;
+    universe    = reply->universe;
 
     strptr = bufferToString(&info, strptr, strend);
     bufferToString(&name, strptr, strend);
@@ -95,11 +96,55 @@ bool CKinfo::SetFromPollReply(const char* buffer, int buflen, string* errmsg) {
     return true;
 }
 
+bool CKdevice::UpdateKiNetVersion(string* errmsg) {
+    SocketUDPClient sock(iIP, KiNETudpPort);
+    KiNETdiscover pollPacket;
+    sock.Write((char*) &pollPacket, pollPacket.GetSize());
+    if (sock.HasError()) {
+        if (errmsg) *errmsg = "Error writing CK KiNETdiscover packet: " + sock.GetLastError();
+        sock.Close();
+        return false;
+    }
+
+    // Wait for a response
+    const int buflen = 1000;
+    char buffer[buflen];
+    int bytesRead = 0;
+
+    while (sock.HasData(CK::kDefaultPollTimeout)) {
+        if (sock.Read(buffer, buflen, &bytesRead)) {
+            CKinfo devInfo;
+            if (devInfo.SetFromDiscoverReply(buffer, bytesRead, errmsg))
+                iKiNetVersion = devInfo.kinetVersion;
+            else {
+                sock.Close();
+                return false;
+            }
+        }
+    }
+    sock.Close();
+    return true;
+}
+
+
+//---------------------------------------------------------------------
+// CK::PortType_t
+//---------------------------------------------------------------------
+string CK::PortTypeToString(PortType_t type) {
+    switch(type) {
+        case CK::kChromasic:    return "Chromasic";
+        case CK::kChromasicV2:  return "ChromasicV2";
+        case CK::kSerial:       return "Serial";
+        default:
+            return "Unknown-" + IntToStr(type);
+    }
+}
+
 //---------------------------------------------------------------------
 // CKdevice
 //---------------------------------------------------------------------
 
-CKdevice::CKdevice(csref devstrArg) : iUniverse(0), iPort(1), iCount(50), iLayout(CK::kNormal)
+CKdevice::CKdevice(csref devstrArg) : iUniverse(CK::kAnyUniverse), iPort(1), iCount(50), iKiNetVersion(kDefaultKiNetVersion), iLayout(CK::kNormal)
 {
     string devstr = TrimWhitespace(devstrArg);
     size_t len = devstr.length();
@@ -130,8 +175,13 @@ CKdevice::CKdevice(csref devstrArg) : iUniverse(0), iPort(1), iCount(50), iLayou
 
     // Port
     size_t atpos = devstr.find('/');
-    if (atpos != string::npos)
+    if (atpos == string::npos)
     {
+        // No port number, this is a v1 device
+        iKiNetVersion = 1;
+    } else
+    {
+        iKiNetVersion = 2;
         if (! isdigit(devstr[atpos+1]))
         {
             iLastError = "Device port must be a number";
@@ -159,8 +209,10 @@ string CKdevice::GetDescriptor() const
 {
     string r;
     r += iIP.GetString();
-    r += "/";
-    r += IntToStr(iPort);
+    if (iKiNetVersion > 1) {
+        r += "/";
+        r += IntToStr(iPort);
+    }
     if (iLayout == CK::kReverse)
         r += "R";
     r += "(";
@@ -248,36 +300,70 @@ bool CKbuffer::PortSync()
     return !HasError();
 }
 
-bool CKbuffer::Update()
+void UpdateOneCKv1(CKdevice& device, LBuffer::const_iterator bufIter)
+    {
+    const int maxLen = 2048;
+    char outbuf[maxLen];
+
+    KiNETdmxOut* header = (KiNETdmxOut*) outbuf;
+    int hdrLen = KiNETdmxOut::GetSize();
+    char* dataPtr = outbuf + hdrLen;
+
+    int len = device.GetCount();
+    int dataLen = CopyColorsToBuffer(dataPtr, maxLen-hdrLen, bufIter, len, device.GetLayout() == CK::kReverse);
+    int paddedLen = 512;
+    // Fill in rest with zeros
+    for (int i = dataLen; i < paddedLen; ++i)
+        *(dataPtr+i) = 0;
+
+    *header = KiNETdmxOut(); // Initialize header
+    header->universe = device.GetUniverse();
+    if (! device.Write(outbuf, hdrLen+paddedLen))
+      {
+       cerr << "Update failed on " << device.GetIP().GetString() << ": " << device.GetLastError() << endl;
+      }
+    }
+
+void UpdateOneCKv2(CKdevice& device, LBuffer::const_iterator bufIter)
     {
     const int maxLen = 2048;
     char outbuf[maxLen];
 
     KiNETportOut* header = (KiNETportOut*) outbuf;
     int hdrLen = KiNETportOut::GetSize();
-   // KiNETdmxOut* header = (KiNETdmxOut*) outbuf;
-   // int hdrLen = KiNETdmxOut::GetSize();
     char* dataPtr = outbuf + hdrLen;
 
+    int len = device.GetCount();
+    int dataLen = CopyColorsToBuffer(dataPtr, maxLen-hdrLen, bufIter, len, device.GetLayout() == CK::kReverse);
+    *header = KiNETportOut(); // Initialize header
+    header->port = device.GetPort();
+    header->universe = device.GetUniverse();
+    //cout << "Port is " << device.GetPort() << endl;
+    header->len = dataLen;
+    if (! device.Write(outbuf, hdrLen+dataLen))
+      {
+       cerr << "Update failed on " << device.GetIP().GetString() << ": " << device.GetLastError() << endl;
+      }
+    }
+
+bool CKbuffer::Update()
+    {
     int numDevs = iDevices.size();
-    const_iterator bufIter = iBuffer.begin();
+    const_iterator bufIter = const_cast<const CKbuffer*>(this)->begin();
     for (int i = 0; i < numDevs; ++i)
     {
         // Force a millisecond delay. Otherwise, if we are going to the next port on the same PDS, we could lose data.
         if (i) SleepMilli(1);
-        int len = iDevices[i].GetCount();
-        int dataLen = CopyColorsToBuffer(dataPtr, maxLen-hdrLen, bufIter, len, iDevices[i].GetLayout() == CK::kReverse);
-        *header = KiNETportOut(); // Initialize header
-        //*header = KiNETdmxOut(); // Initialize header
-        header->port = iDevices[i].GetPort();
-        header->universe = iDevices[i].GetUniverse();
-        //cout << "Port is " << iDevices[i].GetPort() << endl;
-        header->len = dataLen;
-        if (! iDevices[i].Write(outbuf, hdrLen+dataLen))
+        switch (iDevices[i].GetKiNetVersion())
         {
-            cerr << "Update failed on " << iDevices[i].GetIP().GetString() << ": " << iDevices[i].GetLastError() << endl;
+            case 2:
+                UpdateOneCKv2(iDevices[i], bufIter);
+                break;
+            default:
+                UpdateOneCKv1(iDevices[i], bufIter);
+                break;
         }
-        bufIter += len;
+        bufIter += iDevices[i].GetCount();
     }
 
     PortSync();
@@ -349,7 +435,7 @@ LBuffer* CKbufferAutoCreate(csref descriptorArg, string* errmsg) {
         return NULL;
     }
 
-    vector<CKdevice> devices = CKpollForDevices(errmsg);
+    vector<CKdevice> devices = CKdiscoverDevices(errmsg);
     if (devices.empty()) {
         if (errmsg) *errmsg = "Didn't detect any ColorKinetics devices.";
         return NULL;
@@ -371,8 +457,8 @@ LBuffer* CKbufferAutoCreate(csref descriptorArg, string* errmsg) {
 
 // Define the creation functions
 DEFINE_LBUFFER_TYPE(ck, CKbufferCreate, "CK:ipaddr/port(size)[,...]",
-        "Comma separated list of ColorKinetics devices. Append 'r' to port to reverse order.\n"
-        "  Examples: ck:172.16.11.23/1  or  ck:10.5.4.3/1(72),10.5.4.3/2r(72)");
+        "Comma separated list of ColorKinetics devices. If port is missing, assumes a KiNet V1 device.\n"
+        "  Examples: ck:172.16.11.23/1  or  ck:10.5.4.3/1(72),10.5.4.3/2r(72) or ck:172.16.11.54(21)");
 
 DEFINE_LBUFFER_TYPE(ckauto, CKbufferAutoCreate, "CKAUTO", "Creates a display using all of the local CK devices");
 
@@ -383,7 +469,7 @@ void ForceLinkCK() {}
 // Polling the CK devices on the network
 //---------------------------------------------------------------------
 
-vector<CKinfo> CKpollForInfo(string* errmsg, int timeoutInMS) {
+vector<CKinfo> CKdiscoverInfo(string* errmsg, int timeoutInMS) {
     vector<CKinfo> retval;
 
     // Create the client socket for the polling request
@@ -393,10 +479,10 @@ vector<CKinfo> CKpollForInfo(string* errmsg, int timeoutInMS) {
 
     // Broadcast the poll request
     // Note: QuickPlayPro sends out 4 PORTOUT_SYNC packets before the poll. Not sure if that's important.
-    KiNETpoll pollPacket;
+    KiNETdiscover pollPacket;
     sock.Write((char*) &pollPacket, pollPacket.GetSize());
     if (sock.HasError()) {
-        if (errmsg) *errmsg = "Error writing CK KiNETpoll packet: " + sock.GetLastError();
+        if (errmsg) *errmsg = "Error writing CK KiNETdiscover packet: " + sock.GetLastError();
         return retval;
     }
 
@@ -409,10 +495,10 @@ vector<CKinfo> CKpollForInfo(string* errmsg, int timeoutInMS) {
         if (sock.Read(buffer, buflen, &bytesRead)) {
             CKinfo devInfo;
             string errmsg;
-            if (devInfo.SetFromPollReply(buffer, bytesRead, &errmsg))
+            if (devInfo.SetFromDiscoverReply(buffer, bytesRead, &errmsg))
                 retval.push_back(devInfo);
         } else {
-            if (errmsg) *errmsg = "Error reading CK KiNETpoll response: " + sock.GetLastError();
+            if (errmsg) *errmsg = "Error reading CK KiNETdiscover response: " + sock.GetLastError();
             return retval;
         }
     }
@@ -423,61 +509,128 @@ vector<CKinfo> CKpollForInfo(string* errmsg, int timeoutInMS) {
     return retval;
 }
 
-vector<CKdevice> CKpollForDevices(string* errmsg, int timeoutInMS) {
-    // Get all the info structures
-    vector<CKinfo> infos = CKpollForInfo(errmsg, timeoutInMS);
-    return CKpollForDevices(infos,errmsg);
-}
-
-
 const int kDefaultCountTimeout = 2500; // timeout in MS
-vector<CKdevice> CKpollForDevices(const vector<CKinfo>& infos, string* errmsg) {
-    vector<CKdevice> devices;
+bool GetDevicesForInfoV1(const CKinfo& info, vector<CKdevice>* devices, string* errmsg = NULL) {
     const int buflen = 1000;
     char buffer[buflen];
     int bytesRead = 0;
+    IPAddr ipaddr(info.ipaddr);
+    int universe = info.universe;
+    // Write the GetCount request
+    SocketUDPClient sock(ipaddr, KiNETudpPort);
+    KiNETblinkScan1 getCountPacket;
+    sock.Write((char*) &getCountPacket, getCountPacket.GetSize());
+    if (sock.HasError()) {
+        if (errmsg) *errmsg = "Error writing CK getCount1 packet: " + sock.GetLastError();
+        sock.Close();
+        return false;
+    }
+
+    // Parse the results
+    if (sock.HasData(kDefaultCountTimeout) && sock.Read(buffer, buflen, &bytesRead)) {
+        if (bytesRead >= KiNETblinkScan1CAReply::GetSize()) {
+            KiNETblinkScan1CAReply* replyPtr = (KiNETblinkScan1CAReply*) buffer;
+            int count = 0;
+            for (int i = 0; i < 4; ++i)
+                count += replyPtr->counts[i];
+            CKdevice dev(ipaddr, universe, 0, count); // v1 devices don't really use the port concept
+            dev.SetKiNetVersion(1); // This is a v1 feature
+            devices->push_back(dev);
+            sock.Close();
+            return true;
+        }
+        else {
+            if (errmsg)
+                *errmsg = "Error: CK getCount1Reply packet was too short. Got " + IntToStr(bytesRead) + " bytes, but was expecting at least " + IntToStr(KiNETblinkScan1Reply::GetSize()) + " bytes";
+            sock.Close();
+            return false;
+        }
+    }
+
+    if (sock.HasError()) {
+        if (errmsg)
+            *errmsg = "Error reading CK getCount1Reply packet: " + sock.GetLastError();
+        sock.Close();
+        return false;
+    } else {
+        sock.Close();
+        return true;
+    }
+}
+
+bool GetDevicesForInfoV2(const CKinfo& info, vector<CKdevice>* devices, string* errmsg = NULL) {
+    const int buflen = 1000;
+    char buffer[buflen];
+    int bytesRead = 0;
+    IPAddr ipaddr(info.ipaddr);
+    // Write the GetCount request
+    SocketUDPClient sock(ipaddr, KiNETudpPort);
+    KiNETblinkScan2 getCountPacket;
+    sock.Write((char*) &getCountPacket, getCountPacket.GetSize());
+    if (sock.HasError()) {
+        if (errmsg) *errmsg = "Error writing CK blinkScan2 packet: " + sock.GetLastError();
+        sock.Close();
+        return false;
+    }
+
+    // Parse the results
+    while (sock.HasData(kDefaultCountTimeout) && sock.Read(buffer, buflen, &bytesRead)) {
+        //cout << "BytesRead=" << bytesRead << "  size " << KiNETblinkScan2Reply::GetSize() << endl;
+        if (bytesRead >= KiNETblinkScan2Reply::GetSize()) {
+            KiNETblinkScan2Reply* replyPtr = (KiNETblinkScan2Reply*) buffer;
+            if (replyPtr->replyType == KiNETblinkScan2Reply::kEnd) break; // Done reading
+            if (replyPtr->replyType == KiNETblinkScan2Reply::kData) {
+                // We have the count data
+                KiNETblinkScan2Data* countDataPtr = (KiNETblinkScan2Data*) (buffer + KiNETblinkScan2Reply::GetSize());
+                KiNETblinkScan2Data* countDataEnd = (KiNETblinkScan2Data*) (buffer + bytesRead);
+                while (countDataPtr < countDataEnd) {
+                    int universe = info.universe;
+                    int port = countDataPtr->portnum;
+                    int count = countDataPtr->count;
+                    if (port >= 1 && count > 0) {
+                        CKdevice dev(ipaddr, universe, port, count);
+                        if (info.kinetVersion == 1 || info.kinetVersion == 2)
+                            dev.SetKiNetVersion(info.kinetVersion);
+                        devices->push_back(dev);
+                    }
+                    ++countDataPtr;
+                }
+            }
+        }
+    }
+    if (sock.HasError()) {
+        if (errmsg) *errmsg = "Error reading CK blinkScan2Reply packet: " + sock.GetLastError();
+        sock.Close();
+        return false;
+    }
+
+    sock.Close();
+    return true;
+}
+
+vector<CKdevice> CKdiscoverDevices(string* errmsg, int timeoutInMS) {
+    // Get all the info structures
+    vector<CKinfo> infos = CKdiscoverInfo(errmsg, timeoutInMS);
+    return CKdiscoverDevices(infos,errmsg);
+}
+
+vector<CKdevice> CKdiscoverDevices(const vector<CKinfo>& infos, string* errmsg) {
+    vector<CKdevice> devices;
 
     // For each info, poll for the count of lights
     for (size_t i = 0; i < infos.size(); ++i) {
         CKinfo info = infos[i];
-        IPAddr ipaddr(info.ipaddr);
-
-        // Write the GetCount request
-        SocketUDPClient sock(ipaddr, KiNETudpPort);
-        KiNETgetCount getCountPacket;
-        sock.Write((char*) &getCountPacket, getCountPacket.GetSize());
-        if (sock.HasError()) {
-            if (errmsg) *errmsg = "Error writing CK KiNETpoll packet: " + sock.GetLastError();
-            sock.Close();
-            continue;
+        switch (info.kinetVersion)
+        {
+        case 1:
+            // Old protocol
+            GetDevicesForInfoV1(info, &devices, errmsg);
+            break;
+        default:
+            // Default to newer protocol
+            GetDevicesForInfoV2(info, &devices, errmsg);
         }
-
-        // Parse the results
-        while (sock.HasData(kDefaultCountTimeout) && sock.Read(buffer, buflen, &bytesRead)) {
-            if (bytesRead >= KiNETgetCountReply::GetSize()) {
-                KiNETgetCountReply* replyPtr = (KiNETgetCountReply*) buffer;
-                if (replyPtr->replyType == KiNETgetCountReply::kEnd) break; // Done reading
-                if (replyPtr->replyType == KiNETgetCountReply::kData) {
-                    // We have the count data
-                    KiNETgetCountData* countDataPtr = (KiNETgetCountData*) (buffer + KiNETgetCountReply::GetSize());
-                    KiNETgetCountData* countDataEnd = (KiNETgetCountData*) (buffer + bytesRead);
-                    while (countDataPtr < countDataEnd) {
-                        int universe = info.universe;
-                        int port = countDataPtr->portnum;
-                        int count = countDataPtr->count;
-                        if (port >= 1 && port <= info.numports && count > 0) {
-                            CKdevice dev(ipaddr, universe, port, count);
-                            devices.push_back(dev);
-                        }
-                        ++countDataPtr;
-                    }
-                }
-            }
-        }
-        if (sock.HasError())
-            if (errmsg) *errmsg = "Error reading CK KiNETpoll packet: " + sock.GetLastError();
-
-        sock.Close();
     }
+
     return devices;
 }

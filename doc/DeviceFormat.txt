@@ -1,0 +1,23 @@
+New CK Device Format.
+
+type:typespec
+
+CK (physical, ColorKinetics)
+CK:ip[/port][(size)
+
+CKAUTO (physical, ColorKinetics, auto discover)
+
+Spark (physical, SparkFun strip)
+
+Combo (meta, multiple items)
+Combo:[dev1, dev2, …devN]
+or just 
+[dev1, dev2, …devN]
+
+Flip (reverses the direction of the device via a reverse mapping)
+flip:devicespec
+
+Random (randomizes the mapping of the device)
+
+NOTES
+When parsing LDEV, it is assumed  that it should be surrounded by square braces. In other words, the default is that LDEV contains a comma separated list of all devices.
