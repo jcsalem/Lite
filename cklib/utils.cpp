@@ -111,7 +111,7 @@ float StrToFlt(csref str) {
 
 bool StrToInt(csref str, int* result) {
     errno = 0;
-    long int val = strtol(str.c_str(), NULL, 0);
+    long val = strtol(str.c_str(), NULL, 0);
     if (val < INT_MIN) {val = INT_MIN; errno = ERANGE;}
     if (val > INT_MAX) {val = INT_MAX; errno = ERANGE;}
     if (result) *result = val;
@@ -121,6 +121,20 @@ bool StrToInt(csref str, int* result) {
 int StrToInt(csref str) {
     int val;
     StrToInt(str, &val);
+    return val;
+}
+
+bool StrToUnsigned(csref str, unsigned* result) {
+    errno = 0;
+    unsigned long val = strtoul(str.c_str(), NULL, 0);
+    if (val > UINT_MAX) {val = UINT_MAX; errno = ERANGE;}
+    if (result) *result = val;
+    return errno == 0;
+}
+
+unsigned StrToUnsigned(csref str) {
+    unsigned val;
+    StrToUnsigned(str, &val);
     return val;
 }
 

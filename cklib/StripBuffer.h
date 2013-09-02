@@ -7,40 +7,26 @@
 #include "utilsPrecomp.h"
 
 #ifndef OS_WINDOWS
+//#ifdef __arm__
 #include "LBuffer.h"
-// // Currently for the WS2801-based LED strips from SparkFun
+// // Currently for the Raspberry Pi and the WS2801-based LED strips from SparkFun
 
-namespace Strip
-{
-// Strip Type
-//typedef enum {
-//    kWS2801        = 1
-//    } Type_t;
-
-// The options for each strip
-enum {
-    kOptNone = 0,
-    kOptReverse = 1,   // Reverses the order of the
-    kOptFlipColor = 2
-    };
-
-typedef int Options_t;
-};
-
-class StripBuffer : public LBuffer
+// Generic strip type
+class StripBuffer : public LBufferPhys
 {
 public:
-    StripBuffer(int count = 0) : LBuffer(count)) {iOptions = Strip::kOptNone;}
+    StripBuffer(int count = 0) : LBufferPhys(count), iColorFlip(false) {}
     virtual ~StripBuffer() {}
 
-    virtual void    SetOptions(int options) {iOptions = options;}
-    virtual string  GetDescriptor() const {return "strip:" + (iCreateString.empty() ? "unknown" : iCreateString); }
+    virtual string  GetDescriptor() const {return (iCreateString.empty() ? "unknownstriptype" : iCreateString); }
     virtual bool    Update() {iLastError = "Attempted to update invalid strip."; return false;}
-    void            SetCreateString(csref str) {iCreateString = str;}
+    void            SetCreateString(csref str)  {iCreateString = str;}
+    void            SetColorFlip(bool val)      {iColorFlip = val;}
+    bool            GetColorFlip() const        {return iColorFlip;}
 
 private:
     string              iCreateString;
-    Strip::Options_t    iOptions;
+    bool                iColorFlip;
     // Don't allow copying
     StripBuffer(const StripBuffer&);
     StripBuffer& operator=(const StripBuffer&);
@@ -56,12 +42,11 @@ public:
 private:
     int iSDIgpio;
     int iCLKgpio;
-    void MaybeInitializeStrip();
     // Don't allow copying
-    StripBuffer(const StripBuffer&);
-    StripBuffer& operator=(const StripBuffer&);
+    StripBufferWS2801(const StripBufferWS2801&);
+    StripBufferWS2801& operator=(const StripBufferWS2801&);
 };
-#endif    // !OS_WINDOWS
+#endif    // __arm__
 
 // This function is defined only so LFramework can reference it and force it to be linked in. Otherwise, CKBuffer is never linked in!
 void ForceLinkStrip();
