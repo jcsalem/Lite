@@ -5,7 +5,6 @@
 #include "MetaBuffer.h"
 #include <vector>
 #include <algorithm>
-#include <iostream>
 
 RGBColor LBuffer::kNullColor = BLACK; // note that this is used by functions returning references to colors
 
