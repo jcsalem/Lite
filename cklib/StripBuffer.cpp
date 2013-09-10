@@ -3,11 +3,11 @@
 //  Only supported on Raspberry Pi
 //
 // Pin Assignments
-//  Pin    OldStrips  NewStrips  Connector   RPi Pin   BCM GPIO#  WiringPi
-//  5v      Red         Red        Blue        4
-//  CLK     Green       Blue       Green      16/11      23/17       4/0
-//  SDI     Red         Green      Yellow     18/15      24/22       5/6
-//  Gnd     Blue        Yellow     Red        6 or 14
+//  Pin    OldStrips  NewStrips  Connector  Cable  RPi Pin    BCM GPIO#  WiringPi
+//  5v      Red         Red        Blue     Blue      4
+//  CLK     Green       Blue       Green    Red     16/11      23/17       4/0
+//  SDI     Red         Green      Yellow   Green   18/15      24/22       5/6
+//  Gnd     Blue        Yellow     Red      Black  6 or 14
 // This is compatible with both revision 1 and revision 2 boards/
 // Two standard strips are supported and labeled with A and B.
 // Strip A pins are list before the slash and strip B pins are listed after.
