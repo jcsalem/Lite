@@ -68,7 +68,7 @@ LBuffer* StripBufferCreate(csref descStrArg, string* errmsg) {
 
     if (! descStr.empty() && tolower(descStr[descStr.size()-1]) == 'x') {
         flip = true;
-        descStr.substr(0, descStr.size()-1);
+        descStr = descStr.substr(0, descStr.size()-1);
     }
     // Standard names
     descStr = TrimWhitespace(descStr);
