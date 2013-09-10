@@ -24,7 +24,7 @@ string TrimWhitespace(csref str)
     for (epos = len - 1; epos > spos; --epos)
         if (!IsWhitespace(str[epos])) break;
 
-    if (spos >= epos) return "";
+    if (spos > epos) return "";
     return str.substr(spos, epos - spos + 1);
 }
 

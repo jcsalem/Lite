@@ -43,7 +43,7 @@ void ForceLinkStrip() {}
 
 LBuffer* StripBufferCreate(csref descStrArg, string* errmsg) {
     string descStr = descStrArg;
-    // Parse size if it exists
+
     int size = 32;
     size_t leftPos = descStr.find('(');
     size_t rightPos = descStr.find(')');
@@ -68,7 +68,7 @@ LBuffer* StripBufferCreate(csref descStrArg, string* errmsg) {
 
     if (! descStr.empty() && tolower(descStr[descStr.size()-1]) == 'x') {
         flip = true;
-        descStr.substr(0, descStr.size()-1);
+        descStr = descStr.substr(0, descStr.size()-1);
     }
     // Standard names
     descStr = TrimWhitespace(descStr);
