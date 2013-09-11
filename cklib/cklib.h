@@ -14,8 +14,6 @@
 
 namespace CK
 {
-    // Mapping of the lights into the CKbuffer;
-    typedef enum {kNormal, kReverse} Layout_t;
     typedef enum {kNull = 0, kSerial = 1, kChromasic = 2, kChromasicV2 = 3} PortType_t;
     string PortTypeToString(PortType_t type);
     const int kAnyUniverse = -1;  // This means to output to any universe on the device
@@ -40,7 +38,7 @@ class CKdevice
 {
 public:
     CKdevice(const IPAddr& ip, int universe = CK::kAnyUniverse, int port = 1, int count = 50) :
-        iIP(ip), iUniverse(universe), iPort(port), iCount(count), iKiNetVersion(kDefaultKiNetVersion), iLayout(CK::kNormal) {}
+        iIP(ip), iUniverse(universe), iPort(port), iCount(count), iKiNetVersion(kDefaultKiNetVersion) {}
     CKdevice(csref devstr);
     bool        HasError()          const {return !iLastError.empty();}
     string      GetLastError()      const {return iLastError;}
@@ -53,18 +51,16 @@ public:
     int         GetUniverse()       const {return iUniverse;}
     int         GetCount()          const {return iCount;}
     int         GetKiNetVersion()   const {return iKiNetVersion;}
-    CK::Layout_t GetLayout()        const {return iLayout;}
 
     void        SetKiNetVersion(int version)    {iKiNetVersion = version;}
     bool        UpdateKiNetVersion(string* errmsg = NULL);           // Ask the light what version it is
-    void        SetLayout(CK::Layout_t layout)  {iLayout = layout;}
 
     // Writes a KiNET UDP packet to this device
     bool        Write(const char* buffer, int len);
 
     // Copying (copy everything but socket and error)
-    CKdevice(const CKdevice& dev) : iIP(dev.iIP), iUniverse(dev.iUniverse), iPort(dev.iPort), iCount(dev.iCount), iKiNetVersion(dev.iKiNetVersion), iLayout(dev.iLayout) {}
-    CKdevice& operator=(const CKdevice& dev) {iSocket.Close(); iLastError.clear(); iIP = dev.iIP; iPort = dev.iPort; iUniverse = dev.iUniverse; iCount = dev.iCount; iKiNetVersion = dev.iKiNetVersion; iLayout = dev.iLayout; return *this;}
+    CKdevice(const CKdevice& dev) : iIP(dev.iIP), iUniverse(dev.iUniverse), iPort(dev.iPort), iCount(dev.iCount), iKiNetVersion(dev.iKiNetVersion) {}
+    CKdevice& operator=(const CKdevice& dev) {iSocket.Close(); iLastError.clear(); iIP = dev.iIP; iPort = dev.iPort; iUniverse = dev.iUniverse; iCount = dev.iCount; iKiNetVersion = dev.iKiNetVersion; return *this;}
 private:
     // These describe the device
     IPAddr          iIP;
@@ -72,7 +68,6 @@ private:
     int             iPort;      // This is the fixure port NOT the udp port which is hard-coded
     int             iCount;     // Number of lights controlled
     int             iKiNetVersion;
-    CK::Layout_t    iLayout;   //
     // Used to manage communication
     SocketUDPClient iSocket;
     string          iLastError;

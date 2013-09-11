@@ -39,7 +39,6 @@ class LBuffer
     // Mapping functions
     void RandomizeMap();
     void ClearMap();  // 1 to 1 mapping
-    bool SetMap(const vector<int>& lmap); // mapping from an integer coordinate to the light's index in the buffer
 
     // Filters
     //void AttachFilter(const LFilter& filter); // adds a processing filter

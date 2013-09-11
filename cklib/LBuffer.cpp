@@ -58,16 +58,6 @@ void LBuffer::ClearMap() {
     iMap.clear();
     }
 
-bool LBuffer::SetMap(const vector<int>& lmap) {
-    // mapping from coordinate to the light's index on the device
-    if ((int) lmap.size() != GetCount()) return false;
-    for (int i = 0; i < GetCount(); ++i) {
-        if (! InBounds(lmap[i])) return false;
-    }
-    iMap = lmap;
-    return true;
-}
-
 string LBuffer::GetDescription() const {
     string r = "LBuffer: ";
     r += IntToStr(GetCount()) + " total lights";

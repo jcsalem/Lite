@@ -20,21 +20,14 @@ int KiNETdmxOut::GetSize()
 }
 
 // Returns the number of bytes copied or a negative number if there wasn't enough room.
-int CopyColorsToBuffer(char* buffer, int maxlen, LBuffer::const_iterator citer, int clen, bool reverseOrder)
+int CopyColorsToBuffer(char* buffer, int maxlen, LBuffer::const_iterator citer, int clen)
 {
     int bytesNeeded = clen * 3;
     if (bytesNeeded > maxlen) return -bytesNeeded;
 
-    // We reverse the list while copying because that better fits the PDS pattern which has high numbered lights further from the  PDS
-    int incr = 1;
-    if (reverseOrder)
-    {
-        citer += clen - 1;
-        incr = -1;
-    }
     for (int i = 0; i < clen; ++i)
     {
-        if (i != 0) citer += incr;
+        if (i != 0) ++citer;
         *buffer++ = citer->rAsChar();
         *buffer++ = citer->gAsChar();
         *buffer++ = citer->bAsChar();
@@ -144,7 +137,7 @@ string CK::PortTypeToString(PortType_t type) {
 // CKdevice
 //---------------------------------------------------------------------
 
-CKdevice::CKdevice(csref devstrArg) : iUniverse(CK::kAnyUniverse), iPort(1), iCount(50), iKiNetVersion(kDefaultKiNetVersion), iLayout(CK::kNormal)
+CKdevice::CKdevice(csref devstrArg) : iUniverse(CK::kAnyUniverse), iPort(1), iCount(50), iKiNetVersion(kDefaultKiNetVersion)
 {
     string devstr = TrimWhitespace(devstrArg);
     size_t len = devstr.length();
@@ -174,27 +167,21 @@ CKdevice::CKdevice(csref devstrArg) : iUniverse(CK::kAnyUniverse), iPort(1), iCo
     }
 
     // Port
-    size_t atpos = devstr.find('/');
-    if (atpos == string::npos)
+    size_t slashpos = devstr.find('/');
+    if (slashpos == string::npos)
     {
         // No port number, this is a v1 device
         iKiNetVersion = 1;
     } else
     {
         iKiNetVersion = 2;
-        if (! isdigit(devstr[atpos+1]))
-        {
+        if (! StrToUnsigned(devstr.substr(slashpos + 1, len - slashpos - 1), (unsigned*) &iPort)) {
             iLastError = "Device port must be a number";
             return;
         }
 
-        if (tolower(devstr[len-1]) == 'r')
-        {
-            iLayout = CK::kReverse;
-        }
-        iPort = atoi(devstr.substr(atpos + 1, len - atpos - 1).c_str());
-        devstr = devstr.substr(0,atpos);
-        len = atpos;
+        devstr = devstr.substr(0,slashpos);
+        len = slashpos;
     }
 
     iIP = IPAddr(devstr);
@@ -213,8 +200,6 @@ string CKdevice::GetDescriptor() const
         r += "/";
         r += IntToStr(iPort);
     }
-    if (iLayout == CK::kReverse)
-        r += "R";
     r += "(";
     r += IntToStr(iCount);
     r += ")";
@@ -310,7 +295,7 @@ void UpdateOneCKv1(CKdevice& device, LBuffer::const_iterator bufIter)
     char* dataPtr = outbuf + hdrLen;
 
     int len = device.GetCount();
-    int dataLen = CopyColorsToBuffer(dataPtr, maxLen-hdrLen, bufIter, len, device.GetLayout() == CK::kReverse);
+    int dataLen = CopyColorsToBuffer(dataPtr, maxLen-hdrLen, bufIter, len);
     int paddedLen = 512;
     // Fill in rest with zeros
     for (int i = dataLen; i < paddedLen; ++i)
@@ -334,7 +319,7 @@ void UpdateOneCKv2(CKdevice& device, LBuffer::const_iterator bufIter)
     char* dataPtr = outbuf + hdrLen;
 
     int len = device.GetCount();
-    int dataLen = CopyColorsToBuffer(dataPtr, maxLen-hdrLen, bufIter, len, device.GetLayout() == CK::kReverse);
+    int dataLen = CopyColorsToBuffer(dataPtr, maxLen-hdrLen, bufIter, len);
     *header = KiNETportOut(); // Initialize header
     header->port = device.GetPort();
     header->universe = device.GetUniverse();
