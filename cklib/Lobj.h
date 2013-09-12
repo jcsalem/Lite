@@ -66,10 +66,12 @@ public:
     void Map(Lobj::MapFcn_t mapfcn, const void* info = NULL);
     typedef vector<LobjBase*>::const_iterator   const_iterator;
     typedef vector<LobjBase*>::iterator         iterator;
-    const_iterator   begin() const   {return iObjs.begin();}
-    const_iterator   end()   const   {return iObjs.end();}
-    iterator         begin()         {return iObjs.begin();}
-    iterator         end()           {return iObjs.end();}
+    const_iterator  begin() const       {return iObjs.begin();}
+    const_iterator  end()   const       {return iObjs.end();}
+    iterator        begin()             {return iObjs.begin();}
+    iterator        end()               {return iObjs.end();}
+    LobjBase&       operator[](int i)   {return *(iObjs[i]);}
+    const LobjBase& operator[](int i) const {return *(iObjs[i]);}
 
 private:
     vector<LobjBase*> iObjs;
