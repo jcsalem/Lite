@@ -39,6 +39,11 @@ DefProgramHelp(kPHhelp, "command is one of:\n"
     "  color is \"r,g,b\" or \"HSV(h,s,v)\" or a named color, etc.  All components are scaled from 0.0 to 1.0\n"
     );
 
+typedef enum {kStatic, kRotate, kBounce} Mode_t;
+Mode_t gMode;
+Color* gColor;      // Always set
+Color* gColor2;     // Only set if we're doing a color wash
+
 int main(int argc, char** argv)
 {
     // Initialize and Parse arguments
@@ -52,49 +57,47 @@ int main(int argc, char** argv)
     string command = argv[argp++];
     string errmsg;
     int idx = -1;  // if -1 all colors should be set
-    Color* color;
-    Color* color2;
-    bool doWash   = false;
-    bool bounce   = false;
+
     float defaultRotateDelay = 0;
 
     if (command == "clear")
     {
         ValidateNumArgs(command, 0, argc, argp);
-        color = new BLACK;
+        gColor = new BLACK;
     }
     else if (command == "set")
     {
         ValidateNumArgs(command, 2, argc, argp);
         idx   = atoi(argv[argp++]);
-        color = Color::AllocFromString(argv[argp++], &errmsg);
+        gColor = Color::AllocFromString(argv[argp++], &errmsg);
     }
     else if (command == "all")
     {
         ValidateNumArgs(command, 1, argc, argp);
-        color = Color::AllocFromString(argv[argp++], &errmsg);
+        gColor = Color::AllocFromString(argv[argp++], &errmsg);
     }
     else if (command == "rotate" || command == "bounce")
     {
         ValidateNumArgs(command, 1, argc, argp);
         idx = 0;
-        color = Color::AllocFromString(argv[argp++], &errmsg);
+        gColor = Color::AllocFromString(argv[argp++], &errmsg);
         defaultRotateDelay = 50;
-        bounce = (command == "bounce");
+        gMode = (command == "bounce") ? kBounce : kRotate;
     }
     else if (command == "wash")
     {
         ValidateNumArgs(command, 2, argc, argp);
-        color = Color::AllocFromString(argv[argp++], &errmsg);
-        color2 = color ? Color::AllocFromString(argv[argp++], &errmsg) : NULL;
-        doWash = true;
+        gColor = Color::AllocFromString(argv[argp++], &errmsg);
+        gColor2 = gColor ? Color::AllocFromString(argv[argp++], &errmsg) : NULL;
+        if (!gColor2) gColor = NULL;
     }
     else if (command == "rotwash")
     {
         ValidateNumArgs(command, 2, argc, argp);
-        color = Color::AllocFromString(argv[argp++], &errmsg);
-        color2 = color ? Color::AllocFromString(argv[argp++], &errmsg) : NULL;
-        doWash = true;
+        gColor = Color::AllocFromString(argv[argp++], &errmsg);
+        gColor2 = gColor ? Color::AllocFromString(argv[argp++], &errmsg) : NULL;
+        if (!gColor2) gColor = NULL;
+        gMode = kRotate;
         defaultRotateDelay = 25;
     }
     else
@@ -103,14 +106,13 @@ int main(int argc, char** argv)
     }
 
     // Validate the colors
-    if (! color) Usage(errmsg);
-    if (doWash && !color2) Usage(errmsg);
+    if (! gColor) Usage(errmsg);
 
     // Print summary
     if (L::gVerbose) {
-        cout << "Cmd: " << command << "   Color: " << color->ToString();
+        cout << "Cmd: " << command << "   Color: " << gColor->ToString();
         if (doWash)
-            cout << " Color2: " << color2->ToString();
+            cout << " Color2: " << gColor2->ToString();
         if (idx != -1)
             cout << "  Index: " << idx;
         if (L::gRunTime >= 0)
@@ -121,8 +123,8 @@ int main(int argc, char** argv)
     }
 
     // Set and update the lights
-    if (doWash) {
-        HSVColorRange range(*color, *color2);
+    if (gColor2) {
+        HSVColorRange range(*gColor, *gColor2);
         int numLights = L::gOutputBuffer->GetCount();;
         float stepSize = 1.0f / numLights;
         for (int i = 0; i < numLights; ++i) {
@@ -131,9 +133,9 @@ int main(int argc, char** argv)
         }
     } else
     if (idx == -1)
-        L::gOutputBuffer->SetAll(*color);
+        L::gOutputBuffer->SetAll(*gColor);
     else
-        L::gOutputBuffer->SetColor(idx, *color);
+        L::gOutputBuffer->SetColor(idx, *gColor);
     L::gOutputBuffer->Update();
 
      // Handle rotation and/or timedelay
@@ -159,6 +161,7 @@ int main(int argc, char** argv)
 
         }
     } else if (L::gRunTime > 0)
+        // If it's not rotate mode and run time wasn't set, end immediately
         SleepMilli(L::gRunTime * 1000);
 
     exit(EXIT_SUCCESS);
