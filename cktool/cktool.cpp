@@ -71,6 +71,7 @@ int main(int argc, char** argv)
 {
     // Initialize and Parse arguments
     L::SetRateMode(L::kRateNonZero);
+    Option::DeleteOption("color");
     L::Startup(&argc, argv, Option::kVariable);
 
     if (argc <= 1) Usage("Missing command");
