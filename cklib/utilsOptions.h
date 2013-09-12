@@ -24,7 +24,7 @@ public:
 
     static const int kVariable = -1;
     // Returns false if an error occurred and a help message was printed.
-    // numPositionArgs is the number of positional arguments after the options. Use kVariable if it can be more than one number.
+    // numPositionArgs is the number of positional arguments after the options. Use kVariable if it can be any number of arguments..
     static void ParseArglist(int *argc, char** argv, int numPositionArgs = 0);
     static bool DeleteOption(csref name);
 private:
