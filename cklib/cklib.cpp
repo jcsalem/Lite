@@ -278,7 +278,7 @@ bool CKbuffer::PortSync()
     {
     if (! iDevices[i].Write(outbuf, len))
         {
-            cerr << "Update failed writing to " << iDevices[i].GetIP().GetString() << ": " << iDevices[i].GetLastError() << endl;
+            cerr << "PortSync failed writing to " << iDevices[i].GetIP().GetString() << ": " << iDevices[i].GetLastError() << endl;
         }
     }
 
