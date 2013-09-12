@@ -33,7 +33,7 @@ struct Lxy {
     Lxy& operator/=(float s)         {x /= s; y /= s; return *this;}
 
     const Lxy operator+(const Lxy& a) const {Lxy r = *this; r += a; return r;}
-    const Lxy operator-(const Lxy& a) const {Lxy r = *this; r += a; return r;}
+    const Lxy operator-(const Lxy& a) const {Lxy r = *this; r -= a; return r;}
     const Lxy operator*(float s)      const {Lxy r = *this; r *= s; return r;}
     const Lxy operator/(float s)      const {Lxy r = *this; r /= s; return r;}
 };

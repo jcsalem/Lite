@@ -106,10 +106,9 @@ void ObjRender(const LobjBase* obj, LBuffer* buffer, const LFilterList& filters)
 
     RGBColor rgb = obj->GetCurrentColor();
     rgb = filters.Apply(rgb, obj->lastTime);
-
-//    cout << "Render: " << rgb.ToString() << " at " << pos.x << "," << pos.y << endl;
     float   width   = obj->width;
     Lxy     pos     = obj->pos;
+    //cout << "Render: " << rgb.ToString() << " at " << pos.x << "," << pos.y << endl;
 
     if (width == 0 || !gAntiAlias) {
         // Round to nearest pixel to beginning of object
@@ -157,6 +156,7 @@ void LobjBase::Wrap(const Lxy& minBound, const Lxy& maxBound) {
 
     float newX = fmod(pos.x - minBound.x, range.x) + minBound.x;
     float newY = fmod(pos.y - minBound.y, range.y) + minBound.y;
+    //cout << "Wrap: " << pos.x << " to " << minBound.x << "," << maxBound.x << "  Result: " << newX << endl;
     pos = Lxy(newX, newY);
 }
 

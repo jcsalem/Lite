@@ -230,16 +230,6 @@ void Startup(int *argc, char** argv, int numPositionalArgs) {
 
     // Set up time variables
     gStartTime  = gTime = Milliseconds();
-    gEndTime = 0; // Runs forever
-    if (gRunTime >= 0)
-        gEndTime = gStartTime + (Milli_t) (gRunTime * 1000 + .5);
-
-    // Handle fade effect (this should really be automated from a list of filters added during arg parsing
-    if (gFade > 0) {
-        gFilters.AddFilter(LFilterFadeIn(false,gStartTime, gStartTime + gFade * 1000));
-        if (gEndTime)
-            gFilters.AddFilter(LFilterFadeOut(false,gEndTime - gFade * 1000, gEndTime));
-    }
 }
 
 void Cleanup(bool eraseAtEnd)
@@ -254,6 +244,19 @@ void Cleanup(bool eraseAtEnd)
 
 void Run(Lgroup& objGroup, L::Callback_t fcn)
 {
+    // Set up end time variables
+    gEndTime = 0; // Runs forever
+    if (gRunTime >= 0)
+        gEndTime = gStartTime + (Milli_t) (gRunTime * 1000 + .5);
+
+    // Handle fade effect (this should really be automated from a list of filters added during arg parsing
+    if (gFade > 0) {
+        gFilters.AddFilter(LFilterFadeIn(false,gStartTime, gStartTime + gFade * 1000));
+        if (gEndTime)
+            gFilters.AddFilter(LFilterFadeOut(false,gEndTime - gFade * 1000, gEndTime));
+    }
+
+    // Main loop
     while (true) {
         gTime = Milliseconds();
 

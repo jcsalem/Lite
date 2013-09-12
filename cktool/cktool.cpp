@@ -3,6 +3,7 @@
 #include "cklib.h"
 #include "utilsTime.h"
 #include "LFramework.h"
+#include "Lobj.h"
 #include <iostream>
 #include <cmath>
 
@@ -44,6 +45,28 @@ Mode_t gMode;
 Color* gColor;      // Always set
 Color* gColor2;     // Only set if we're doing a color wash
 
+void cktoolCallback(Lgroup& group) {
+    // Move the lights as needed
+    group.MoveAll(L::gTime);
+
+    // Do the bounary stuff
+    Lxy minBound(-.5,0);
+    Lxy maxBound(L::gOutputBuffer->GetCount()-.5, 0);
+    switch (gMode)
+    {
+    case kRotate:
+        group.WrapAll(minBound, maxBound);
+        break;
+    case kBounce:
+        group.BounceAll(minBound, maxBound);
+        break;
+    case kStatic:
+    default:
+        break;
+    }
+}
+
+
 int main(int argc, char** argv)
 {
     // Initialize and Parse arguments
@@ -58,30 +81,33 @@ int main(int argc, char** argv)
     string errmsg;
     int idx = -1;  // if -1 all colors should be set
 
-    float defaultRotateDelay = 0;
+    float speed = 0;
 
     if (command == "clear")
     {
         ValidateNumArgs(command, 0, argc, argp);
         gColor = new BLACK;
+        if (L::gRunTime < 0) L::gRunTime = 0;  // If no run time specified, return immediately
     }
     else if (command == "set")
     {
         ValidateNumArgs(command, 2, argc, argp);
         idx   = atoi(argv[argp++]);
         gColor = Color::AllocFromString(argv[argp++], &errmsg);
+        if (L::gRunTime < 0) L::gRunTime = 0;  // If no run time specified, return immediately
     }
     else if (command == "all")
     {
         ValidateNumArgs(command, 1, argc, argp);
         gColor = Color::AllocFromString(argv[argp++], &errmsg);
+        if (L::gRunTime < 0) L::gRunTime = 0;  // If no run time specified, return immediately
     }
     else if (command == "rotate" || command == "bounce")
     {
         ValidateNumArgs(command, 1, argc, argp);
         idx = 0;
         gColor = Color::AllocFromString(argv[argp++], &errmsg);
-        defaultRotateDelay = 50;
+        speed = 20 * L::gRate;
         gMode = (command == "bounce") ? kBounce : kRotate;
     }
     else if (command == "wash")
@@ -90,6 +116,7 @@ int main(int argc, char** argv)
         gColor = Color::AllocFromString(argv[argp++], &errmsg);
         gColor2 = gColor ? Color::AllocFromString(argv[argp++], &errmsg) : NULL;
         if (!gColor2) gColor = NULL;
+        if (L::gRunTime < 0) L::gRunTime = 0;  // If no run time specified, return immediately
     }
     else if (command == "rotwash")
     {
@@ -97,8 +124,8 @@ int main(int argc, char** argv)
         gColor = Color::AllocFromString(argv[argp++], &errmsg);
         gColor2 = gColor ? Color::AllocFromString(argv[argp++], &errmsg) : NULL;
         if (!gColor2) gColor = NULL;
+        speed = 40 * L::gRate;
         gMode = kRotate;
-        defaultRotateDelay = 25;
     }
     else
     {
@@ -111,58 +138,46 @@ int main(int argc, char** argv)
     // Print summary
     if (L::gVerbose) {
         cout << "Cmd: " << command << "   Color: " << gColor->ToString();
-        if (doWash)
+        if (gColor2)
             cout << " Color2: " << gColor2->ToString();
         if (idx != -1)
             cout << "  Index: " << idx;
         if (L::gRunTime >= 0)
             cout << "  Time: " << L::gRunTime << " seconds";
-        if (defaultRotateDelay != 0 && L::gRate != 1)
+        if (gMode != kStatic && L::gRate != 1)
             cout << "  Rate: " << L::gRate;
         cout << endl;
     }
 
-    // Set and update the lights
-    if (gColor2) {
-        HSVColorRange range(*gColor, *gColor2);
+    // Allocate objects and set colors
+    Lgroup objs;
+    if (idx != -1) {
+        // Just one light
+        LobjBase* obj = new LobjBase();
+        obj->pos.x = idx;
+        obj->color = *gColor;
+        obj->speed.x = speed;
+        objs.Add(obj);
+    } else {
+        // One light for each pixel
+        HSVColorRange range;
+        if (gColor2) range = HSVColorRange(*gColor, *gColor2);
+
         int numLights = L::gOutputBuffer->GetCount();;
-        float stepSize = 1.0f / numLights;
         for (int i = 0; i < numLights; ++i) {
-            HSVColor col = range.GetColor(i * stepSize);
-            L::gOutputBuffer->SetColor(i, col);
+            LobjBase* obj = new LobjBase();
+            obj->pos.x = i;
+            if (gColor2)
+                obj->color = range.GetColor((float) i / (float) numLights);
+            else
+                obj->color = *gColor;
+            obj->speed.x = speed;
+            objs.Add(obj);
         }
-    } else
-    if (idx == -1)
-        L::gOutputBuffer->SetAll(*gColor);
-    else
-        L::gOutputBuffer->SetColor(idx, *gColor);
-    L::gOutputBuffer->Update();
+    }
 
-     // Handle rotation and/or timedelay
-    if (defaultRotateDelay != 0) {
-        Milli_t duration = L::gRunTime * 1000;
-        Milli_t startTime = Milliseconds();
-        Milli_t sleepBetween = defaultRotateDelay / fabs(L::gRate);
-        int width = L::gOutputBuffer->GetCount();
-        int count = 0;
-        int direction = L::gRate < 0 ? -1 : 1;
-        while (true) {
-            if (bounce && count != 0 && width > 1 && (count % (width-1)) == 0) direction = -direction;
-            ++count;
-            L::gOutputBuffer->Rotate(direction);
-            L::gOutputBuffer->Update();
-            if (L::gOutputBuffer->HasError()) {
-                cerr << "Update error: " << L::gOutputBuffer->GetLastError() << endl;
-                exit(EXIT_FAILURE);
-            }
-
-            SleepMilli(sleepBetween);
-            if (duration >= 0 && MilliDiff(Milliseconds(),  startTime) >= (Milli_t) L::gRunTime * 1000) break;
-
-        }
-    } else if (L::gRunTime > 0)
-        // If it's not rotate mode and run time wasn't set, end immediately
-        SleepMilli(L::gRunTime * 1000);
+    L::Run(objs, cktoolCallback);
+    L::Cleanup();
 
     exit(EXIT_SUCCESS);
 }
