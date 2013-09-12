@@ -152,15 +152,24 @@ DEFINE_LBUFFER_TYPE(combo_internal, ComboBuffer::Create, "[<device spec>,<device
         "Combines all devices end-to-end into a single combo device.");
 
 //-----------------------------------------------------------------------------
+// Utility Fcn
+//-----------------------------------------------------------------------------
+
+LBuffer* SafeCreateBuffer(csref typeStr, csref descStr, string* errmsg){
+    if (descStr.empty()) {
+        if (errmsg) *errmsg = "Missing device specification to '" + typeStr + "' type.";
+        return NULL;
+    }
+    return LBuffer::Create(descStr, errmsg);
+}
+
+//-----------------------------------------------------------------------------
 // ReverseBuffer
 //-----------------------------------------------------------------------------
 
-LBuffer* ReverseBufferCreate(csref descStr, string* errmsg) {
-    if (descStr.empty()) {
-        if (errmsg) *errmsg = "Missing device specification to 'flip' type.";
-        return NULL;
-    }
-    LBuffer* buffer = LBuffer::Create(descStr, errmsg);
+LBuffer* ReverseBufferCreate(csref descStr, string* errmsg)
+{
+    LBuffer* buffer = SafeCreateBuffer("flip", descStr, errmsg);
     if (! buffer) return NULL;
     return new ReverseBuffer(buffer);
 }
@@ -168,3 +177,58 @@ LBuffer* ReverseBufferCreate(csref descStr, string* errmsg) {
 DEFINE_LBUFFER_TYPE(flip, ReverseBufferCreate, "flip:<device spec>",
         "Outputs to the device described by <device spec>, but flips the result.");
 
+//-----------------------------------------------------------------------------
+// LBufferMap -- Abstract class for any type that uses a map
+//-----------------------------------------------------------------------------
+
+LBufferMap::LBufferMap(LBuffer* buffer) : LBuffer(), iBuffer(buffer)
+{
+    int len = iBuffer->GetCount();
+    iMap = vector<int>(len);
+    for (int i = 0; i < len; ++i) {
+        iMap[i] = i;
+    }
+}
+
+//-----------------------------------------------------------------------------
+// RandomizedBuffer
+//-----------------------------------------------------------------------------
+void RandomizedBuffer::RandomizeMap()
+{
+    random_shuffle(iMap.begin(), iMap.end());
+}
+
+
+LBuffer* RandomizedBufferCreate(csref descStr, string* errmsg)
+{
+    LBuffer* buffer = SafeCreateBuffer("random", descStr, errmsg);
+    if (! buffer) return NULL;
+    return new RandomizedBuffer(buffer);
+}
+
+DEFINE_LBUFFER_TYPE(random, RandomizedBufferCreate, "random:<device spec>",
+                    "Randomizes the order of pixels in the device.");
+
+//-----------------------------------------------------------------------------
+// Skip2Buffer
+//-----------------------------------------------------------------------------
+Skip2Buffer::Skip2Buffer(LBuffer* buffer) : LBufferMap(buffer)
+{
+    int len = buffer->GetCount();
+    int idx = 0;
+    for (int i = 0; i < len; i += 2)
+        iMap[idx++] = i;
+    for (int i = 1; i < len; i += 2)
+        iMap[idx++] = i;
+}
+
+
+LBuffer* Skip2BufferCreate(csref descStr, string* errmsg)
+{
+    LBuffer* buffer = SafeCreateBuffer("skip2", descStr, errmsg);
+    if (! buffer) return NULL;
+    return new Skip2Buffer(buffer);
+}
+
+DEFINE_LBUFFER_TYPE(skip2, Skip2BufferCreate, "skip2:<device spec>",
+                    "Interleaves the order of pixels.");
