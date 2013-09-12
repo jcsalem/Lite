@@ -113,7 +113,7 @@ int main(int argc, char** argv)
             cout << " Color2: " << color2->ToString();
         if (idx != -1)
             cout << "  Index: " << idx;
-        if (L::gRunTime != 0)
+        if (L::gRunTime >= 0)
             cout << "  Time: " << L::gRunTime << " seconds";
         if (defaultRotateDelay != 0 && L::gRate != 1)
             cout << "  Rate: " << L::gRate;
@@ -137,8 +137,8 @@ int main(int argc, char** argv)
     L::gOutputBuffer->Update();
 
      // Handle rotation and/or timedelay
-    Milli_t duration = L::gRunTime * 1000;
     if (defaultRotateDelay != 0) {
+        Milli_t duration = L::gRunTime * 1000;
         Milli_t startTime = Milliseconds();
         Milli_t sleepBetween = defaultRotateDelay / fabs(L::gRate);
         int width = L::gOutputBuffer->GetCount();
@@ -155,10 +155,11 @@ int main(int argc, char** argv)
             }
 
             SleepMilli(sleepBetween);
-            if (duration > 0 && MilliDiff(Milliseconds(),  startTime) > (Milli_t) L::gRunTime * 1000) break;
+            if (duration >= 0 && MilliDiff(Milliseconds(),  startTime) >= (Milli_t) L::gRunTime * 1000) break;
 
         }
-    } else
-        SleepMilli(duration);
+    } else if (L::gRunTime > 0)
+        SleepMilli(L::gRunTime * 1000);
+
     exit(EXIT_SUCCESS);
 }

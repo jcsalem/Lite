@@ -124,7 +124,7 @@ string ColorCallback(csref name, csref val) {
 DefOption(color, ColorCallback, "colormode", "identifies the type of color. Options: bright, halloween, realstar, starry, etc.", ColorDefaultCallback);
 
 //------------
-float gRunTime        = 0.0;
+float gRunTime        = -1.0; // any number below zero means run forever
 
 string TimeCallback(csref name, csref val) {
     string errmsg;
@@ -231,7 +231,7 @@ void Startup(int *argc, char** argv, int numPositionalArgs) {
     // Set up time variables
     gStartTime  = gTime = Milliseconds();
     gEndTime = 0; // Runs forever
-    if (gRunTime > 0)
+    if (gRunTime >= 0)
         gEndTime = gStartTime + (Milli_t) (gRunTime * 1000 + .5);
 
     // Handle fade effect (this should really be automated from a list of filters added during arg parsing
