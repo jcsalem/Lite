@@ -90,19 +90,6 @@ private:
     void SetFromRGB(const RGBColor& rgb);
   };
 
-// A way of specifying a range of colors
-class HSVColorRange
-{
-public:
-    HSVColorRange(const Color& cc1, const Color& cc2);
-    HSVColor GetRandomColor(void) const;  // returns a random color from the range
-    HSVColor GetColor(float index) const; // returns a color from within the range (0 <= range <= 1)
-    HSVColor c1;
-    HSVColor c2;
-    string GetDescription() const;
-
-};
-
 // Standard color names
 #define BLACK   RGBColor(  0,  0,  0)
 #define WHITE   RGBColor(1.0,1.0,1.0)
@@ -120,6 +107,20 @@ public:
 
 #define ORANGE  RGBColor(1.0,.33,  0)
 #define PURPLE  RGBColor(.63,.13,.94)
+
+// A way of specifying a range of colors
+class HSVColorRange
+{
+public:
+    HSVColorRange() : c1(BLACK), c2(WHITE) {}
+    HSVColorRange(const Color& cc1, const Color& cc2);
+    HSVColor GetRandomColor(void) const;  // returns a random color from the range
+    HSVColor GetColor(float index) const; // returns a color from within the range (0 <= range <= 1)
+    HSVColor c1;
+    HSVColor c2;
+    string GetDescription() const;
+
+};
 
 // Random color utilities (really part of LFramework.h)
 // --color option
