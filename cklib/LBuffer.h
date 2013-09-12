@@ -28,18 +28,14 @@ class LBuffer
     bool        InBounds(int coord)     const {return coord >= 0 && coord < GetCount();}
 
     // Reads
-    RGBColor    GetRGB(int coord)       const {if (InBounds(coord)) return const_cast<LBuffer*>(this)->GetRawRGB(MapCoord(coord)); else return BLACK;}
+    RGBColor    GetRGB(int coord)       const {if (InBounds(coord)) return const_cast<LBuffer*>(this)->GetRawRGB(coord); else return BLACK;}
 
     // Writes
     void Clear(void) {SetAll(BLACK);}
     void SetColor(int coord, const Color& color);
     void SetAll(const Color& color);
-    void SetRGB(int coord, const RGBColor& rgb)   {if (InBounds(coord)) GetRawRGB(MapCoord(coord)) = rgb;}
+    void SetRGB(int coord, const RGBColor& rgb)   {if (InBounds(coord)) GetRawRGB(coord) = rgb;}
     void AddRGB(int coord, const RGBColor& rgb)   {SetRGB(coord, GetRGB(coord) + rgb);}
-
-    // Mapping functions
-    void RandomizeMap();
-    void ClearMap();  // 1 to 1 mapping
 
     // Filters
     //void AttachFilter(const LFilter& filter); // adds a processing filter
@@ -61,13 +57,10 @@ class LBuffer
     LBuffer() {}
 
     string              iLastError;
-    vector<int>         iMap;
 
-    int                 MapCoord(int coord) const   {if (iMap.size() == 0) return coord; else return iMap[coord];}
-
-        // Buffer access functions. Idx assumed to be in bounds.
+    // Buffer access functions. Idx assumed to be in bounds.
     virtual RGBColor&   GetRawRGB(int idx) = 0;
-    RGBColor&           GetRGBRef(int coord)             {if (InBounds(coord)) return GetRawRGB(MapCoord(coord)); else return kNullColor;}
+    RGBColor&           GetRGBRef(int coord)             {if (InBounds(coord)) return GetRawRGB(coord); else return kNullColor;}
 
     // Disallow copy construction because it doesn't work reliably for the derived class
     LBuffer(const LBuffer&);

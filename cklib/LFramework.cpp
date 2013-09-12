@@ -37,6 +37,7 @@ UninitAtExit _gUninitAtExit;
 //---------------------------------------------------------------
 
 LBuffer* gOutputBuffer   = NULL;
+string gOutputDeviceArg;
 
 LBuffer* CreateOutputBuffer(csref devstr, string* errmsg) {
     LBuffer* buffer = ComboBuffer::Create(devstr, errmsg);
@@ -57,10 +58,8 @@ LBuffer* CreateOutputBuffer(csref devstr, string* errmsg) {
 }
 
 string DeviceCallback(csref name, csref val) {
-    string errmsg;
-    gOutputBuffer = CreateOutputBuffer(val, &errmsg);
-    if (! gOutputBuffer && errmsg.empty()) errmsg = "Error creating output buffer";
-    return errmsg;
+    gOutputDeviceArg = TrimWhitespace(val);
+    return "";
 }
 
 DefOption(dev, DeviceCallback, "deviceInfo", "is a device descriptor beginning with the device type name (see below)", NULL);
@@ -92,22 +91,20 @@ string VerboseCallback(csref name, csref val) {
 DefOptionBool(verbose, VerboseCallback, "enables verbose status messages");
 
 //------------
-enum {kOutMapNormal = 0, kOutMapRandom = 1};
-int gOutMap = kOutMapNormal;
+string gOutputFilters;
 
-string OutMapDefaultCallback(csref name) {
-    if (gOutMap == kOutMapRandom) return "random";
-    return "normal";
-}
+string validOutputFilters[] = {"random", "skip2", "flip"};
 
-string OutMapCallback(csref name, csref val) {
-    if      (StrEQ(val, "random")) gOutMap = kOutMapRandom;
-    else if (StrEQ(val, "normal")) gOutMap = kOutMapNormal;
-    else return "Invalid --outmap value: " + val + " (should be normal or random)";
+string OutFilterCallback(csref name, csref valarg) {
+    // $$$ TODO $$$ Add parameter checking
+    string value = TrimWhitespace(valarg);
+    if (value.empty()) return "";
+    if (value[value.size()-1] != ':') value += ":";
+    gOutputFilters = value + gOutputFilters;
     return "";
 }
 
-DefOption(outmap, OutMapCallback, "outmap", "Enables mapping the order of the output pixels to something else. Either normal or random.", OutMapDefaultCallback);
+DefOption(outfilter, OutFilterCallback, "filters", "Adds output filters/maps that operate at the pixel level. Can be specified with as random, skip2, flip, etc.", NULL);
 
 //------------
 string ColorDefaultCallback(csref name)
@@ -201,19 +198,20 @@ void Startup(int *argc, char** argv, int numPositionalArgs) {
     // Parse the argument list
     Option::ParseArglist(argc, argv, numPositionalArgs);
 
-    // If no --dev, try LDEV environment variable
-    if (! gOutputBuffer) {
+    // Create the OutputBuffer
+    if (gOutputDeviceArg.empty()) {
         const char* envval = getenv("LDEV");
-        if (envval && envval[0] != '\0') {
-            string errmsg;
-            gOutputBuffer = CreateOutputBuffer(envval, &errmsg);
-            if (!gOutputBuffer) errorExit(errmsg);
-        }
+        if (envval && envval[0] != '\0') gOutputDeviceArg = TrimWhitespace(envval);
     }
-
-    // Check for valid output buffer
-    if (! gOutputBuffer)
+    if (gOutputDeviceArg.empty())
         errorExit("No output device was specified via --dev or the LDEV environment variable.");
+
+    string errmsg;
+    string devstr = gOutputDeviceArg;
+    if (!gOutputFilters.empty())
+        devstr = gOutputFilters + "[" + gOutputDeviceArg + "]";
+    gOutputBuffer = CreateOutputBuffer(devstr, &errmsg);
+    if (!gOutputBuffer) errorExit("Error creating output buffer: " + errmsg);
 
     if (gOutputBuffer->HasError())
         errorExit(gOutputBuffer->GetLastError());
@@ -223,10 +221,6 @@ void Startup(int *argc, char** argv, int numPositionalArgs) {
 
     if (gVerbose)
         cout << gOutputBuffer->GetDescription() << endl;
-
-    // Other random setup
-    if (gOutMap == kOutMapRandom)
-        gOutputBuffer->RandomizeMap();
 
     // Set up time variables
     gStartTime  = gTime = Milliseconds();

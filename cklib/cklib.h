@@ -97,10 +97,10 @@ vector<CKinfo>      CKdiscoverInfo   (string* errmsg = NULL, int timeoutInMS = C
 class CKbuffer : public LBufferPhys
 {
 public:
-    CKbuffer() : LBufferPhys() {}
-    CKbuffer(const CKdevice& dev) : LBufferPhys() {AddDevice(dev);}
+    //CKbuffer() : LBufferPhys() {}
+    CKbuffer(const CKdevice& dev);
     virtual ~CKbuffer() {}
-    bool    AddDevice(const CKdevice& dev);
+    //bool    AddDevice(const CKdevice& dev);
 
     virtual bool    HasError()       const;
     virtual string  GetLastError()   const;
@@ -113,8 +113,7 @@ public:
 //    static bool    CreateFromXML(CKbuffer* buffer, const CKxmldoc& xmldoc);
 
 private:
-    typedef vector<CKdevice>::const_iterator  DevIter_t;
-    vector<CKdevice>    iDevices;
+    CKdevice iDevice;
     // Don't allow copying
     CKbuffer(const CKbuffer&);
     CKbuffer& operator=(const CKbuffer&);

@@ -11,7 +11,6 @@ RGBColor LBuffer::kNullColor = BLACK; // note that this is used by functions ret
 void LBufferPhys::Alloc(int count)
 {
   iBuffer.resize(count);
-    ClearMap();
 }
 
 void LBuffer::SetAll(const Color& color)
@@ -44,24 +43,9 @@ void LBuffer::Rotate(int incr) {
     }
 }
 
-// Map stuff
-void LBuffer::RandomizeMap() {
-    vector<int> lmap(GetCount());
-    for (int i = 0; i < GetCount(); ++i)
-        lmap[i] = i;
-    random_shuffle(lmap.begin(), lmap.end());
-    iMap = lmap;
-    }
-
-void LBuffer::ClearMap() {
-// Just use a 1 to 1 mapping
-    iMap.clear();
-    }
-
 string LBuffer::GetDescription() const {
     string r = "LBuffer: ";
     r += IntToStr(GetCount()) + " total lights";
-    if (iMap.size() > 0) r += " with custom mapping";
     r += " [" + GetDescriptor() + "]";
     return r;
 }

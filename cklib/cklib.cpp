@@ -6,6 +6,7 @@
 #include "LBuffer.h"
 #include <iostream>
 #include <stdio.h>
+#include "MetaBuffer.h"
 
 //---------------------------------------------------------------------
 // KiNET utilities
@@ -237,32 +238,33 @@ bool CKdevice::Write(const char* buffer, int len)
 // CKduffer
 //---------------------------------------------------------------------
 
+CKbuffer::CKbuffer(const CKdevice& dev) : LBufferPhys(), iDevice(dev)
+{
+    if (dev.GetCount() == 0) {
+        iLastError = "Zero length ColorKinetics device";
+    }
+
+    Alloc(dev.GetCount());
+}
+
+
 bool CKbuffer::HasError() const
 {
     if (LBuffer::HasError()) return true;
-    for (DevIter_t i = iDevices.begin(); i != iDevices.end(); ++i)
-        if (i->HasError()) return true;
+    if (iDevice.HasError()) return true;
     return false;
 }
 
 string CKbuffer::GetLastError() const
 {
     if (LBuffer::HasError()) return LBuffer::GetLastError();
-    for (DevIter_t i = iDevices.begin(); i != iDevices.end(); ++i)
-        if (i->HasError()) return i->GetLastError();
+    if (iDevice.HasError()) return iDevice.GetLastError();
     return string();
 }
 
 string CKbuffer::GetDescriptor() const
 {
-    string str = "ck:";
-    for (DevIter_t i = iDevices.begin(); i != iDevices.end(); ++i)
-    {
-        if (i != iDevices.begin())
-            str += ", ";
-        str += i->GetDescriptor();
-    }
-    return str;
+    return "ck:" + iDevice.GetDescriptor();
 }
 
 bool CKbuffer::PortSync()
@@ -274,13 +276,8 @@ bool CKbuffer::PortSync()
     KiNETportOutSync* header = (KiNETportOutSync*) outbuf;
     *header = KiNETportOutSync();
     int len = KiNETportOutSync::GetSize();
-    for (size_t i = 0; i < iDevices.size(); ++i)
-    {
-    if (! iDevices[i].Write(outbuf, len))
-        {
-            cerr << "PortSync failed writing to " << iDevices[i].GetIP().GetString() << ": " << iDevices[i].GetLastError() << endl;
-        }
-    }
+    if (! iDevice.Write(outbuf, len))
+        cerr << "PortSync failed writing to " << iDevice.GetIP().GetString() << ": " << iDevice.GetLastError() << endl;
 
     return !HasError();
 }
@@ -333,25 +330,20 @@ void UpdateOneCKv2(CKdevice& device, LBuffer::const_iterator bufIter)
 
 bool CKbuffer::Update()
     {
-    int numDevs = iDevices.size();
     const_iterator bufIter = const_cast<const CKbuffer*>(this)->begin();
-    for (int i = 0; i < numDevs; ++i)
-    {
-        // Force a millisecond delay. Otherwise, if we are going to the next port on the same PDS, we could lose data.
-        if (i) SleepMilli(1);
-        switch (iDevices[i].GetKiNetVersion())
+    switch (iDevice.GetKiNetVersion())
         {
-            case 2:
-                UpdateOneCKv2(iDevices[i], bufIter);
-                break;
-            default:
-                UpdateOneCKv1(iDevices[i], bufIter);
-                break;
+        case 2:
+            UpdateOneCKv2(iDevice, bufIter);
+            break;
+        default:
+            UpdateOneCKv1(iDevice, bufIter);
+            break;
         }
-        bufIter += iDevices[i].GetCount();
-    }
 
     PortSync();
+    // Force a millisecond delay. Otherwise, if we are going to the next port on the same PDS, we could lose data.
+    SleepMilli(1);
 
     return !HasError();
     }
@@ -360,58 +352,20 @@ bool CKbuffer::Update()
 // CKbuffer: Creating
 //---------------------------------------------------------------------
 
-bool CKbuffer::AddDevice(const CKdevice& dev)
-    {
-    int oldCount = GetCount();
-    iDevices.push_back(dev);
-    Alloc(oldCount + dev.GetCount());
-    return !dev.HasError();
-    }
-
-#if 0
-bool CKbuffer::AddDevice(csref devstrarg)
+LBuffer* CKbufferCreate(csref devstr, string* errmsg)
 {
-    bool success = false;
-    size_t pos = devstrarg.find(',');
-    string devstr = devstrarg.substr(0, pos);
     CKdevice dev(devstr);
-    if (dev.HasError())
-        iLastError = "Invalid device string: '" + devstrarg + "': " + dev.GetLastError();
-    else
-        success = AddDevice(dev);
-    if (pos != string::npos)
-        success = AddDevice(devstrarg.substr(pos+1)) && success;
-    return success;
-}
-#endif
-
-LBuffer* CKbufferCreate(csref descriptorArg, string* errmsg)
-{
-    string descriptor = descriptorArg;
-    CKbuffer* buffer = new CKbuffer();
-
-    while (! descriptor.empty()) {
-        size_t pos = descriptor.find(',');
-        string devstr = descriptor.substr(0, pos);
-        CKdevice dev(devstr);
-        if (dev.HasError()) {
-            if (errmsg) *errmsg = "Invalid device string: '" + devstr + "': " + dev.GetLastError();
-            delete buffer;
-            return NULL;
-        }
-        // Success for this device. Prep for the next one
-        buffer->AddDevice(dev);
-        if (pos == string::npos) break;
-        descriptor = descriptor.substr(pos+1);
+    if (dev.HasError()) {
+        if (errmsg) *errmsg = "Invalid device string: '" + devstr + "': " + dev.GetLastError();
+        return NULL;
     }
 
     // Check for missing descriptors
-    if (buffer->GetCount() == 0) {
-        delete buffer;
+    if (dev.GetCount() == 0) {
         if (errmsg) *errmsg = "Couldn't create CKbuffer: zero lights";
         return NULL;
     }
-    return buffer;
+    return new CKbuffer(dev);
 }
 
 LBuffer* CKbufferAutoCreate(csref descriptorArg, string* errmsg) {
@@ -426,24 +380,38 @@ LBuffer* CKbufferAutoCreate(csref descriptorArg, string* errmsg) {
         return NULL;
     }
 
-
-    CKbuffer *ckbuffer = new CKbuffer();
+    // Create the different CKbuffers
+    vector<LBuffer*> ckbuffers;
     for (size_t i = 0; i < devices.size(); ++i)
-        ckbuffer->AddDevice(devices[i]);
+        ckbuffers.push_back(new CKbuffer(devices[i]));
 
-    if (ckbuffer->GetCount() == 0 || ckbuffer->HasError()) {
-        if (errmsg) *errmsg = "Couldn't create CKbuffer: " + (ckbuffer->HasError() ? ckbuffer->GetLastError() : string("zero lights"));
-        delete ckbuffer;
+    // Check for errors
+    bool hasError = false;
+    for (size_t i = 0; i < ckbuffers.size(); ++i) {
+        if (ckbuffers[i]->HasError()) {
+            if (errmsg) *errmsg = "Couldn't create CKbuffer: " + ckbuffers[i]->GetLastError();
+            hasError = true;
+            break;
+        }
+    }
+
+    if (hasError) {
+        for (size_t i = 0; i < ckbuffers.size(); ++i)
+            delete ckbuffers[i];
         return NULL;
     }
 
-    return ckbuffer;
+    // No error, return the buffer
+    if (ckbuffers.size() == 1)
+        return ckbuffers[0];
+    else
+        return new ComboBuffer(ckbuffers);
 }
 
 // Define the creation functions
 DEFINE_LBUFFER_TYPE(ck, CKbufferCreate, "CK:ipaddr/port(size)[,...]",
-        "Comma separated list of ColorKinetics devices. If port is missing, assumes a KiNet V1 device.\n"
-        "  Examples: ck:172.16.11.23/1  or  ck:10.5.4.3/1(72),10.5.4.3/2r(72) or ck:172.16.11.54(21)");
+        "ColorKinetics device. If port is missing, assumes a KiNet V1 device.\n"
+        "  Examples: ck:172.16.11.23/1  or  ck:10.5.4.3/1(72) or ck:172.16.11.54(21)");
 
 DEFINE_LBUFFER_TYPE(ckauto, CKbufferAutoCreate, "CKAUTO", "Creates a display using all of the local CK devices");
 

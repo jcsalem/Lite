@@ -9,8 +9,7 @@ class LBuffer;
 class Lgroup;
 
 namespace L {
-// --pds
-// --outmap   Output mapping function (used in creating the output buffer)
+// --dev
 extern LBuffer*     gOutputBuffer;
 // --verbose
 extern bool         gVerbose;
@@ -24,8 +23,8 @@ typedef enum {kRatePositive = 0, kRateNonZero = 1, kRateAny = 2} RateMode_t;    
 void SetRateMode(RateMode_t mode); //Call this to allow different types of values for --rate
 // --fade
 extern float        gFade;  // Fade in/out time in seconds
-// --outmap
-extern int          gOutMap; // Output mapping
+// --outfilter   Output filters (used in creating the output buffer)
+extern string       gOutputFilters; // Output mapping
 
 // Global time variables
 extern Milli_t      gTime;                  // Current time
