@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_workspace_file>
 	<Workspace title="Workspace">
-		<Project filename="cklib/cklib.cbp" active="1" />
-		<Project filename="cktool/cktool.cbp">
+		<Project filename="cklib/cklib.cbp" />
+		<Project filename="cktool/cktool.cbp" active="1">
 			<Depends filename="cklib/cklib.cbp" />
 		</Project>
 		<Project filename="ckfirefly/ckfirefly.cbp">

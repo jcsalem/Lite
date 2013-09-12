@@ -55,11 +55,13 @@ public:
     void FreeIfOutOfBounds(Lxy MinBound, Lxy maxBound) const;
 
     // Common functions
-    void RenderAll(LBuffer* buffer) const;
-    void RenderAll(LBuffer* buffer, const LFilterList& filters) const;
+    void RenderAll  (LBuffer* buffer) const;
+    void RenderAll  (LBuffer* buffer, const LFilterList& filters) const;
 
-    void MoveAll(Milli_t newTime) const;
-    void WrapAll(const Lxy& MinBound, const Lxy& maxBound) const;
+    void MoveAll    (Milli_t newTime) const;
+    void WrapAll    (const Lxy& MinBound, const Lxy& maxBound) const;
+    void BounceAll  (const Lxy& MinBound, const Lxy& maxBound) const;
+
     string GetDescription(bool verbose = false) const;
 
     // Mapping
@@ -94,6 +96,7 @@ class LobjBase {
     // Standard operations
     virtual void Move           (Milli_t currentTime);
     virtual void Wrap           (const Lxy& minBound, const Lxy& maxBound);
+    virtual void Bounce         (const Lxy& minBound, const Lxy& maxBound);
     virtual bool IsOutOfBounds  (const Lxy& minBound, const Lxy& maxBound) const;
     virtual bool IsOutOfTime    ()   const {return false;}
 

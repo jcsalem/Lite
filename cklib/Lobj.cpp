@@ -160,6 +160,13 @@ void LobjBase::Wrap(const Lxy& minBound, const Lxy& maxBound) {
     pos = Lxy(newX, newY);
 }
 
+void LobjBase::Bounce(const Lxy& minBound, const Lxy& maxBound) {
+    if      (pos.x <  minBound.x) {speed.x = -speed.x; pos.x = 2 * minBound.x - pos.x;}
+    else if (pos.x >= maxBound.x) {speed.x = -speed.x; pos.x = 2 * maxBound.x - pos.x;}
+    if      (pos.y <  minBound.y) {speed.y = -speed.y; pos.y = 2 * minBound.y - pos.y;}
+    else if (pos.y >= maxBound.y) {speed.y = -speed.y; pos.y = 2 * maxBound.y - pos.y;}
+}
+
 bool LobjBase::IsOutOfBounds(const Lxy& minBound, const Lxy& maxBound) const {
     return pos.x < minBound.x && pos.x > maxBound.x && pos.y < minBound.y && pos.y > maxBound.y;
 }
@@ -231,6 +238,11 @@ void Lgroup::MoveAll(Milli_t newTime) const {
 void Lgroup::WrapAll(const Lxy& minBound, const Lxy& maxBound) const {
     for (const_iterator i = begin(); i != end(); ++i)
         (*i)->Wrap(minBound, maxBound);
+}
+
+void Lgroup::BounceAll(const Lxy& minBound, const Lxy& maxBound) const {
+    for (const_iterator i = begin(); i != end(); ++i)
+        (*i)->Bounce(minBound, maxBound);
 }
 
 // Mapping
