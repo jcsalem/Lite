@@ -7,6 +7,7 @@ void ForceLinkMeta() {}
 
 #include "utils.h"
 #include "MetaBuffer.h"
+#include <algorithm>
 
 //-----------------------------------------------------------------------------
 // ComboBuffer
