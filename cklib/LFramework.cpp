@@ -62,17 +62,19 @@ string DeviceCallback(csref name, csref val) {
     return "";
 }
 
-DefOption(dev, DeviceCallback, "deviceInfo", "is a device descriptor beginning with the device type name (see below)", NULL);
+DefOption(dev, DeviceCallback, "deviceInfo", "specifies the output device, optionally prefaced by filterInfos.", NULL);
 
 string GetDevHelp() {
     string r, tmp;
     r = "Environment variable LDEV is used if --dev is missing.\n"
-        "\nfilterInfo is filter_type:parameters and there may be any number\n"
+        "\nfilterInfo is pipe-separated list of filter_type:parameters\n"
+        "   Examples: random, skip2|flip\n"
         "The supported filter types are: \n  ";
     tmp = LBufferType::GetDocumentation(true);
     r += StrReplace(tmp, "\n", "\n  ") + "\n";
 
-    r += "\ndeviceInfo is device_type:arguments\n"
+    r += "\ndeviceInfo is device_type:arguments, optionally preceded by filterInfos\n"
+         "   Examples: ck:192.168.5.5(50), flip|console\n"
         "The supported device types are: \n  ";
     tmp = LBufferType::GetDocumentation(false);
     r += StrReplace(tmp, "\n", "\n  ") + "\n";
@@ -97,8 +99,7 @@ DefOptionBool(verbose, VerboseCallback, "enables verbose status messages");
 //------------
 string gOutputFilters;
 
-string OutFilterCallback(csref name, csref valarg) {
-    // $$$ TODO $$$ Add parameter checking
+string FilterCallback(csref name, csref valarg) {
     string value = TrimWhitespace(valarg);
     if (value.empty()) return "";
     if (value[value.size()-1] != '|') value += "|";
@@ -106,7 +107,7 @@ string OutFilterCallback(csref name, csref valarg) {
     return "";
 }
 
-DefOption(outfilter, OutFilterCallback, "filterInfo", "Inserts a filter into the output pipeline. See below.", NULL);
+DefOption(filter, FilterCallback, "filterInfo", "adds post-rendering filters.", NULL);
 
 //------------
 string ColorDefaultCallback(csref name)
@@ -120,7 +121,7 @@ string ColorCallback(csref name, csref val) {
     return errmsg;
 }
 
-DefOption(color, ColorCallback, "colormode", "identifies the type of color. Options: bright, halloween, realstar, starry, etc.", ColorDefaultCallback);
+DefOption(color, ColorCallback, "colormode", "chooses a color scheme.", ColorDefaultCallback);
 
 //------------
 float gRunTime        = -1.0; // any number below zero means run forever
@@ -134,7 +135,7 @@ string TimeCallback(csref name, csref val) {
     return "";
 }
 
-DefOption(time, TimeCallback, "duration", "is the running time in seconds. By default, animation continues forever.", NULL);
+DefOption(time, TimeCallback, "duration", "specifies the running time in seconds. By default, animation continues forever.", NULL);
 
 //------------
 float gRate     = 1.0;
@@ -164,7 +165,7 @@ void SetRateMode(RateMode_t mode) {
     gRateMode = mode;
 }
 
-DefOption(rate, RateCallback, "rateval", " is the relative speed of the effect.", RateDefaultCallback);
+DefOption(rate, RateCallback, "rateval", "specifies the relative speed of the effect.", RateDefaultCallback);
 
 //------------
 
@@ -182,7 +183,7 @@ string FadeCallback(csref name, csref val) {
     return "";
 }
 
-DefOption(fade, FadeCallback, "fadeduration", " is the time to fade in and out in seconds.", FadeDefaultCallback);
+DefOption(fade, FadeCallback, "fadeduration", "sets the fade in and out in time seconds.", FadeDefaultCallback);
 
 
 
@@ -190,7 +191,7 @@ DefOption(fade, FadeCallback, "fadeduration", " is the time to fade in and out i
 // Startup
 //---------------------------------------------------------------
 
-void errorExit(csref msg) {
+void ErrorExit(csref msg) {
     cerr << ProgramHelp::GetString(kPHprogram) << ": " << msg << endl;
     cerr << ProgramHelp::GetUsage();
     exit(EXIT_FAILURE);
@@ -206,20 +207,20 @@ void Startup(int *argc, char** argv, int numPositionalArgs) {
         if (envval && envval[0] != '\0') gOutputDeviceArg = TrimWhitespace(envval);
     }
     if (gOutputDeviceArg.empty())
-        errorExit("No output device was specified via --dev or the LDEV environment variable.");
+        ErrorExit("No output device was specified via --dev or the LDEV environment variable.");
 
     string errmsg;
     string devstr = gOutputDeviceArg;
     if (!gOutputFilters.empty())
         devstr = gOutputFilters + "[" + gOutputDeviceArg + "]";
     gOutputBuffer = CreateOutputBuffer(devstr, &errmsg);
-    if (!gOutputBuffer) errorExit("Error creating output buffer: " + errmsg);
+    if (!gOutputBuffer) ErrorExit("Error creating output buffer: " + errmsg);
 
     if (gOutputBuffer->HasError())
-        errorExit(gOutputBuffer->GetLastError());
+        ErrorExit(gOutputBuffer->GetLastError());
 
     if (gOutputBuffer->GetCount() == 0)
-        errorExit("Empty output device.");
+        ErrorExit("Empty output device.");
 
     if (gVerbose)
         cout << gOutputBuffer->GetDescription() << endl;

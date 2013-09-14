@@ -27,6 +27,7 @@ public:
     // numPositionArgs is the number of positional arguments after the options. Use kVariable if it can be any number of arguments..
     static void ParseArglist(int *argc, char** argv, int numPositionArgs = 0);
     static bool DeleteOption(csref name);
+    static bool Exists(csref name);
 private:
     string              iName; // Fully decorated name in lower case
     string              iParam;

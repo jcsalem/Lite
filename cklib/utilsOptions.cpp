@@ -15,6 +15,7 @@ public:
     OptionList() {}
     static void AddOption(const Option& option) {GetOptions().push_back(option);}
     static bool DeleteOption(csref name);
+    static bool Exists(csref name);
 
     typedef vector<Option>::const_iterator const_iterator;
     static const_iterator begin() {return GetOptions().begin();}
@@ -42,6 +43,14 @@ bool OptionList::DeleteOption(csref namearg) {
     return false;
 }
 
+bool OptionList::Exists(csref namearg) {
+    string name = StrToLower(namearg);
+    for (vector<Option>::iterator i = GetOptions().begin(); i != GetOptions().end(); ++i) {
+        if (i->GetName() == name) return true;
+        }
+    return false;
+}
+
 //---------------------------------------------------------------------
 // Option class
 //---------------------------------------------------------------------
@@ -58,6 +67,11 @@ Option::Option(csref name, OptionParserFcn_t parserCallback, csref paramName, cs
 bool Option::DeleteOption(csref name) {
     return OptionList::DeleteOption(name);
 }
+
+bool Option::Exists(csref name) {
+    return OptionList::Exists(name);
+}
+
 //---------------------------------------------------------------------
 // Program Help support
 //---------------------------------------------------------------------
@@ -92,8 +106,9 @@ string ProgramHelp::GetString(HelpType_t helpType) {
     if (helpType == kPHpostHelp) {
         vector<PostHelpFcn_t>& fcns = getPostHelpFcns();
         for (size_t i = 0; i < fcns.size(); ++i) {
-            if (! r.empty() && r[r.size()-1] != '\n') r += "\n";
-            r += fcns[i]();
+            string helpstr = fcns[i]();
+            if (! r.empty() && !helpstr.empty()/* && r[r.size()-1] != '\n'*/) r += "\n";
+            r += helpstr;
         }
     }
     return r;
@@ -115,16 +130,13 @@ string phGetOptionDoc() {
     string r;
     for (OptionList::const_iterator i = OptionList::begin(); i != OptionList::end(); ++i) {
         if (i->GetDoc().empty()) continue;
+        if (!r.empty()) r += "\n";
         r += "  ";
-        if (i->HasParam())
-            r += i->GetParam();
-        else
-            r += "--" + i->GetName();
+        r += "--" + i->GetName();
         r += " ";
         r += StrReplace(i->GetDoc(), "\n", "\n  "); // indent
         if (i->HasParam() && i->GetDefaulter())
             r += " (default is " + (i->GetDefaulter())(i->GetName()) + ")";
-        r += "\n";
     }
     return r;
 }
@@ -140,9 +152,9 @@ string phGetUsageLine() {
 
 string ProgramHelp::GetUsage(bool showOptions) {
     string r;
-    r+= phGetUsageLine() + "\n";
+    r+= phGetUsageLine();
     if (showOptions)
-        r += phGetOptions() += "\n";
+        r += "\nOptions: " + phGetOptions();
     return r;
     }
 
@@ -151,14 +163,14 @@ string phGetHelp(bool verbose) {
     r += ProgramHelp::GetString(kPHusage) + "\n";
     r += phGetUsageLine() + "\n";
     // Show argument list and help
-    r += "Options: " + phGetOptions() + "\n";
+    r += "Options: " + phGetOptions();
     if (verbose) {
-        r += phGetOptionDoc();
+        r += "\n" + phGetOptionDoc();
         // Append help
         string temp = ProgramHelp::GetString(kPHhelp);
-        if (!temp.empty()) r += temp + "\n";
+        if (!temp.empty()) r += "\n\n" + temp;
         temp = ProgramHelp::GetString(kPHpostHelp);
-        if (!temp.empty()) r += temp + "\n";
+        if (!temp.empty()) r += "\n\n" + temp;
     }
     return r;
     }

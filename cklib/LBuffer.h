@@ -37,13 +37,6 @@ class LBuffer
     void SetRGB(int coord, const RGBColor& rgb)   {if (InBounds(coord)) GetRawRGB(coord) = rgb;}
     void AddRGB(int coord, const RGBColor& rgb)   {SetRGB(coord, GetRGB(coord) + rgb);}
 
-    // Filters
-    //void AttachFilter(const LFilter& filter); // adds a processing filter
-    //void DeleteAllFilters();
-
-    // Operations
-    void Rotate(int inc = 1);
-
     // Things to be overridden by the specific output class
     virtual bool    HasError()          const {return !iLastError.empty();}
     virtual string  GetLastError()      const {return iLastError;}
@@ -51,7 +44,7 @@ class LBuffer
     virtual string  GetDescription()    const; // returns a detailed description of the CKbuffer
     virtual bool    Update() = 0;              // Updates the actual device based on the buffer contents.  Must be supplied for all derived types.
 
-    virtual ~LBuffer() {/*DeleteAllFilters();*/}
+    virtual ~LBuffer() {}
 
   protected:
     LBuffer() {}

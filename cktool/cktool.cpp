@@ -11,23 +11,16 @@
 // Options
 //----------------------------------------------------------------------------
 
-void Usage(csref msg = "")    {
-    if (!msg.empty())
-        cerr << ProgramHelp::GetString(kPHprogram) << ": " << msg << endl;
-    cerr << ProgramHelp::GetUsage();
-    exit(EXIT_FAILURE);
-}
-
 void ValidateNumArgs(csref command, int numArgs, int argc, int argp)
     {
         if (argc == argp + numArgs)
             // Everything is correct
             return;
-        Usage(command + " expected " + IntToStr(numArgs) + " parameters but got " + IntToStr(argc - 2));
+        L::ErrorExit(command + " expected " + IntToStr(numArgs) + " parameters but got " + IntToStr(argc - 2));
     }
 
 DefProgramHelp(kPHprogram, "cktool");
-DefProgramHelp(kPHusage, "Performs various lighting commands: clear, all, set, rotate, rotwash");
+DefProgramHelp(kPHusage, "Performs various lighting commands: clear, all, set, wash, rotate, rotwash, bounce");
 DefProgramHelp(kPHadditionalArgs, "command [colorargs...]");
 DefProgramHelp(kPHhelp, "command is one of:\n"
     "    clear \n"
@@ -37,7 +30,7 @@ DefProgramHelp(kPHhelp, "command is one of:\n"
     "    bounce color\n"
     "    set idx color\n"
     "    wash color1 color2\n"
-    "  color is \"r,g,b\" or \"HSV(h,s,v)\" or a named color, etc.  All components are scaled from 0.0 to 1.0\n"
+    "  color is \"r,g,b\" or \"HSV(h,s,v)\" or a named color, etc.  All components are scaled from 0.0 to 1.0"
     );
 
 typedef enum {kStatic, kRotate, kBounce} Mode_t;
@@ -74,7 +67,7 @@ int main(int argc, char** argv)
     Option::DeleteOption("color");
     L::Startup(&argc, argv, Option::kVariable);
 
-    if (argc <= 1) Usage("Missing command");
+    if (argc <= 1) L::ErrorExit("Missing command");
 
     int argp = 1;
 
@@ -130,11 +123,11 @@ int main(int argc, char** argv)
     }
     else
     {
-        Usage("Unknown command \"" + command + "\"");
+        L::ErrorExit("Unknown command \"" + command + "\"");
     }
 
     // Validate the colors
-    if (! gColor) Usage(errmsg);
+    if (! gColor) L::ErrorExit(errmsg);
 
     // Print summary
     if (L::gVerbose) {

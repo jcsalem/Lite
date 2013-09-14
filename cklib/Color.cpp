@@ -5,6 +5,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <iostream>
+#include "utilsOptions.h"
 
 //--------------------------------------------------------------------------
 // Utilities
@@ -616,4 +617,12 @@ string CurrentColorModeAsString() {
         }
 }
 
+string ColorModeHelp() {
+    if (Option::Exists("color"))
+        return "colormode is one of: rgb,realstar,starry,halloween,christmas,bright,(R,G,B),hsv(H,S,V),range:C1,C2";
+    else
+        return "";
+}
+
+ProgramHelp PHColorHelp(ColorModeHelp);
 };//namespace

@@ -38,6 +38,7 @@ void Startup(int *argc, char** argv, int numPositionalArgs = 0);
 void Run(Lgroup& objgroup, Callback_t fcn);
 void Cleanup(bool eraseAtEnd = true);
 
+void ErrorExit(csref message);
 }; // namespace L
 
 #endif // LFRAMEWORK_H_INCLUDED

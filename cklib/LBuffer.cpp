@@ -29,19 +29,6 @@ void LBuffer::SetColor(int idx, const Color& color)
     SetRGB(idx, rgb);
 }
 
-void LBuffer::Rotate(int incr) {
-    if (GetCount() == 0 || incr == 0) return;
-    vector<RGBColor> newBuffer(GetCount());
-    for (int i = 0; i < GetCount(); ++i) {
-        int coord = (i - incr) % GetCount();
-        if (coord < 0) coord = GetCount() + coord;
-        newBuffer[i] = GetRGB(coord);
-    }
-    for (int i = 0; i < GetCount(); ++i) {
-        SetRGB(i, newBuffer[i]);
-    }
-}
-
 string LBuffer::GetDescription() const {
     string r = "LBuffer: ";
     r += IntToStr(GetCount()) + " total lights";
@@ -106,7 +93,7 @@ LBuffer* LBuffer::Create(csref descArg, string* errmsg) {
     if (name.empty()) return CreateError(errmsg, "Missing " + string(isFilter ? "filter" : "device") + " name: " + descArg);
 
     const LBufferType* type = LBufferType::Find(name);
-    if (! type) return CreateError(errmsg, "No " + string(isFilter ? "output filter" : "device type") + " named: " + name);
+    if (! type) return CreateError(errmsg, "No " + string(isFilter ? "filter" : "device type") + " named: " + name);
 
     string args = (colonpos == string::npos) ? "" : TrimWhitespace(desc.substr(colonpos+1));
     if (isFilter) {
