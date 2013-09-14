@@ -5,6 +5,7 @@
 *.depend
 *.layout
 *.o
+*~
 obj/
 bin/ck*
 bin/L*

@@ -2,14 +2,14 @@
 <CodeBlocks_project_file>
 	<FileVersion major="1" minor="6" />
 	<Project>
-		<Option title="ckstarry" />
+		<Option title="Lstarry" />
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="Debug">
-				<Option output="bin/Debug/ckstarry" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/Debug/Lstarry" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Debug/" />
-				<Option external_deps="../cklib/bin/Debug/libcklib.a;" />
+				<Option external_deps="../lib/bin/Debug/liblite.a;" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Option parameters='--PDS=&quot;172.24.22.51/1,172.24.22.51/2r&quot;' />
@@ -18,9 +18,9 @@
 				</Compiler>
 			</Target>
 			<Target title="Release">
-				<Option output="bin/Release/ckstarry" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/Release/Lstarry" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Release/" />
-				<Option external_deps="../cklib/bin/Release/libcklib.a;" />
+				<Option external_deps="../lib/bin/Release/liblite.a;" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
@@ -33,18 +33,18 @@
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
-			<Add directory="../cklib" />
+			<Add directory="../lib" />
 		</Compiler>
 		<Linker>
-			<Add option="../cklib/bin/$(TARGET_NAME)/libcklib.a -static-libgcc -static-libstdc++ $(#extralibs)" />
+			<Add option="../lib/bin/$(TARGET_NAME)/liblite.a -static-libgcc -static-libstdc++ $(#extralibs)" />
 		</Linker>
 		<ExtraCommands>
 			<Add after="cp bin/$(TARGET_NAME)/$(TARGET_OUTPUT_BASENAME)$(#FILEXT) ../bin/$(TARGET_OUTPUT_BASENAME)$(#FILEXT)" />
 		</ExtraCommands>
-		<Unit filename="ckstarry.cpp" />
+		<Unit filename="Lstarry.cpp" />
 		<Extensions>
 			<code_completion />
-			<envvars set="cksquare" />
+			<envvars set="Lsquare" />
 			<debugger />
 		</Extensions>
 	</Project>

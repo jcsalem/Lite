@@ -2,14 +2,14 @@
 <CodeBlocks_project_file>
 	<FileVersion major="1" minor="6" />
 	<Project>
-		<Option title="cksparkle" />
+		<Option title="Lsparkle" />
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="Debug">
-				<Option output="bin/Debug/cksparkle" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/Debug/Lsparkle" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Debug/" />
-				<Option external_deps="../cklib/bin/Debug/libcklib.a;" />
+				<Option external_deps="../lib/bin/Debug/liblite.a;" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
@@ -17,9 +17,9 @@
 				</Compiler>
 			</Target>
 			<Target title="Release">
-				<Option output="bin/Release/cksparkle" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/Release/Lsparkle" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Release/" />
-				<Option external_deps="../cklib/bin/Release/libcklib.a;" />
+				<Option external_deps="../lib/bin/Release/liblite.a;" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
@@ -33,15 +33,15 @@
 		<Compiler>
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
-			<Add directory="../cklib" />
+			<Add directory="../lib" />
 		</Compiler>
 		<Linker>
-			<Add option="../cklib/bin/$(TARGET_NAME)/libcklib.a -static-libgcc -static-libstdc++ $(#extralibs)" />
+			<Add option="../lib/bin/$(TARGET_NAME)/liblite.a -static-libgcc -static-libstdc++ $(#extralibs)" />
 		</Linker>
 		<ExtraCommands>
 			<Add after="cp bin/$(TARGET_NAME)/$(TARGET_OUTPUT_BASENAME)$(#FILEXT) ../bin/$(TARGET_OUTPUT_BASENAME)$(#FILEXT)" />
 		</ExtraCommands>
-		<Unit filename="cksparkle.cpp" />
+		<Unit filename="Lsparkle.cpp" />
 		<Extensions>
 			<code_completion />
 			<envvars />
