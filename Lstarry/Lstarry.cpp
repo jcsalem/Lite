@@ -45,13 +45,13 @@ void InitializeOneStar(LobjSparkle* lobj, int idx, bool firstTime = false) {
 
 const void* kIsFirstTime = (void*) -1;
 
-LobjBase* SparkleAlloc(int idx, const void* ignore) {
+Lobj* SparkleAlloc(int idx, const void* ignore) {
     LobjSparkle* lobj = new LobjSparkle();
     InitializeOneStar(lobj, idx, true);
     return lobj;
 }
 
-void RestartExpired(LobjBase* objarg, const void* ignore) {
+void RestartExpired(Lobj* objarg, const void* ignore) {
     LobjSparkle* obj = dynamic_cast<LobjSparkle*>(objarg);
     if (! obj || !obj->IsOutOfTime()) return;
     InitializeOneStar(obj, obj->pos.x);

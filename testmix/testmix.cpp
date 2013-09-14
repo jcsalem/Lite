@@ -99,7 +99,7 @@ DefOption(color3, ParseColorCallback, "color", "is the third  color to mix", Def
 
 Lgroup gObjs;
 
-void MoveOne(LobjBase* obj, int incr){
+void MoveOne(Lobj* obj, int incr){
     obj->pos.x += incr;
 }
 
@@ -108,8 +108,8 @@ void Loop()
 {
     int numLights = L::gOutputBuffer->GetCount();
 
-    LobjBase* left = new LobjBase();
-    LobjBase* right = new LobjBase();
+    Lobj* left = new Lobj();
+    Lobj* right = new Lobj();
     left->color     = gColor1;
     right->color    = gColor2;
     left->width     = gWidth;

@@ -19,7 +19,7 @@ LobjSparkle* SparkleAlloc(void) {
     return lobj;
 }
 
-bool HasNoSparkleLeft(LobjBase* objarg, const void* ignore) {
+bool HasNoSparkleLeft(Lobj* objarg, const void* ignore) {
     const LobjSparkle* obj = dynamic_cast<const LobjSparkle*>(objarg);
     if (! obj) return false;
     return obj->IsOutOfTime();

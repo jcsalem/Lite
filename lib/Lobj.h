@@ -10,14 +10,6 @@
 extern bool gAntiAlias; // 1 to enable
 class LprocList; //fwd decl
 
-// Type definitions
-class LobjBase; // forward decl
-namespace Lobj {
-    typedef void       (*MapFcn_t)      (LobjBase* obj, const void* info);
-    typedef LobjBase*  (*AllocFcn_t)    (int idx,       const void* info);
-    typedef bool       (*FreeIfFcn_t)   (LobjBase* obj, const void* info);  // Returns tree if item should be freed
-};
-
 // Class for holding XY coordinates
 // Used for coordinates and speed
 struct Lxy {
@@ -38,18 +30,58 @@ struct Lxy {
     const Lxy operator/(float s)      const {Lxy r = *this; r /= s; return r;}
 };
 
+class Lobj {
+  public:
+     // Constructor
+    Lobj(Milli_t currentTime = Milliseconds()) : /*initColor(BLACK), initWidth(0), */ lastTime(currentTime), color(BLACK), width(0) {}
+    virtual ~Lobj() {}
+
+    // These variables are set at the beginning
+    Lxy         initSpeed;  // Initial speed of the object
+//    RGBColor    initColor;  // Initial color of the object
+//    Lxy         initPos;
+//    float       initWidth;
+
+    // These are current as of lastTime
+    Milli_t     lastTime;   // Last update time
+    Lxy         speed;      // Speed in positions per second
+    Lxy         pos;
+    RGBColor    color;
+    float       width;
+
+    // Standard operations
+    virtual void Move           (Milli_t currentTime);
+    virtual void Wrap           (const Lxy& minBound, const Lxy& maxBound);
+    virtual void Bounce         (const Lxy& minBound, const Lxy& maxBound);
+    virtual bool IsOutOfBounds  (const Lxy& minBound, const Lxy& maxBound) const;
+    virtual bool IsOutOfTime    ()   const {return false;}
+
+    virtual void Clear() {*this = Lobj();}
+
+    // Returns the color as of lastTime
+    virtual RGBColor GetCurrentColor() const {return color;}
+
+    // Function types
+    typedef void       (*MapFcn_t)      (Lobj* obj, const void* info);
+    typedef Lobj*  (*AllocFcn_t)    (int idx,       const void* info);
+    typedef bool       (*FreeIfFcn_t)   (Lobj* obj, const void* info);  // Returns tree if item should be freed
+
+    // Info
+    virtual string GetDescription(bool verbose = false) const;
+};
+
 class Lgroup {
 public:
     Lgroup() {}
     ~Lgroup() {FreeAll();}
     // Access
-    LobjBase*   Get(int idx) const {if (idx < 0 || (size_t) idx >= iObjs.size()) return NULL; else return iObjs[idx];}
+    Lobj*   Get(int idx) const {if (idx < 0 || (size_t) idx >= iObjs.size()) return NULL; else return iObjs[idx];}
     int         GetCount() const {return iObjs.size();}
 
     // Allocation and deallocation
-    void Add(LobjBase* obj);
+    void Add(Lobj* obj);
     void Add(int num, Lobj::AllocFcn_t fcn, const void* info);
-    bool Free(LobjBase* obj);
+    bool Free(Lobj* obj);
     void FreeAll();
     void FreeIf(Lobj::FreeIfFcn_t fcn, const void* info);
     void FreeIfOutOfBounds(Lxy MinBound, Lxy maxBound) const;
@@ -66,54 +98,20 @@ public:
 
     // Mapping
     void Map(Lobj::MapFcn_t mapfcn, const void* info = NULL);
-    typedef vector<LobjBase*>::const_iterator   const_iterator;
-    typedef vector<LobjBase*>::iterator         iterator;
+    typedef vector<Lobj*>::const_iterator   const_iterator;
+    typedef vector<Lobj*>::iterator         iterator;
     const_iterator  begin() const       {return iObjs.begin();}
     const_iterator  end()   const       {return iObjs.end();}
     iterator        begin()             {return iObjs.begin();}
     iterator        end()               {return iObjs.end();}
-    LobjBase&       operator[](int i)   {return *(iObjs[i]);}
-    const LobjBase& operator[](int i) const {return *(iObjs[i]);}
+    Lobj&       operator[](int i)   {return *(iObjs[i]);}
+    const Lobj& operator[](int i) const {return *(iObjs[i]);}
 
 private:
-    vector<LobjBase*> iObjs;
-};
-
-class LobjBase {
-  public:
-     // Constructor
-    LobjBase(Milli_t currentTime = Milliseconds()) : width(0), color(BLACK), lastTime(currentTime) {}
-    virtual ~LobjBase() {}
-
-    // Instance variables
-    Lxy         pos;
-    float       width;
-    RGBColor    color;
-    Lxy         speed;      // Speed in positions per second
-    Lxy         initSpeed;
-    Milli_t     lastTime;
-
-    // Standard operations
-    virtual void Move           (Milli_t currentTime);
-    virtual void Wrap           (const Lxy& minBound, const Lxy& maxBound);
-    virtual void Bounce         (const Lxy& minBound, const Lxy& maxBound);
-    virtual bool IsOutOfBounds  (const Lxy& minBound, const Lxy& maxBound) const;
-    virtual bool IsOutOfTime    ()   const {return false;}
-
-    virtual void Clear() {*this = LobjBase();}
-
-    // Returns the color as of lastTime
-    virtual RGBColor GetCurrentColor() const {return color;}
-
-    //virtual void Render(LBuffer* buffer, const LprocList& filters) const;
-
-    //void Render(LBuffer* buffer, const RGBColor& color) const;
-
-    virtual string GetDescription(bool verbose = false) const;
+    vector<Lobj*> iObjs;
 };
 
 // Obsolete
-
 class LobjOld {
   public:
      // Constructor

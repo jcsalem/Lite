@@ -146,7 +146,7 @@ int main(int argc, char** argv)
     Lgroup objs;
     if (idx != -1) {
         // Just one light
-        LobjBase* obj = new LobjBase();
+        Lobj* obj = new Lobj();
         obj->pos.x = idx;
         obj->color = *gColor;
         obj->speed.x = speed;
@@ -158,7 +158,7 @@ int main(int argc, char** argv)
 
         int numLights = L::gOutputBuffer->GetCount();;
         for (int i = 0; i < numLights; ++i) {
-            LobjBase* obj = new LobjBase();
+            Lobj* obj = new Lobj();
             obj->pos.x = i;
             if (gColor2)
                 obj->color = range.GetColor((float) i / (float) numLights);

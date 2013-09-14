@@ -100,7 +100,7 @@ namespace { // These are internal to just this file
 // Just used for default values
 LprocList gDummyFilterList;
 
-void ObjRender(const LobjBase* obj, LBuffer* buffer, const LprocList& filters) {
+void ObjRender(const Lobj* obj, LBuffer* buffer, const LprocList& filters) {
     // Only supports 1D rendering at the moment
     // Position is the middle of the object
 
@@ -142,16 +142,16 @@ void ObjRender(const LobjBase* obj, LBuffer* buffer, const LprocList& filters) {
 }; // Local namespace
 
 //----------------------------------------------------------------------
-// LobjBase Operations
+// Lobj Operations
 //----------------------------------------------------------------------
 
-void LobjBase::Move(Milli_t newTime) {
+void Lobj::Move(Milli_t newTime) {
     float timeDiff = MilliDiff(newTime, lastTime);
     pos += speed * timeDiff/1000;
     lastTime = newTime;
 }
 
-void LobjBase::Wrap(const Lxy& minBound, const Lxy& maxBound) {
+void Lobj::Wrap(const Lxy& minBound, const Lxy& maxBound) {
     Lxy range = maxBound - minBound;
 
     float newX = fmod(pos.x - minBound.x, range.x) + minBound.x;
@@ -160,18 +160,18 @@ void LobjBase::Wrap(const Lxy& minBound, const Lxy& maxBound) {
     pos = Lxy(newX, newY);
 }
 
-void LobjBase::Bounce(const Lxy& minBound, const Lxy& maxBound) {
+void Lobj::Bounce(const Lxy& minBound, const Lxy& maxBound) {
     if      (pos.x <  minBound.x) {speed.x = -speed.x; pos.x = 2 * minBound.x - pos.x;}
     else if (pos.x >= maxBound.x) {speed.x = -speed.x; pos.x = 2 * maxBound.x - pos.x;}
     if      (pos.y <  minBound.y) {speed.y = -speed.y; pos.y = 2 * minBound.y - pos.y;}
     else if (pos.y >= maxBound.y) {speed.y = -speed.y; pos.y = 2 * maxBound.y - pos.y;}
 }
 
-bool LobjBase::IsOutOfBounds(const Lxy& minBound, const Lxy& maxBound) const {
+bool Lobj::IsOutOfBounds(const Lxy& minBound, const Lxy& maxBound) const {
     return pos.x < minBound.x && pos.x > maxBound.x && pos.y < minBound.y && pos.y > maxBound.y;
 }
 
-string LobjBase::GetDescription(bool verbose) const {
+string Lobj::GetDescription(bool verbose) const {
     string retval = "[" + DblToStr(pos.x) + "," + DblToStr(pos.y) + "," + color.ToString() + "]";
     return retval;
 }
@@ -181,7 +181,7 @@ string LobjBase::GetDescription(bool verbose) const {
 //----------------------------------------------------------------------
 
 
-void Lgroup::Add(LobjBase* obj) {
+void Lgroup::Add(Lobj* obj) {
     if (obj) iObjs.push_back(obj);
 }
 
@@ -190,7 +190,7 @@ void Lgroup::Add(int num, Lobj::AllocFcn_t fcn, const void* info) {
         Add(fcn(i, info));
 }
 
-bool Lgroup::Free(LobjBase* obj) {
+bool Lgroup::Free(Lobj* obj) {
     for (iterator i = begin(); i != end(); ++i) {
         if (*i == obj) {
             iObjs.erase(i);

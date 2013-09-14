@@ -31,10 +31,10 @@ private:
     Milli_t     GetEndTime() const;
 };
 
-class LobjSparkle : public LobjBase {
+class LobjSparkle : public Lobj {
   public:
      // Constructor
-    LobjSparkle(Milli_t currentTime = Milliseconds()) : LobjBase(currentTime), sparkle() {}
+    LobjSparkle(Milli_t currentTime = Milliseconds()) : Lobj(currentTime), sparkle() {}
     virtual ~LobjSparkle() {}
 
     // Variables
