@@ -1,0 +1,26 @@
+#!/bin/bash
+
+if [ -z "$LDEV" ]; then
+	export LDEV="ck:172.24.22.52/1(50),flip|ck:172.24.22.52/2"
+fi
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+echo "LDEV=$LDEV"
+
+set -x
+
+while true; do
+$DIR/Lstarry --time 40 --rate 4.0 --fade 3
+$DIR/Lsparkle --color realstar --time 50 --fade 1
+$DIR/Ltool --time 220 --outmap random rotwash "hsv(.65,.45,.25)" "hsv(.68,.7,.45)"
+$DIR/Lstarry --color "range:hsv(.1,1,1);hsv(.134,.5,.2)" --rate 10 --time 30
+$DIR/Lfirefly --color halloween --time 100
+$DIR/Ltool --rate .25 --time 10 rotate "hsv(.11,1,.8)"
+$DIR/Ltool --rate .5 --time 10 rotate "hsv(.11,1,.8)"
+$DIR/Ltool --rate 1 --time 10 rotate "hsv(.11,1,.8)"
+$DIR/Ltool --rate 2 --time 5 rotate "hsv(.11,1,.8)"
+$DIR/Ltool --rate 4 --time 2.5 rotate "hsv(.11,1,.8)"
+$DIR/Ltool --rate 6 --time 1 rotate "hsv(.11,1,.8)"
+$DIR/Ltool --time 100 --outmap random rotwash "hsv(0,.8,.5)" "hsv(1,.8,.5)"
+done
