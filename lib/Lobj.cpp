@@ -1,7 +1,7 @@
 #include "Lobj.h"
 #include "Color.h"
 #include "LBuffer.h"
-#include "LFilter.h"
+#include "Lproc.h"
 #include <math.h>
 #include <iostream>
 
@@ -98,9 +98,9 @@ void LobjOld::Map(LobjOldMapFcn_t mapfcn) {
 
 namespace { // These are internal to just this file
 // Just used for default values
-LFilterList gDummyFilterList;
+LprocList gDummyFilterList;
 
-void ObjRender(const LobjBase* obj, LBuffer* buffer, const LFilterList& filters) {
+void ObjRender(const LobjBase* obj, LBuffer* buffer, const LprocList& filters) {
     // Only supports 1D rendering at the moment
     // Position is the middle of the object
 
@@ -225,7 +225,7 @@ void Lgroup::RenderAll(LBuffer* buffer) const {
     RenderAll(buffer, gDummyFilterList);
 }
 
-void Lgroup::RenderAll(LBuffer* buffer, const LFilterList& filters) const {
+void Lgroup::RenderAll(LBuffer* buffer, const LprocList& filters) const {
     for (const_iterator i = begin(); i != end(); ++i)
         ObjRender(*i, buffer, filters);
 }

@@ -1,8 +1,8 @@
 #include "utils.h"
 #include "LBuffer.h"
 #include "Color.h"
-#include "LFilter.h"
-#include "MetaBuffer.h"
+#include "Lproc.h"
+#include "ComboBuffer.h"
 #include <vector>
 
 RGBColor LBuffer::kNullColor = BLACK; // note that this is used by functions returning references to colors
@@ -126,13 +126,13 @@ string LBufferType::GetDocumentation(bool isFilterType) {
 //-----------------------------------------------------------------------------------------------------
 // This section forces the linking of required modules (otherwise, CKlib, etc. are never loaded!)
 //-----------------------------------------------------------------------------------------------------
-#include "cklib.h"
+#include "CKbuffer.h"
 #include "CursesBuffer.h"
 #include "StripBuffer.h"
-#include "MetaBuffer.h"
+#include "FilterBuffers.h"
 void ForceLinking() {
     ForceLinkCK();
     ForceLinkCurses(); // This actually does nothing on Windows
     ForceLinkStrip(); // This actually does nothing on Windows
-    ForceLinkMeta();
+    ForceLinkFilters();
 };

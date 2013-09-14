@@ -1,13 +1,13 @@
-// Support for LFilter
+// Support for Lproc
 //
 #include "utils.h"
-#include "LFilter.h"
+#include "Lproc.h"
 
 //---------------------------------------------------------------------------------
-// LFilterFade
+// LprocFade
 //---------------------------------------------------------------------------------
 
-RGBColor LFilterFade::Apply(const RGBColor& rgb, Milli_t currentTime) const {
+RGBColor LprocFade::Apply(const RGBColor& rgb, Milli_t currentTime) const {
     bool isFadeIn;
     bool isExponential;
 
@@ -38,47 +38,47 @@ RGBColor LFilterFade::Apply(const RGBColor& rgb, Milli_t currentTime) const {
 }
 
 //---------------------------------------------------------------------------------
-// LFilterList
+// LprocList
 //---------------------------------------------------------------------------------
 
 
-LFilterList::~LFilterList() {
-    for (size_t i = 0; i < iFilters.size(); ++i)
-        delete iFilters[i].second;
-    iFilters.clear();
+LprocList::~LprocList() {
+    for (size_t i = 0; i < iProcList.size(); ++i)
+        delete iProcList[i].second;
+    iProcList.clear();
 }
 
-// Returns a handle to the added filter
-int LFilterList::AddFilter(const LFilter& filter) {
+// Returns a handle to the added proc
+int LprocList::AddProc(const Lproc& proc) {
     int handle = iNextHandle++;
-    iFilters.push_back(pair<int,LFilter*>(handle, filter.Duplicate()));
+    iProcList.push_back(pair<int,Lproc*>(handle, proc.Duplicate()));
     return handle;
 }
 
-bool LFilterList::ReplaceFilter(int handle, const LFilter& filter) {
-    for (size_t i = 0; i < iFilters.size(); ++i)
-        if (iFilters[i].first == handle) {
-            delete iFilters[i].second;
-            iFilters[i].second = filter.Duplicate();
+bool LprocList::ReplaceProc(int handle, const Lproc& proc) {
+    for (size_t i = 0; i < iProcList.size(); ++i)
+        if (iProcList[i].first == handle) {
+            delete iProcList[i].second;
+            iProcList[i].second = proc.Duplicate();
             return true;
         }
     return false;
 }
 
-bool LFilterList::DeleteFilter(int handle) {
-    for (vector<pair<int,LFilter*> >::iterator i = iFilters.begin(); i != iFilters.end(); ++i)
+bool LprocList::DeleteProc(int handle) {
+    for (vector<pair<int,Lproc*> >::iterator i = iProcList.begin(); i != iProcList.end(); ++i)
         if (i->first == handle) {
             delete i->second;
-            iFilters.erase(i);
+            iProcList.erase(i);
             return true;
         }
     return false;
 }
 
-RGBColor LFilterList::Apply(const RGBColor& rgbarg, Milli_t currentTime) const {
+RGBColor LprocList::Apply(const RGBColor& rgbarg, Milli_t currentTime) const {
     RGBColor rgb(rgbarg);
-    for (size_t i = 0; i < iFilters.size(); ++i) {
-        rgb = iFilters[i].second->Apply(rgb, currentTime);
+    for (size_t i = 0; i < iProcList.size(); ++i) {
+        rgb = iProcList[i].second->Apply(rgb, currentTime);
     }
     return rgb;
 }

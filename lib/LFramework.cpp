@@ -1,9 +1,8 @@
 #include "utils.h"
-#include "cklib.h"
 #include "Color.h"
 #include "LFramework.h"
-#include "MetaBuffer.h"
-#include "LFilter.h"
+#include "ComboBuffer.h"
+#include "Lproc.h"
 #include "utilsOptions.h"
 #include "Lobj.h"
 #include <iostream>
@@ -22,7 +21,7 @@ Milli_t     gEndTime;                // Ending time (set to gTime to end prematu
 
 // Not externally accessible
 Milli_t     gFrameDuration  = 40;    // duration of each frame of animation (in MS)
-LFilterList gFilters;
+LprocList   gProcs;
 
 // Force gOutputBuffer to be deleted at exit
 struct UninitAtExit {
@@ -97,13 +96,13 @@ string VerboseCallback(csref name, csref val) {
 DefOptionBool(verbose, VerboseCallback, "enables verbose status messages");
 
 //------------
-string gOutputFilters;
+string gGlobalFilters;
 
 string FilterCallback(csref name, csref valarg) {
     string value = TrimWhitespace(valarg);
     if (value.empty()) return "";
     if (value[value.size()-1] != '|') value += "|";
-    gOutputFilters = gOutputFilters + value;
+    gGlobalFilters = gGlobalFilters + value;
     return "";
 }
 
@@ -211,8 +210,8 @@ void Startup(int *argc, char** argv, int numPositionalArgs) {
 
     string errmsg;
     string devstr = gOutputDeviceArg;
-    if (!gOutputFilters.empty())
-        devstr = gOutputFilters + "[" + gOutputDeviceArg + "]";
+    if (!gGlobalFilters.empty())
+        devstr = gGlobalFilters + "[" + gOutputDeviceArg + "]";
     gOutputBuffer = CreateOutputBuffer(devstr, &errmsg);
     if (!gOutputBuffer) ErrorExit("Error creating output buffer: " + errmsg);
 
@@ -248,9 +247,9 @@ void Run(Lgroup& objGroup, L::Callback_t fcn)
 
     // Handle fade effect (this should really be automated from a list of filters added during arg parsing
     if (gFade > 0) {
-        gFilters.AddFilter(LFilterFadeIn(false,gStartTime, gStartTime + gFade * 1000));
+        gProcs.AddProc(LprocFadeIn(false,gStartTime, gStartTime + gFade * 1000));
         if (gEndTime)
-            gFilters.AddFilter(LFilterFadeOut(false,gEndTime - gFade * 1000, gEndTime));
+            gProcs.AddProc(LprocFadeOut(false,gEndTime - gFade * 1000, gEndTime));
     }
 
     // Main loop
@@ -262,7 +261,7 @@ void Run(Lgroup& objGroup, L::Callback_t fcn)
 
         // Render
         gOutputBuffer->Clear();
-        objGroup.RenderAll(gOutputBuffer, gFilters);
+        objGroup.RenderAll(gOutputBuffer, gProcs);
         gOutputBuffer->Update();
 
         // Exit if out of time, else delay until next frame

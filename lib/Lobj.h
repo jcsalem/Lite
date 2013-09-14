@@ -8,7 +8,7 @@
 #include "LBuffer.h"
 
 extern bool gAntiAlias; // 1 to enable
-class LFilterList; //fwd decl
+class LprocList; //fwd decl
 
 // Type definitions
 class LobjBase; // forward decl
@@ -56,7 +56,7 @@ public:
 
     // Common functions
     void RenderAll  (LBuffer* buffer) const;
-    void RenderAll  (LBuffer* buffer, const LFilterList& filters) const;
+    void RenderAll  (LBuffer* buffer, const LprocList& filters) const;
 
     void MoveAll    (Milli_t newTime) const;
     void WrapAll    (const Lxy& MinBound, const Lxy& maxBound) const;
@@ -105,7 +105,7 @@ class LobjBase {
     // Returns the color as of lastTime
     virtual RGBColor GetCurrentColor() const {return color;}
 
-    //virtual void Render(LBuffer* buffer, const LFilterList& filters) const;
+    //virtual void Render(LBuffer* buffer, const LprocList& filters) const;
 
     //void Render(LBuffer* buffer, const RGBColor& color) const;
 

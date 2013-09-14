@@ -7,7 +7,7 @@
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="Debug">
-				<Option output="bin/Debug/liblite" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/Debug/lite" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="" />
 				<Option object_output="obj/Debug/" />
 				<Option type="2" />
@@ -19,7 +19,7 @@
 				</Compiler>
 			</Target>
 			<Target title="Release">
-				<Option output="bin/Release/liblite" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/Release/lite" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="" />
 				<Option type="2" />
 				<Option compiler="gcc" />
@@ -33,27 +33,29 @@
 				</Linker>
 			</Target>
 		</Build>
+		<Unit filename="CKbuffer.cpp" />
+		<Unit filename="CKbuffer.h" />
 		<Unit filename="Color.cpp" />
 		<Unit filename="Color.h" />
+		<Unit filename="ComboBuffer.cpp" />
+		<Unit filename="ComboBuffer.h" />
 		<Unit filename="CursesBuffer.cpp" />
 		<Unit filename="CursesBuffer.h" />
+		<Unit filename="FilterBuffers.cpp" />
+		<Unit filename="FilterBuffers.h" />
 		<Unit filename="KiNET.h" />
 		<Unit filename="LBuffer.cpp" />
 		<Unit filename="LBuffer.h" />
-		<Unit filename="LFilter.cpp" />
-		<Unit filename="LFilter.h" />
 		<Unit filename="LFramework.cpp" />
 		<Unit filename="LFramework.h" />
 		<Unit filename="LSparkle.cpp" />
 		<Unit filename="LSparkle.h" />
 		<Unit filename="Lobj.cpp" />
 		<Unit filename="Lobj.h" />
-		<Unit filename="MetaBuffer.cpp" />
-		<Unit filename="MetaBuffer.h" />
+		<Unit filename="Lproc.cpp" />
+		<Unit filename="Lproc.h" />
 		<Unit filename="StripBuffer.cpp" />
 		<Unit filename="StripBuffer.h" />
-		<Unit filename="cklib.cpp" />
-		<Unit filename="cklib.h" />
 		<Unit filename="utils.cpp" />
 		<Unit filename="utils.h" />
 		<Unit filename="utilsFile.cpp" />

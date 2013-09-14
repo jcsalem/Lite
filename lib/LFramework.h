@@ -24,7 +24,7 @@ void SetRateMode(RateMode_t mode); //Call this to allow different types of value
 // --fade
 extern float        gFade;  // Fade in/out time in seconds
 // --outfilter   Output filters (used in creating the output buffer)
-extern string       gOutputFilters; // Output mapping
+extern string       gGlobalFilters; // Output mapping
 
 // Global time variables
 extern Milli_t      gTime;                  // Current time

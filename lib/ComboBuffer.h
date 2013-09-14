@@ -1,8 +1,8 @@
 // An LBuffer variant built using ncurses
 //
 
-#ifndef METABUFFER_H_INCLUDED
-#define METABUFFER_H_INCLUDED
+#ifndef COMBOBUFFER_H_INCLUDED
+#define COMBOBUFFER_H_INCLUDED
 
 #include "utilsPrecomp.h"
 #include "LBuffer.h"
@@ -40,24 +40,4 @@ private:
     vector<LBuffer*> iBuffers;
 };
 
-// Building block class.  Remaps locations in the buffer using a map.
-class LBufferMap : public LBuffer
-{
-public:
-    LBufferMap(LBuffer* buffer);
-    virtual ~LBufferMap() {}
-
-    virtual int     GetCount() const {return iBuffer->GetCount();}
-    virtual bool    Update() {return iBuffer->Update();}
-    // Note that the derived class requires GetDescriptor
-
-protected:
-    virtual RGBColor&   GetRawRGB(int idx) {return iBuffer->GetRawRGB(iMap[idx]);}
-    LBuffer*    iBuffer;
-    vector<int> iMap;
-};
-
-// This function is defined only so LFramework can reference it and force it to be linked in. Otherwise, CKBuffer is never linked in!
-void ForceLinkMeta();
-
-#endif // !METABUFFER_H_INCLUDED
+#endif // !COMBOBUFFER_H_INCLUDED

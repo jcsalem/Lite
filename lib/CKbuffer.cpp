@@ -1,12 +1,12 @@
 // Interface to color kinetics hardware
 //
-#include "cklib.h"
+#include "CKbuffer.h"
 #include "KiNET.h"
 #include "utilsTime.h"
 #include "LBuffer.h"
 #include <iostream>
 #include <stdio.h>
-#include "MetaBuffer.h"
+#include "ComboBuffer.h"
 
 //---------------------------------------------------------------------
 // KiNET utilities
