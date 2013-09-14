@@ -72,7 +72,7 @@ LBuffer* CursesBufferCreate(csref descStr, string* errmsg) {
     return new CursesBuffer(width);
 }
 
-DEFINE_LBUFFER_TYPE(console, CursesBufferCreate, "console[:size]",
+DEFINE_LBUFFER_DEVICE_TYPE(console, CursesBufferCreate, "console[:size]",
         "Outputs to the console. No size defaults to screen width.\n"
         "  Examples: console or console:50");
 

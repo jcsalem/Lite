@@ -154,17 +154,24 @@ class LBufferPhys : public LBuffer
 class LBufferType {
     friend class LBuffer;
 public:
-    typedef LBuffer* (*CreateFcn_t) (csref descriptorArgString, string* errmsg);
-    LBufferType(csref name, CreateFcn_t fcn, csref formatString, csref docString);
-    static string GetDocumentation();
+    typedef LBuffer* (*DeviceFcn_t) (csref descriptorArgString, string* errmsg);
+    typedef LBuffer* (*FilterFcn_t) (csref descriptorArgString, LBuffer* destBuffer, string* errmsg);
+    LBufferType(csref name, DeviceFcn_t fcn, csref formatString, csref docString);
+    LBufferType(csref name, FilterFcn_t fcn, csref formatString, csref docString, bool ignored);
+    static string GetDocumentation(bool isFilterType);
+    static const LBufferType* Find(csref name);
 private:
     string      iName;
-    CreateFcn_t iFcn;
+    bool        iIsFilter;
+    DeviceFcn_t iDeviceCreateFcn;
+    FilterFcn_t iFilterCreateFcn;
     string      iFormatString;
     string      iDocString;
 };
 
-#define DEFINE_LBUFFER_TYPE(name, fcn, formatString, docString) \
+#define DEFINE_LBUFFER_DEVICE_TYPE(name, fcn, formatString, docString) \
   LBufferType LBufferType_ ## name(#name, fcn, formatString, docString)
+#define DEFINE_LBUFFER_FILTER_TYPE(name, fcn, formatString, docString) \
+  LBufferType LBufferType_ ## name(#name, fcn, formatString, docString, true)
 
 #endif // _LBUFFER_H

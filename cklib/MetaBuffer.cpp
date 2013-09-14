@@ -149,34 +149,20 @@ LBuffer* ComboBuffer::PopLastBuffer()
 
 
 // Only used for documentation string
-DEFINE_LBUFFER_TYPE(combo_internal, ComboBuffer::Create, "[<device spec>,<device spec>,...]",
+DEFINE_LBUFFER_DEVICE_TYPE(combo_internal, ComboBuffer::Create, "[<device spec>,<device spec>,...]",
         "Combines all devices end-to-end into a single combo device.");
-
-//-----------------------------------------------------------------------------
-// Utility Fcn
-//-----------------------------------------------------------------------------
-
-LBuffer* SafeCreateBuffer(csref typeStr, csref descStr, string* errmsg){
-    if (descStr.empty()) {
-        if (errmsg) *errmsg = "Missing device specification to '" + typeStr + "' type.";
-        return NULL;
-    }
-    return LBuffer::Create(descStr, errmsg);
-}
 
 //-----------------------------------------------------------------------------
 // ReverseBuffer
 //-----------------------------------------------------------------------------
 
-LBuffer* ReverseBufferCreate(csref descStr, string* errmsg)
+LBuffer* ReverseBufferCreate(csref descStr, LBuffer* buffer, string* errmsg)
 {
-    LBuffer* buffer = SafeCreateBuffer("flip", descStr, errmsg);
-    if (! buffer) return NULL;
     return new ReverseBuffer(buffer);
 }
 
-DEFINE_LBUFFER_TYPE(flip, ReverseBufferCreate, "flip:<device spec>",
-        "Outputs to the device described by <device spec>, but flips the result.");
+DEFINE_LBUFFER_FILTER_TYPE(flip, ReverseBufferCreate, "flip",
+        "Reverses the order of pixels");
 
 //-----------------------------------------------------------------------------
 // LBufferMap -- Abstract class for any type that uses a map
@@ -200,14 +186,12 @@ void RandomizedBuffer::RandomizeMap()
 }
 
 
-LBuffer* RandomizedBufferCreate(csref descStr, string* errmsg)
+LBuffer* RandomizedBufferCreate(csref descStr, LBuffer* buffer, string* errmsg)
 {
-    LBuffer* buffer = SafeCreateBuffer("random", descStr, errmsg);
-    if (! buffer) return NULL;
-    return new RandomizedBuffer(buffer);
+   return new RandomizedBuffer(buffer);
 }
 
-DEFINE_LBUFFER_TYPE(random, RandomizedBufferCreate, "random:<device spec>",
+DEFINE_LBUFFER_FILTER_TYPE(random, RandomizedBufferCreate, "random",
                     "Randomizes the order of pixels in the device.");
 
 //-----------------------------------------------------------------------------
@@ -224,12 +208,10 @@ Skip2Buffer::Skip2Buffer(LBuffer* buffer) : LBufferMap(buffer)
 }
 
 
-LBuffer* Skip2BufferCreate(csref descStr, string* errmsg)
+LBuffer* Skip2BufferCreate(csref descStr, LBuffer* buffer, string* errmsg)
 {
-    LBuffer* buffer = SafeCreateBuffer("skip2", descStr, errmsg);
-    if (! buffer) return NULL;
     return new Skip2Buffer(buffer);
 }
 
-DEFINE_LBUFFER_TYPE(skip2, Skip2BufferCreate, "skip2:<device spec>",
+DEFINE_LBUFFER_FILTER_TYPE(skip2, Skip2BufferCreate, "skip2",
                     "Interleaves the order of pixels.");

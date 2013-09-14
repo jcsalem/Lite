@@ -409,11 +409,11 @@ LBuffer* CKbufferAutoCreate(csref descriptorArg, string* errmsg) {
 }
 
 // Define the creation functions
-DEFINE_LBUFFER_TYPE(ck, CKbufferCreate, "CK:ipaddr/port(size)[,...]",
+DEFINE_LBUFFER_DEVICE_TYPE(ck, CKbufferCreate, "CK:ipaddr/port(size)[,...]",
         "ColorKinetics device. If port is missing, assumes a KiNet V1 device.\n"
         "  Examples: ck:172.16.11.23/1  or  ck:10.5.4.3/1(72) or ck:172.16.11.54(21)");
 
-DEFINE_LBUFFER_TYPE(ckauto, CKbufferAutoCreate, "CKAUTO", "Creates a display using all of the local CK devices");
+DEFINE_LBUFFER_DEVICE_TYPE(ckauto, CKbufferAutoCreate, "CKAUTO", "Creates a display using all of the local CK devices");
 
 // Dummy function to force linking of this file
 void ForceLinkCK() {}

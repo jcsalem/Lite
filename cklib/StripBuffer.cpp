@@ -106,7 +106,7 @@ LBuffer* StripBufferCreate(csref descStrArg, string* errmsg) {
     return buffer;
     }
 
-DEFINE_LBUFFER_TYPE(strip, StripBufferCreate, "strip:stripInfo(size)",
+DEFINE_LBUFFER_DEVICE_TYPE(strip, StripBufferCreate, "strip:stripInfo(size)",
         "Outputs to a WS2801-based LED strip. stripInfo is SDI/CLK or one of the aliases.\n"
         "  Aliases: A is 24/23; B is 22/17.  'strip' by itself is the same as 'strip:A'\n"
         "  Size defaults to 32.  Follow the description with 'X' to flip the color order (for older sparkfun strips)\n"

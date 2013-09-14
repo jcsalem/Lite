@@ -65,13 +65,17 @@ string DeviceCallback(csref name, csref val) {
 DefOption(dev, DeviceCallback, "deviceInfo", "is a device descriptor beginning with the device type name (see below)", NULL);
 
 string GetDevHelp() {
-    string r = LBufferType::GetDocumentation();
-    r = StrReplace(r, "\n", "\n  ");
+    string r, tmp;
+    r = "Environment variable LDEV is used if --dev is missing.\n"
+        "\nfilterInfo is filter_type:parameters and there may be any number\n"
+        "The supported filter types are: \n  ";
+    tmp = LBufferType::GetDocumentation(true);
+    r += StrReplace(tmp, "\n", "\n  ") + "\n";
 
-    r = "If --dev is not specified, the environment variable LDEV is checked.\n"
-        "A device descriptor begins with a device type followed by a colon and the device's parameters.\n"
-        "The supported device types are: \n  "
-        + r;
+    r += "\ndeviceInfo is device_type:arguments\n"
+        "The supported device types are: \n  ";
+    tmp = LBufferType::GetDocumentation(false);
+    r += StrReplace(tmp, "\n", "\n  ") + "\n";
     return r;
 }
 
@@ -93,18 +97,16 @@ DefOptionBool(verbose, VerboseCallback, "enables verbose status messages");
 //------------
 string gOutputFilters;
 
-string validOutputFilters[] = {"random", "skip2", "flip"};
-
 string OutFilterCallback(csref name, csref valarg) {
     // $$$ TODO $$$ Add parameter checking
     string value = TrimWhitespace(valarg);
     if (value.empty()) return "";
-    if (value[value.size()-1] != ':') value += ":";
-    gOutputFilters = value + gOutputFilters;
+    if (value[value.size()-1] != '|') value += "|";
+    gOutputFilters = gOutputFilters + value;
     return "";
 }
 
-DefOption(outfilter, OutFilterCallback, "filters", "Adds output filters/maps that operate at the pixel level. Can be specified with as random, skip2, flip, etc.", NULL);
+DefOption(outfilter, OutFilterCallback, "filterInfo", "Inserts a filter into the output pipeline. See below.", NULL);
 
 //------------
 string ColorDefaultCallback(csref name)

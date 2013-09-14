@@ -58,52 +58,81 @@ vector<LBufferType>& GetAllLBufferTypes() {
     return allLBufferTypes;
 }
 
-LBufferType::LBufferType(csref name, CreateFcn_t fcn, csref formatString, csref docString)
-  : iName(StrToLower(name)), iFcn(fcn), iFormatString(formatString), iDocString(docString)
+LBufferType::LBufferType(csref name, DeviceFcn_t fcn, csref formatString, csref docString)
+  : iName(StrToLower(name)), iIsFilter(false), iDeviceCreateFcn(fcn), iFilterCreateFcn(NULL), iFormatString(formatString), iDocString(docString)
   {
       GetAllLBufferTypes().push_back(*this);
   }
+
+LBufferType::LBufferType(csref name, FilterFcn_t fcn, csref formatString, csref docString, bool ignored)
+  : iName(StrToLower(name)), iIsFilter(true), iDeviceCreateFcn(NULL), iFilterCreateFcn(fcn), iFormatString(formatString), iDocString(docString)
+  {
+      GetAllLBufferTypes().push_back(*this);
+  }
+
+
+const LBufferType* LBufferType::Find(csref nameArg)
+{
+    string name = StrToLower(nameArg);
+    const vector<LBufferType>& allLBufferTypes = GetAllLBufferTypes();
+    for (size_t i = 0; i < allLBufferTypes.size(); ++i) {
+        if (allLBufferTypes[i].iName == name) return &(allLBufferTypes[i]);
+    }
+    return NULL;
+}
 
 LBuffer* CreateError(string* errmsgptr, csref msg) {
     if (errmsgptr) *errmsgptr = msg;
     return NULL;
     }
 
-LBuffer* LBuffer::Create(csref descriptor, string* errmsg) {
-    string name     = TrimWhitespace(descriptor);
-    if (name.empty()) return CreateError(errmsg, "Empty device descriptor");
-    if (name[0] == '[') {
-        if (name[name.size() - 1] != ']') return CreateError(errmsg, "Device descriptor started with a bracket but didn't end with one: " + descriptor);
-        return ComboBuffer::Create(name.substr(1, name.size()-2));
+LBuffer* LBuffer::Create(csref descArg, string* errmsg) {
+    string desc     = TrimWhitespace(descArg);
+    if (desc.empty()) return CreateError(errmsg, "Missing device descriptor");
+    if (desc[0] == '[') {
+        if (desc[desc.size() - 1] != ']') return CreateError(errmsg, "Device descriptor started with a bracket but didn't end with one: " + descArg);
+        return ComboBuffer::Create(desc.substr(1, desc.size()-2));
     }
 
-    // Single device
-    size_t colonpos = name.find(':');
-    string desc     = (colonpos == string::npos) ? "" : TrimWhitespace(name.substr(colonpos+1));
-    name = StrToLower(name.substr(0,colonpos));
-    if (name.empty()) {
-        if (errmsg) *errmsg = "Missing device type: " + descriptor;
-        return NULL;
+    // If we get here it is a single buffer or a pipeline of filters plus a buffer
+    size_t pipepos  = desc.find('|');
+    bool isFilter = (pipepos != string::npos);
+    string nextdev  = isFilter ? desc.substr(pipepos + 1) : "";
+
+    // Now parse the current filter or device
+    desc = desc.substr(0, pipepos);
+    size_t colonpos = desc.find(':');
+    string name = desc.substr(0,colonpos);
+    if (name.empty()) return CreateError(errmsg, "Missing " + string(isFilter ? "filter" : "device") + " name: " + descArg);
+
+    const LBufferType* type = LBufferType::Find(name);
+    if (! type) return CreateError(errmsg, "No " + string(isFilter ? "output filter" : "device type") + " named: " + name);
+
+    string args = (colonpos == string::npos) ? "" : TrimWhitespace(desc.substr(colonpos+1));
+    if (isFilter) {
+        if (! type->iIsFilter) return CreateError(errmsg, "Device type found when filter name expected: " + descArg);
+        if (nextdev.empty()) return CreateError(errmsg, "Missing device after pipe: " + descArg);
+        LBuffer* buffer = LBuffer::Create(nextdev,errmsg);
+        if (! buffer) return NULL;
+        return type->iFilterCreateFcn(args, buffer, errmsg);
+    } else {
+        // Output device}
+        if (type->iIsFilter) return CreateError(errmsg, "Filter name found when device type expected: " + descArg);
+        return type->iDeviceCreateFcn(args, errmsg);
     }
-
-    const vector<LBufferType>& allLBufferTypes = GetAllLBufferTypes();
-
-    for (size_t i = 0; i < allLBufferTypes.size(); ++i) {
-        if (allLBufferTypes[i].iName == name)
-            return allLBufferTypes[i].iFcn(desc, errmsg);
-        }
-    // Unknown LBuffer type
-    if (errmsg) *errmsg = "Unknown device type: \"" + name + "\"";
-    return NULL;
-
 }
 
-string LBufferType::GetDocumentation() {
+string LBufferType::GetDocumentation(bool isFilterType) {
     const vector<LBufferType>& allLBufferTypes = GetAllLBufferTypes();
     string r;
+    bool firstTime = true;
     for (size_t i = 0; i < allLBufferTypes.size(); ++i) {
-        r += allLBufferTypes[i].iFormatString + " - " + allLBufferTypes[i].iDocString + "\n";
+        if (allLBufferTypes[i].iIsFilter == isFilterType) {
+            if (!firstTime) r += "\n";
+            firstTime = false;
+            r += allLBufferTypes[i].iFormatString + " - " + allLBufferTypes[i].iDocString;
         }
+    }
     return r;
 }
 
