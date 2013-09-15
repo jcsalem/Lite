@@ -38,7 +38,8 @@ DefOption(density, DensityCallback, "density", "controls the density of stars.",
 //----------------------------------------------------------------
 
 void InitializeOneStar(LobjSparkle* lobj, int idx, bool firstTime = false) {
-    lobj->pos.x = (idx != -1) ? idx : RandomInt(L::gOutputBuffer->GetCount());
+    *lobj = LobjSparkle(L::gTime);
+    lobj->pos.x = idx;
     lobj->color = (RandomFloat() < gDensity) ? RandomColor() : BLACK;
     lobj->sparkle = LSparkle::MakeRandomSparkle(L::gTime, L::gSparkleMode, L::gSparkleRate, firstTime);
 }
@@ -46,15 +47,9 @@ void InitializeOneStar(LobjSparkle* lobj, int idx, bool firstTime = false) {
 const void* kIsFirstTime = (void*) -1;
 
 Lobj* SparkleAlloc(int idx, const void* ignore) {
-    LobjSparkle* lobj = new LobjSparkle();
+    LobjSparkle* lobj = new LobjSparkle(L::gTime);
     InitializeOneStar(lobj, idx, true);
     return lobj;
-}
-
-void RestartExpired(Lobj* objarg, const void* ignore) {
-    LobjSparkle* obj = dynamic_cast<LobjSparkle*>(objarg);
-    if (! obj || !obj->IsOutOfTime()) return;
-    InitializeOneStar(obj, obj->pos.x);
 }
 
 Lgroup gObjs;
@@ -64,14 +59,10 @@ void InitializeStars() {
     gObjs.Add(numLights, SparkleAlloc, NULL);
     }
 
-
-void StarryCallback(Lgroup& objGroup)
-{
-    // Restart expired stars
-    objGroup.Map(RestartExpired, NULL);
-
-    // Move (needed for time update
-    objGroup.MoveAll(L::gTime);
+void StarryCallback(Lobj* objarg) {
+    LobjSparkle* obj = dynamic_cast<LobjSparkle*>(objarg);
+    if (obj->sparkle.IsOutOfTime(obj->nextTime))
+        InitializeOneStar(obj, obj->pos.x);
 }
 
 //----------------------------------------------------------------
@@ -89,5 +80,5 @@ int main(int argc, char** argv)
     InitializeStars();
     L::Run(gObjs, StarryCallback);
     L::Cleanup();
-    return 0;
+    exit(EXIT_SUCCESS);
 }

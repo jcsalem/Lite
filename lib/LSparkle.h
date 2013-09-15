@@ -8,7 +8,9 @@
 #include "utilsTime.h"
 
 // This describes a sparkly light of some kind
-class LSparkle {
+class LSparkle
+{
+  friend class LobjSparkle;
   public:
     LSparkle() : startTime(0), attack(0), hold(0), release(0), sleep(0) {}
     Milli_t startTime;
@@ -16,10 +18,11 @@ class LSparkle {
     Milli_t hold;
     Milli_t release;
     Milli_t sleep;
-
-    RGBColor    ComputeColor(const RGBColor& referenceColor, Milli_t currentTime) const;
+    // Operations
     bool        IsOutOfTime(Milli_t currentTime) const {return MilliLT(GetEndTime(), currentTime);}
 
+    // Creating Sparkles
+    // Mode
     typedef enum {kError = -1, kDefault = 0, kSparkle = 1, kFirefly = 2, kSlow = 3} Mode_t;
     static Mode_t StrToMode(csref str);
     static string ModeToStr(Mode_t mode);
@@ -29,6 +32,7 @@ class LSparkle {
 
 private:
     Milli_t     GetEndTime() const;
+    RGBColor    ComputeColor(const RGBColor& referenceColor, Milli_t currentTime) const;
 };
 
 class LobjSparkle : public Lobj {
@@ -41,14 +45,14 @@ class LobjSparkle : public Lobj {
     LSparkle    sparkle;
 
     // Operations
+    virtual void UpdateColor() {renderColor = sparkle.ComputeColor(color, nextTime);}
     virtual void Clear() {*this = LobjSparkle();}
-    virtual bool IsOutOfTime() const;
+//    virtual bool IsOutOfTime() const;
 
     // Allocate function
     static LobjSparkle* Alloc(int,const void*) {return new LobjSparkle();}
 
-    virtual RGBColor GetCurrentColor() const {return sparkle.ComputeColor(color, lastTime);}
-
+    virtual string GetTypeName() const {return "LobjSparkle";}
 };
 
 namespace L {

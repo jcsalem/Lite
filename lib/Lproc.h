@@ -7,6 +7,8 @@
 #include "Color.h"
 #include <vector>
 
+class Lobj; // fwd decl
+
 class Lproc {
 public:
     Lproc() {}
@@ -14,7 +16,30 @@ public:
 
     // These are the key functions that each Lproc must provide
     virtual Lproc* Duplicate() const = 0; // Makes a copy of the Lproc
-    virtual RGBColor Apply(const RGBColor& rgb, Milli_t currentTime) const = 0;
+    virtual void Apply(Lobj* obj) const = 0;
+};
+
+class LprocFcn : public Lproc {
+public:
+    typedef void (*Callback_t) (Lobj* obj);
+    LprocFcn(Callback_t fcn) : iFcn(fcn) {}
+    virtual ~LprocFcn() {}
+    virtual LprocFcn* Duplicate() const {return new LprocFcn(*this);}
+    virtual void Apply(Lobj* obj) const {if (iFcn) iFcn(obj);}
+
+private:
+    Callback_t iFcn;
+};
+
+class LprocDim : public Lproc {
+public:
+    LprocDim(float fraction) : Lproc(), iFraction(fraction) {}
+    virtual ~LprocDim() {}
+
+    virtual Lproc* Duplicate() const {return new LprocDim(*this);}
+    virtual void Apply(Lobj* obj) const;
+private:
+    float iFraction;
 };
 
 class LprocFade : public Lproc {
@@ -24,7 +49,7 @@ public:
     virtual ~LprocFade() {}
 
     virtual Lproc* Duplicate() const {return new LprocFade(*this);}
-    virtual RGBColor Apply(const RGBColor& rgb, Milli_t currentTime) const;
+    virtual void Apply(Lobj* obj) const;
 private:
     Type_t  iType;
     Milli_t iStartTime;
@@ -49,18 +74,22 @@ public:
 
 class LprocList {
 public:
-    LprocList() : iNextHandle(1) {}
+    LprocList() {}
     ~LprocList();
 
-    int AddProc(const Lproc& proc);
-    bool ReplaceProc(int handle, const Lproc& proc);
-    bool DeleteProc(int handle);
+    void    AddProc(const Lproc& proc);
+    void    PrependProc(const Lproc& proc);
+    size_t  NumProcs() const {return iProcList.size();}
+    Lproc*  operator[](size_t idx) const {return iProcList[idx];}
+    void Apply(Lobj* obj) const;
 
-    RGBColor Apply(const RGBColor& rgb, Milli_t currentTime) const;
+//    bool ReplaceProc(int handle, const Lproc& proc);
+//    bool DeleteProc(int handle);
 
 private:
-    int iNextHandle;
-    vector<pair<int,Lproc*> > iProcList;
+    vector<Lproc*> iProcList;
+//    int iNextHandle;
+//    vector<pair<int,Lproc*> > iProcList;
 };
 
 #endif

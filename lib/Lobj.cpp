@@ -93,21 +93,34 @@ void LobjOld::Map(LobjOldMapFcn_t mapfcn) {
 }
 
 //----------------------------------------------------------------------
-// Rendering
+// Lobj Update Loop
 //----------------------------------------------------------------------
 
-namespace { // These are internal to just this file
-// Just used for default values
-LprocList gDummyFilterList;
+void Lobj::Update(Milli_t currentTime, const LprocList& procList, LBuffer* outputBuffer) {
+    UpdatePrepare(currentTime);
+    UpdateMove();
+    UpdateColor();
+    UpdateProcs(procList);
+    UpdateRender(outputBuffer);
+    UpdateDone();
+}
 
-void ObjRender(const Lobj* obj, LBuffer* buffer, const LprocList& filters) {
+void Lobj::UpdateMove() {
+    float timeDiff = MilliDiff(nextTime, lastTime);
+    pos += speed * timeDiff/1000;
+}
+
+void Lobj::UpdateColor() {
+    renderColor = color;
+}
+
+void Lobj::UpdateProcs(const LprocList& procs) {
+    procs.Apply(this);
+}
+
+void Lobj::UpdateRender(LBuffer* buffer) {
     // Only supports 1D rendering at the moment
     // Position is the middle of the object
-
-    RGBColor rgb = obj->GetCurrentColor();
-    rgb = filters.Apply(rgb, obj->lastTime);
-    float   width   = obj->width;
-    Lxy     pos     = obj->pos;
     //cout << "Render: " << rgb.ToString() << " at " << pos.x << "," << pos.y << endl;
 
     if (width == 0 || !gAntiAlias) {
@@ -115,42 +128,33 @@ void ObjRender(const Lobj* obj, LBuffer* buffer, const LprocList& filters) {
         int ipos = pos.x - width/2.0 + .5;
         int iwidth = width == 0? 1 : (width + .5);
         for (int i = 0; i < iwidth; ++i, ++ipos)
-            buffer->AddRGB(ipos, rgb);
+            buffer->AddRGB(ipos, renderColor);
     } else {
     // Non-zero width AND anti-aliasing.
-    float left = pos.x - width / 2.0 + .5;  // The .5 insures that a sparkle of width 1 displays as a single pixel
-    float lfloor = floor(left);
-    float lfrac = left - lfloor;
-    int lpos = lfloor;
-    float right = pos.x + width / 2.0 + .5;
-    float rfloor = floor(right);
-    float rfrac = 1.0 - (right - rfloor);
-    int rpos = rfloor;
+    float left = pos.x - width / 2.0 + .5;  // The .5 insures that a light of width 1 displays as a single pixel
+    float lbound = floor(left);
+    float lfrac = 1.0 - (left - lbound);
+    int lpos = lbound;
+    float right = pos.x + width / 2.0 - .5;
+    float rbound = ceil(right);
+    float rfrac = 1.0 - (rbound - right);
+    int rpos = rbound;
     if (lpos == rpos) lfrac *= rfrac;  // May need more thought
 
     // Write out first pixel
-    buffer->AddRGB(lpos, rgb * lfrac);
+    buffer->AddRGB(lpos, renderColor * lfrac);
     // Write out middle pixels
     for (int ipos = lpos + 1; ipos < rpos; ++ipos)
-        buffer->AddRGB(ipos, rgb);
+        buffer->AddRGB(ipos, renderColor);
     // Write out last pixel
     if (lpos != rpos)
-        buffer->AddRGB(rpos, rgb * rfrac);
+        buffer->AddRGB(rpos, renderColor * rfrac);
     }
 }
-
-}; // Local namespace
 
 //----------------------------------------------------------------------
 // Lobj Operations
 //----------------------------------------------------------------------
-
-void Lobj::Move(Milli_t newTime) {
-    float timeDiff = MilliDiff(newTime, lastTime);
-    pos += speed * timeDiff/1000;
-    lastTime = newTime;
-}
-
 void Lobj::Wrap(const Lxy& minBound, const Lxy& maxBound) {
     Lxy range = maxBound - minBound;
 
@@ -172,7 +176,7 @@ bool Lobj::IsOutOfBounds(const Lxy& minBound, const Lxy& maxBound) const {
 }
 
 string Lobj::GetDescription(bool verbose) const {
-    string retval = "[" + DblToStr(pos.x) + "," + DblToStr(pos.y) + "," + color.ToString() + "]";
+    string retval = GetTypeName() + "[" + DblToStr(pos.x) + "," + DblToStr(pos.y) + "," + color.ToString() + "]";
     return retval;
 }
 
@@ -219,17 +223,19 @@ void Lgroup::FreeIf(Lobj::FreeIfFcn_t fcn, const void* info) {
 
 //void Lgroup::FreeIfOutOfBounds(Lxy MinBound, Lxy maxBound) const;
 
-// Common functions
+// Common Lgroup functions
+LprocList gDummyProcList;
 
-void Lgroup::RenderAll(LBuffer* buffer) const {
-    RenderAll(buffer, gDummyFilterList);
+void Lgroup::RenderAll(Milli_t currentTime, LBuffer* buffer) const {
+    RenderAll(currentTime, gDummyProcList, buffer);
 }
 
-void Lgroup::RenderAll(LBuffer* buffer, const LprocList& filters) const {
+void Lgroup::RenderAll(Milli_t currentTime, const LprocList& filters, LBuffer* buffer) const {
     for (const_iterator i = begin(); i != end(); ++i)
-        ObjRender(*i, buffer, filters);
+        (*i)->Update(currentTime, filters, buffer);
 }
 
+/*
 void Lgroup::MoveAll(Milli_t newTime) const {
     for (const_iterator i = begin(); i != end(); ++i)
         (*i)->Move(newTime);
@@ -244,6 +250,7 @@ void Lgroup::BounceAll(const Lxy& minBound, const Lxy& maxBound) const {
     for (const_iterator i = begin(); i != end(); ++i)
         (*i)->Bounce(minBound, maxBound);
 }
+*/
 
 // Mapping
 void Lgroup::Map(Lobj::MapFcn_t mapfcn, const void* info) {

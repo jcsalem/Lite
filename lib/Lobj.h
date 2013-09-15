@@ -33,7 +33,8 @@ struct Lxy {
 class Lobj {
   public:
      // Constructor
-    Lobj(Milli_t currentTime = Milliseconds()) : /*initColor(BLACK), initWidth(0), */ lastTime(currentTime), color(BLACK), width(0) {}
+    Lobj(Milli_t currentTime = Milliseconds()) : /*initColor(BLACK), initWidth(0), */
+        lastTime(currentTime), nextTime(currentTime), color(BLACK), width(0) {}
     virtual ~Lobj() {}
 
     // These variables are set at the beginning
@@ -42,31 +43,42 @@ class Lobj {
 //    Lxy         initPos;
 //    float       initWidth;
 
-    // These are current as of lastTime
+    // These are current as of nextTime
     Milli_t     lastTime;   // Last update time
+    Milli_t     nextTime;   // During the update loop, it's equal to currentTime
     Lxy         speed;      // Speed in positions per second
-    Lxy         pos;
-    RGBColor    color;
-    float       width;
+    Lxy         pos;        // Updated by standard operations
+    RGBColor    color;      // Updated by UpdateColor
+    float       width;      // Generally not changed
 
-    // Standard operations
-    virtual void Move           (Milli_t currentTime);
+    // These are during rendering
+    RGBColor    renderColor;// Update sets this equal to color
+
+    // These are the standard operations that get called in order
+    virtual void UpdatePrepare(Milli_t currentTime) {nextTime = currentTime;}
+    virtual void UpdateMove();                          // Moves the object
+    virtual void UpdateColor();                         // Updates color and renderColor
+    virtual void UpdateProcs(const LprocList& procs);   // Usually just updates renderColor
+    virtual void UpdateRender(LBuffer* output);         // Displays the object using renderColor
+    virtual void UpdateDone() {lastTime = nextTime;}
+    // This calls all of the functions above in order
+    virtual void Update(Milli_t currentTime, const LprocList& procs, LBuffer* output);
+
+    // Other operations that can be overloaded
     virtual void Wrap           (const Lxy& minBound, const Lxy& maxBound);
     virtual void Bounce         (const Lxy& minBound, const Lxy& maxBound);
     virtual bool IsOutOfBounds  (const Lxy& minBound, const Lxy& maxBound) const;
-    virtual bool IsOutOfTime    ()   const {return false;}
+//    virtual bool IsOutOfTime    ()   const {return false;}
 
     virtual void Clear() {*this = Lobj();}
 
-    // Returns the color as of lastTime
-    virtual RGBColor GetCurrentColor() const {return color;}
-
     // Function types
-    typedef void       (*MapFcn_t)      (Lobj* obj, const void* info);
-    typedef Lobj*  (*AllocFcn_t)    (int idx,       const void* info);
-    typedef bool       (*FreeIfFcn_t)   (Lobj* obj, const void* info);  // Returns tree if item should be freed
+    typedef void   (*MapFcn_t)      (Lobj* obj, const void* info);
+    typedef Lobj*  (*AllocFcn_t)    (int idx,   const void* info);
+    typedef bool   (*FreeIfFcn_t)   (Lobj* obj, const void* info);  // Returns tree if item should be freed
 
     // Info
+    virtual string GetTypeName() const {return "Lobj";}
     virtual string GetDescription(bool verbose = false) const;
 };
 
@@ -87,12 +99,12 @@ public:
     void FreeIfOutOfBounds(Lxy MinBound, Lxy maxBound) const;
 
     // Common functions
-    void RenderAll  (LBuffer* buffer) const;
-    void RenderAll  (LBuffer* buffer, const LprocList& filters) const;
+    void RenderAll(Milli_t currentTime, LBuffer* buffer) const;
+    void RenderAll(Milli_t currentTime, const LprocList& procs, LBuffer* buffer) const;
 
-    void MoveAll    (Milli_t newTime) const;
-    void WrapAll    (const Lxy& MinBound, const Lxy& maxBound) const;
-    void BounceAll  (const Lxy& MinBound, const Lxy& maxBound) const;
+//    void MoveAll    (Milli_t newTime) const;
+//    void WrapAll    (const Lxy& MinBound, const Lxy& maxBound) const;
+//    void BounceAll  (const Lxy& MinBound, const Lxy& maxBound) const;
 
     string GetDescription(bool verbose = false) const;
 

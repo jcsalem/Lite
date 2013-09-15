@@ -16,6 +16,7 @@ public:
 
     virtual int     GetCount() const {return iBuffer->GetCount();}
     virtual bool    Update() {return iBuffer->Update();}
+    virtual void    Clear() {iBuffer->Clear();}
     // Note that the derived class requires GetDescriptor
 
 protected:

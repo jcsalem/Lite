@@ -12,6 +12,7 @@
 				<Option external_deps="../lib/bin/Debug/liblite.a;" />
 				<Option type="1" />
 				<Option compiler="gcc" />
+				<Option parameters="--dev ck:172.24.22.51/1(72)" />
 				<Compiler>
 					<Add option="-g" />
 				</Compiler>

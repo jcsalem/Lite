@@ -2,12 +2,13 @@
 //
 #include "utils.h"
 #include "Lproc.h"
+#include "Lobj.h"
 
 //---------------------------------------------------------------------------------
 // LprocFade
 //---------------------------------------------------------------------------------
 
-RGBColor LprocFade::Apply(const RGBColor& rgb, Milli_t currentTime) const {
+void LprocFade::Apply(Lobj* obj) const {
     bool isFadeIn;
     bool isExponential;
 
@@ -18,23 +19,25 @@ RGBColor LprocFade::Apply(const RGBColor& rgb, Milli_t currentTime) const {
         case kExponentialOut:   isFadeIn = false;   isExponential = true; break;
         case kNoFade:
         default:
-            return rgb;
+            return;
         }
 
-    float fraction = 1.0 * (currentTime - iStartTime) / (iEndTime - iStartTime);
+    float currentTime = obj->lastTime;
+    float fraction;
 
     if (isFadeIn) {
-        if (currentTime < iStartTime)       return BLACK;
-        else if (currentTime >= iEndTime)   return rgb;
+        if (currentTime < iStartTime)       fraction = 0.0;
+        else if (currentTime >= iEndTime)   return; // fraction = 1.0;
+        else fraction = 1.0 * (currentTime - iStartTime) / (iEndTime - iStartTime);
     } else {
-        if (currentTime < iStartTime)       return rgb;
-        else if (currentTime < iEndTime)    fraction = 1.0 - fraction;
-        else                                return BLACK;
+        if (currentTime < iStartTime)       return; // fraction = 1.0;
+        else if (currentTime >= iEndTime)   fraction = 0.0;
+        else fraction = 1.0 * (iEndTime - currentTime) / (iEndTime - iStartTime);
     }
 
     if (isExponential) fraction = fraction * fraction;
 
-    return rgb * fraction;
+    obj->renderColor = obj->renderColor * fraction;
 }
 
 //---------------------------------------------------------------------------------
@@ -44,17 +47,28 @@ RGBColor LprocFade::Apply(const RGBColor& rgb, Milli_t currentTime) const {
 
 LprocList::~LprocList() {
     for (size_t i = 0; i < iProcList.size(); ++i)
-        delete iProcList[i].second;
+        delete iProcList[i];
     iProcList.clear();
 }
 
 // Returns a handle to the added proc
-int LprocList::AddProc(const Lproc& proc) {
-    int handle = iNextHandle++;
-    iProcList.push_back(pair<int,Lproc*>(handle, proc.Duplicate()));
-    return handle;
+void LprocList::AddProc(const Lproc& proc) {
+    iProcList.push_back(proc.Duplicate());
 }
 
+// Returns a handle to the added proc
+void LprocList::PrependProc(const Lproc& proc) {
+    iProcList.insert(iProcList.begin(), proc.Duplicate());
+}
+
+
+void LprocList::Apply(Lobj* obj) const {
+    for (size_t i = 0; i < iProcList.size(); ++i) {
+        iProcList[i]->Apply(obj);
+    }
+}
+
+/* OBSOLETE
 bool LprocList::ReplaceProc(int handle, const Lproc& proc) {
     for (size_t i = 0; i < iProcList.size(); ++i)
         if (iProcList[i].first == handle) {
@@ -75,11 +89,5 @@ bool LprocList::DeleteProc(int handle) {
     return false;
 }
 
-RGBColor LprocList::Apply(const RGBColor& rgbarg, Milli_t currentTime) const {
-    RGBColor rgb(rgbarg);
-    for (size_t i = 0; i < iProcList.size(); ++i) {
-        rgb = iProcList[i].second->Apply(rgb, currentTime);
-    }
-    return rgb;
-}
 
+*/ // No longer used

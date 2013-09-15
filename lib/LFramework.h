@@ -7,6 +7,7 @@
 
 class LBuffer;
 class Lgroup;
+class Lobj;
 
 namespace L {
 // --dev
@@ -34,11 +35,13 @@ extern Milli_t      gStartTime;
 extern Milli_t      gEndTime;
 
 // Standard loop functions
-typedef void (*Callback_t) (Lgroup& objGroup);
+typedef void (*ObjCallback_t)   (Lobj* obj);    // Called for each object during L::Run
+typedef void (*GroupCallback_t) (Lgroup* obj);  // Called once for the group at the end of L::Run
 void Startup(int *argc, char** argv, int numPositionalArgs = 0);
 //void Startup(); // Must have already initialized gOutputBuffer to call this one
-void Run(Lgroup& objgroup, Callback_t fcn);
-void Cleanup(bool eraseAtEnd = true);
+void Run(Lgroup& objgroup, ObjCallback_t fcn = NULL, GroupCallback_t gfcn = NULL); // Delay between renders is based on gFrameDuration
+void RunOnce(Lgroup& objgroup);                // No delays built in
+void Cleanup(bool eraseAtEnd = false);
 
 void ErrorExit(csref message);
 }; // namespace L

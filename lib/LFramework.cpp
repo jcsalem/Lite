@@ -233,12 +233,20 @@ void Cleanup(bool eraseAtEnd)
     if (eraseAtEnd)
     {
         // Clear the lights
+        // Note!  This doesn't work reliably
         gOutputBuffer->Clear();
         gOutputBuffer->Update();
     }
 }
 
-void Run(Lgroup& objGroup, L::Callback_t fcn)
+void RunOnce(Lgroup& objGroup) {
+    gTime = Milliseconds();
+    gOutputBuffer->Clear();
+    objGroup.RenderAll(gTime, gProcs, gOutputBuffer);
+    gOutputBuffer->Update();
+}
+
+void Run(Lgroup& objGroup, L::ObjCallback_t objfcn, L::GroupCallback_t groupfcn)
 {
     // Set up end time variables
     gEndTime = 0; // Runs forever
@@ -252,17 +260,16 @@ void Run(Lgroup& objGroup, L::Callback_t fcn)
             gProcs.AddProc(LprocFadeOut(false,gEndTime - gFade * 1000, gEndTime));
     }
 
+    // If callback, install it
+    if (objfcn) {
+        LprocFcn proc(objfcn);
+        gProcs.PrependProc(proc);
+    }
+
     // Main loop
     while (true) {
-        gTime = Milliseconds();
-
-        // Call the callback
-        fcn(objGroup);
-
-        // Render
-        gOutputBuffer->Clear();
-        objGroup.RenderAll(gOutputBuffer, gProcs);
-        gOutputBuffer->Update();
+        RunOnce(objGroup);
+        if (groupfcn) groupfcn(&objGroup);
 
         // Exit if out of time, else delay until next frame
         Milli_t currentTime = Milliseconds();

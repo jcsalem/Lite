@@ -31,7 +31,6 @@ class LBuffer
     RGBColor    GetRGB(int coord)       const {if (InBounds(coord)) return const_cast<LBuffer*>(this)->GetRawRGB(coord); else return BLACK;}
 
     // Writes
-    void Clear(void) {SetAll(BLACK);}
     void SetColor(int coord, const Color& color);
     void SetAll(const Color& color);
     void SetRGB(int coord, const RGBColor& rgb)   {if (InBounds(coord)) GetRawRGB(coord) = rgb;}
@@ -43,6 +42,7 @@ class LBuffer
     virtual string  GetDescriptor()     const = 0; // Returns a descriptor of the LBuffer that can be used to recreate the exact LBuffer
     virtual string  GetDescription()    const; // returns a detailed description of the CKbuffer
     virtual bool    Update() = 0;              // Updates the actual device based on the buffer contents.  Must be supplied for all derived types.
+    virtual void    Clear(void)         {SetAll(BLACK);}
 
     virtual ~LBuffer() {}
 

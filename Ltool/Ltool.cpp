@@ -37,20 +37,17 @@ Mode_t gMode;
 Color* gColor;      // Always set
 Color* gColor2;     // Only set if we're doing a color wash
 
-void cktoolCallback(Lgroup& group) {
-    // Move the lights as needed
-    group.MoveAll(L::gTime);
-
+void LtoolCallback(Lobj* obj) {
     // Do the bounary stuff
     Lxy minBound(-.5,0);
     Lxy maxBound(L::gOutputBuffer->GetCount()-.5, 0);
     switch (gMode)
     {
     case kRotate:
-        group.WrapAll(minBound, maxBound);
+        obj->Wrap(minBound, maxBound);
         break;
     case kBounce:
-        group.BounceAll(minBound, maxBound);
+        obj->Bounce(minBound, maxBound);
         break;
     case kStatic:
     default:
@@ -169,7 +166,7 @@ int main(int argc, char** argv)
         }
     }
 
-    L::Run(objs, cktoolCallback);
+    L::Run(objs, LtoolCallback);
     L::Cleanup();
 
     exit(EXIT_SUCCESS);

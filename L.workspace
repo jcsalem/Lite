@@ -2,7 +2,7 @@
 <CodeBlocks_workspace_file>
 	<Workspace title="Lite">
 		<Project filename="lib/lib.cbp" />
-		<Project filename="Ltool/Ltool.cbp" active="1">
+		<Project filename="Ltool/Ltool.cbp">
 			<Depends filename="lib/lib.cbp" />
 		</Project>
 		<Project filename="Lfirefly/Lfirefly.cbp">

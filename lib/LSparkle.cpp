@@ -28,9 +28,9 @@ Milli_t LSparkle::GetEndTime() const {
     return startTime + attack + hold + release + sleep;
 }
 
-bool LobjSparkle::IsOutOfTime() const {
-    return sparkle.IsOutOfTime(lastTime);
-}
+//bool LobjSparkle::IsOutOfTime() const {
+//    return sparkle.IsOutOfTime(lastTime);
+//}
 
 //----------------------------------------------------------------------
 // LSparkle Global Option definitions

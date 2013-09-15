@@ -64,6 +64,22 @@ Key_t GetOneChar() {
 // Argument Parsing
 //----------------------------------------------------------------
 float       gWidth = 5;
+
+string WidthCallback(csref name, csref val) {
+    string errmsg;
+    if (! StrToFlt(val, &gWidth))
+        return "The --" + name + " parameter, " + val + ", was not a number.";
+    if (gWidth < 0)
+        return "--" + name + " cannot be less than zero.";
+    return "";
+}
+
+string WidthDefault(csref name) {
+    return "5";
+}
+
+DefOption(width, WidthCallback, "width", "specifies the width of the segments.", WidthDefault);
+
 RGBColor    gColor1 = RED;
 RGBColor    gColor2 = GREEN;
 RGBColor    gColor3 = BLUE;
@@ -98,56 +114,53 @@ DefOption(color3, ParseColorCallback, "color", "is the third  color to mix", Def
 //----------------------------------------------------------------
 
 Lgroup gObjs;
+Lobj* gLeft;
+Lobj* gRight;
 
 void MoveOne(Lobj* obj, int incr){
     obj->pos.x += incr;
 }
 
 
-void Loop()
-{
+void InitializeObjects() {
     int numLights = L::gOutputBuffer->GetCount();
 
-    Lobj* left = new Lobj();
-    Lobj* right = new Lobj();
-    left->color     = gColor1;
-    right->color    = gColor2;
-    left->width     = gWidth;
-    right->width    = gWidth;
-    left->pos.x     = 0;
-    left->pos.y     = 0;
-    right->pos.x    = numLights - 1;
-    right->pos.y    = 0;
-    gObjs.Add(left);
-    gObjs.Add(right);
+    gLeft  = new Lobj();
+    gRight = new Lobj();
+    gLeft->color     = gColor1;
+    gRight->color    = gColor2;
+    gLeft->width     = gWidth;
+    gRight->width    = gWidth;
+    gLeft->pos.x     = 0;
+    gLeft->pos.y     = 0;
+    gRight->pos.x    = numLights - 1;
+    gRight->pos.y    = 0;
+    gObjs.Add(gLeft);
+    gObjs.Add(gRight);
+}
 
-    bool endLoop = false;
-    while (!endLoop) {
-        // Render
-        L::gOutputBuffer->Clear();
-        gObjs.RenderAll(L::gOutputBuffer);
-        L::gOutputBuffer->Update();
 
-        // Pause for input
-        switch (GetOneChar()) {
-            case kQuit:
-                endLoop = true;
-                break;
-            case kDown:
-                MoveOne(left, -1);
-                MoveOne(right, 1);
-                break;
-            case kUp:
-                MoveOne(left, 1);
-                MoveOne(right,-1);
-                break;
-            case kNop:
-            default:;
-        }
-
-        if (L::gVerbose)
-            cout << "L(" << left->pos.x << ", " << left->pos.y << ")  R(" << right ->pos.x << ", " << right->pos.y << ")" << endl;
+bool GetUserInputAndMove()
+{
+    // Pause for input
+    switch (GetOneChar()) {
+        case kQuit:
+            return true;
+            break;
+        case kDown:
+            MoveOne(gLeft, -1);
+            MoveOne(gRight, 1);
+            break;
+        case kUp:
+            MoveOne(gLeft, 1);
+            MoveOne(gRight,-1);
+            break;
+        case kNop:
+        default:;
     }
+    if (L::gVerbose)
+       cout << "L(" << gLeft->pos.x << ", " << gLeft->pos.y << ")  R(" << gRight ->pos.x << ", " << gRight->pos.y << ")" << endl;
+    return false;
 }
 
 DefProgramHelp(kPHprogram, "testmix");
@@ -156,9 +169,13 @@ DefProgramHelp(kPHusage, "Tests the mixing code");
 int main(int argc, char** argv)
 {
     Option::DeleteOption("rate");
+    Option::DeleteOption("color");
     L::Startup(&argc, argv);
-    // Test everything
-    // TestLights();
     InitializeConsole();
-    Loop();
+    InitializeObjects();
+    while (true) {
+        L::RunOnce(gObjs);
+        if (GetUserInputAndMove()) break;
+    }
+    L::Cleanup(true);
 }

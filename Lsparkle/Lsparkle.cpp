@@ -22,7 +22,7 @@ LobjSparkle* SparkleAlloc(void) {
 bool HasNoSparkleLeft(Lobj* objarg, const void* ignore) {
     const LobjSparkle* obj = dynamic_cast<const LobjSparkle*>(objarg);
     if (! obj) return false;
-    return obj->IsOutOfTime();
+    return obj->sparkle.IsOutOfTime(obj->nextTime);
 }
 
 bool IsTimeToAlloc() {
@@ -47,15 +47,12 @@ bool IsTimeToAlloc() {
     return lightProb > RandomFloat();
 }
 
-void SparkleCallback(Lgroup& objgroup)
+void SparkleGlobalCallback(Lgroup* objgroup)
 {
     // Deallocate and Allocate
-    objgroup.FreeIf(HasNoSparkleLeft, NULL);
+    objgroup->FreeIf(HasNoSparkleLeft, NULL);
     if (IsTimeToAlloc())
-        objgroup.Add(SparkleAlloc());
-
-    // Move (needed for time update
-    objgroup.MoveAll(L::gTime);
+        objgroup->Add(SparkleAlloc());
 }
 
 //----------------------------------------------------------------
@@ -73,6 +70,7 @@ int main(int argc, char** argv)
 
     Lgroup objs;
     L::Startup(&argc, argv);
-    L::Run(objs, SparkleCallback);
+    L::Run(objs, NULL, SparkleGlobalCallback);
     L::Cleanup();
 }
+
