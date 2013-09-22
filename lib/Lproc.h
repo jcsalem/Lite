@@ -3,6 +3,7 @@
 #ifndef _lfilter_h
 #define _lfilter_h
 
+#include "Config.h"
 #include "utilsTime.h"
 #include "Color.h"
 #include <vector>

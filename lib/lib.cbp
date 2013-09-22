@@ -56,6 +56,8 @@
 		<Unit filename="Lproc.h" />
 		<Unit filename="StripBuffer.cpp" />
 		<Unit filename="StripBuffer.h" />
+		<Unit filename="WinBuffer.cpp" />
+		<Unit filename="WinBuffer.h" />
 		<Unit filename="utils.cpp" />
 		<Unit filename="utils.h" />
 		<Unit filename="utilsFile.cpp" />

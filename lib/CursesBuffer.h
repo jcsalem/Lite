@@ -4,7 +4,7 @@
 #ifndef CURSESBUFFER_H_INCLUDED
 #define CURSESBUFFER_H_INCLUDED
 
-#include "utilsPrecomp.h"
+#include "Config.h"
 
 #ifndef OS_WINDOWS
 #include <curses.h>

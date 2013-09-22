@@ -2,6 +2,8 @@
 
 #ifndef LFRAMEWORK_H_INCLUDED
 #define LFRAMEWORK_H_INCLUDED
+
+#include "Config.h"
 #include "utilsTime.h"
 #include "utilsOptions.h"
 

@@ -4,10 +4,9 @@
 #ifndef STRIPBUFFER_H_INCLUDED
 #define STRIPBUFFER_H_INCLUDED
 
-#include "utilsPrecomp.h"
+#include "Config.h"
 
-#ifndef OS_WINDOWS
-//#ifdef __arm__
+#ifdef HAS_GPIO
 #include "LBuffer.h"
 // // Currently for the Raspberry Pi and the WS2801-based LED strips from SparkFun
 
@@ -46,7 +45,7 @@ private:
     StripBufferWS2801(const StripBufferWS2801&);
     StripBufferWS2801& operator=(const StripBufferWS2801&);
 };
-#endif    // __arm__
+#endif    // HAS_GPIO
 
 // This function is defined only so LFramework can reference it and force it to be linked in. Otherwise, CKBuffer is never linked in!
 void ForceLinkStrip();

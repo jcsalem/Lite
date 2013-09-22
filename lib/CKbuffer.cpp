@@ -195,7 +195,7 @@ CKdevice::CKdevice(csref devstrArg) : iUniverse(CK::kAnyUniverse), iPort(1), iCo
 
 string CKdevice::GetDescriptor() const
 {
-    string r;
+    string r = "ck:";
     r += iIP.GetString();
     if (iKiNetVersion > 1) {
         r += "/";

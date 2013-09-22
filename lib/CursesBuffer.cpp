@@ -1,13 +1,12 @@
 // Implements an LBuffer variant using the curses console library
 
-#include "utilsPrecomp.h"
+#include "CursesBuffer.h"
 
 // Dummy function to force this file to be linked in.
 void ForceLinkCurses() {}
 
 #ifndef OS_WINDOWS
 #include "utils.h"
-#include "CursesBuffer.h"
 #include "Color.h"
 #include <curses.h>
 #include <iostream>

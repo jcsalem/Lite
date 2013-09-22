@@ -130,9 +130,11 @@ string LBufferType::GetDocumentation(bool isFilterType) {
 #include "CursesBuffer.h"
 #include "StripBuffer.h"
 #include "FilterBuffers.h"
+#include "WinBuffer.h"
 void ForceLinking() {
     ForceLinkCK();
     ForceLinkCurses(); // This actually does nothing on Windows
     ForceLinkStrip(); // This actually does nothing on Windows
+    ForceLinkWin();
     ForceLinkFilters();
 };

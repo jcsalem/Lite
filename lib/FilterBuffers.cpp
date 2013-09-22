@@ -1,14 +1,12 @@
 // Implements various output filters
 
-#include "utilsPrecomp.h"
-
-// Dummy function to force this file to be linked in.
-void ForceLinkFilters() {}
-
 #include "utils.h"
 #include "LBuffer.h"
 #include "FilterBuffers.h"
 #include <algorithm>
+
+// Dummy function to force this file to be linked in.
+void ForceLinkFilters() {}
 
 //-----------------------------------------------------------------------------
 // ReverseBuffer

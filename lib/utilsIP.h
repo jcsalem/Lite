@@ -1,9 +1,9 @@
 // Standard utilities for dealing with IP addresses
 
-#include "utils.h"
-
 #ifndef _UTILSIP_H
 #define _UTILSIP_H
+
+#include "utils.h"
 
 #ifdef WIN32
 #include <winsock2.h>

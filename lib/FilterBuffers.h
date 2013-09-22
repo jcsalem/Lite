@@ -4,7 +4,7 @@
 #ifndef FILTERBUFFER_H_INCLUDED
 #define FILTERBUFFER_H_INCLUDED
 
-#include "utilsPrecomp.h"
+#include "Config.h"
 #include "LBuffer.h"
 
 // Building block class.  Remaps locations in the buffer using a map.

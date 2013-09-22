@@ -6,11 +6,9 @@
 //   sysfs (easy but requires a context switch)
 //
 
-#include "utilsPrecomp.h"
+#include "Config.h"
 
-// This ifndef is just for testing the compilation on Linux/OSX
-#ifndef OS_WINDOWS
-//#ifdef __arm__
+#ifdef HAS_GPIO
 #include <string>
 #include "utils.h"
 
@@ -24,4 +22,4 @@ void SetModeOutput(int gpio);
 void Write(int gpio, bool value);
 };
 
-#endif // __arm__
+#endif // HAS_GPIO

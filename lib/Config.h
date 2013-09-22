@@ -5,8 +5,8 @@
 // pr http://sourceforge.net/p/predef/wiki/OperatingSystems/
 //
 
-#ifndef _utilsPrecomp_H
-#define _utilsPrecomp_H
+#ifndef CONFIG_H_INCLUDED
+#define CONFIG_H_INCLUDED
 
 // OS-specific ones
 #ifdef _WIN32  // Windows 32 or 64 bit
@@ -25,9 +25,17 @@
 #define OS_LINUX
 #endif
 
-#ifdef __posix
-#define OS_POSIX
+//----------------------------------------------------------------------------
+// Feature settings
+//----------------------------------------------------------------------------
+
+//#define HAS_SFML
+
+#ifndef OS_WINDOWS
+//#ifdef __arm__
+#define HAS_GPIO
 #endif
+
 
 //----------------------------------------------------------------------------
 // Windows Specific
@@ -57,4 +65,4 @@
 // Intel Compiler: __INTEL_COMPILER
 // GCC: __GNUC__
 
-#endif //_utilsPrecomp_H
+#endif // CONFIG_H_INCLUDED

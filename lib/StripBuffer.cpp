@@ -25,7 +25,7 @@
 //  If X, is present flip red and blue (needed because new strips have blue first while old strips had red first)
 //
 
-#include "utilsPrecomp.h"
+#include "StripBuffer.h"
 
 // Dummy function to force this file to be linked in.
 void ForceLinkStrip() {}
@@ -33,7 +33,6 @@ void ForceLinkStrip() {}
 #ifndef OS_WINDOWS
 //#ifdef __arm__
 #include "utils.h"
-#include "StripBuffer.h"
 #include "Color.h"
 #include "utilsGPIO.h"
 

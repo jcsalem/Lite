@@ -4,7 +4,7 @@
 #ifndef COMBOBUFFER_H_INCLUDED
 #define COMBOBUFFER_H_INCLUDED
 
-#include "utilsPrecomp.h"
+#include "Config.h"
 #include "LBuffer.h"
 
 class ComboBuffer : public LBuffer

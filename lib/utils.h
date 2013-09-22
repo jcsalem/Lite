@@ -4,11 +4,12 @@
 #ifndef __UTILS_H
 #define __UTILS_H
 
+#include "Config.h"
+
 // Shared includes
 #include <stdlib.h>
 #include <string>
 #include <errno.h>
-#include "utilsPrecomp.h"
 using namespace std;
 
 // Standard Data Types

@@ -1,12 +1,9 @@
 // Implements various virtual buffers
-
-#include "utilsPrecomp.h"
+#include "utils.h"
+#include "ComboBuffer.h"
 
 // Dummy function to force this file to be linked in.
 void ForceLinkMeta() {}
-
-#include "utils.h"
-#include "ComboBuffer.h"
 
 //-----------------------------------------------------------------------------
 // ComboBuffer

@@ -9,3 +9,5 @@
 obj/
 bin/ck*
 bin/L*
+bin/testmix
+*/bin

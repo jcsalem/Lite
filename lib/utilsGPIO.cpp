@@ -1,11 +1,9 @@
 // Utilities for accessing the GPIO on a Raspberry PI
 // Used by StripBuffer
 
-#include "utilsPrecomp.h"
-
-#ifndef OS_WINDOWS
-//#ifdef __arm__
 #include "utilsGPIO.h"
+
+#ifdef HAS_GPIO
 #include <iostream>
 #include <fcntl.h>
 #include <sys/mman.h>
@@ -115,6 +113,6 @@ void Write(int gpio, bool value) {
 
 }; // namespace GPIO
 
-#endif // __arm__
+#endif // HAS_CPIO
 
 
