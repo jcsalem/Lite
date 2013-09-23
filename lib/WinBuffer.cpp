@@ -51,8 +51,6 @@ DEFINE_LBUFFER_DEVICE_TYPE(window, WinBufferCreate, "window[:count]",
 // Update function
 //-----------------------------------------------------------------------------
 
-
-
 bool    WinBuffer::Update() {
     if (! iWindow.isOpen() || L::gTerminateNow) {
         iLastError = "Window is Closed";
@@ -62,9 +60,19 @@ bool    WinBuffer::Update() {
     // Handle any events
     sf::Event event;
     while (iWindow.pollEvent(event)) {
-        if (event.type == sf::Event::Closed) {
+        switch (event.type)
+        {
+        case sf::Event::Closed:
             iWindow.close();
             L::gTerminateNow = true;
+            break;
+        case sf::Event::Resized: {
+            // The view port isn't normally resized when the window is resized.  However, we always want the viewport to match the window
+            sf::View newView(sf::FloatRect(0, 0, event.size.width, event.size.height));
+            iWindow.setView(newView);
+            break;
+        }
+        default:;
         }
     }
     if (L::gTerminateNow) return true;
