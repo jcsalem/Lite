@@ -29,7 +29,9 @@
 // Feature settings
 //----------------------------------------------------------------------------
 
-//#define HAS_SFML
+#ifndef __arm__
+#define HAS_SFML
+#endif
 
 #ifndef OS_WINDOWS
 //#ifdef __arm__

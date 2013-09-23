@@ -33,6 +33,9 @@
 				</Linker>
 			</Target>
 		</Build>
+		<Compiler>
+			<Add directory="/usr/local/include" />
+		</Compiler>
 		<Unit filename="CKbuffer.cpp" />
 		<Unit filename="CKbuffer.h" />
 		<Unit filename="Color.cpp" />
@@ -85,7 +88,9 @@
 				<doxyfile_dot />
 				<general />
 			</DoxyBlocks>
-			<code_completion />
+			<code_completion>
+				<search_path add="/usr/local/include" />
+			</code_completion>
 			<envvars />
 			<debugger />
 			<lib_finder disable_auto="1" />

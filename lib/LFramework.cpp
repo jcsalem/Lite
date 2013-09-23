@@ -17,11 +17,12 @@ namespace L {
 Milli_t     gTime;                   // Current time
 Milli_t     gStartTime;              // Loop start time
 Milli_t     gEndTime;                // Ending time (set to gTime to end prematurely)
-
+bool        gTerminateNow;           // Set to exit asap
 
 // Not externally accessible
 Milli_t     gFrameDuration  = 40;    // duration of each frame of animation (in MS)
 LprocList   gProcs;
+
 
 // Force gOutputBuffer to be deleted at exit
 struct UninitAtExit {
@@ -272,6 +273,7 @@ void Run(Lgroup& objGroup, L::ObjCallback_t objfcn, L::GroupCallback_t groupfcn)
         if (groupfcn) groupfcn(&objGroup);
 
         // Exit if out of time, else delay until next frame
+        if (gTerminateNow) break;
         Milli_t currentTime = Milliseconds();
         if (gEndTime != 0 && MilliLE(gEndTime, currentTime)) break;
 

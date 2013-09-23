@@ -2,10 +2,12 @@
 
 #ifndef LFRAMEWORK_H_INCLUDED
 #define LFRAMEWORK_H_INCLUDED
+// TODO (jimsalem#1#): Change the ObjFcn and the GroupFcn to be methods on their respective object.
 
 #include "Config.h"
 #include "utilsTime.h"
 #include "utilsOptions.h"
+#include "Lproc.h"
 
 class LBuffer;
 class Lgroup;
@@ -28,13 +30,16 @@ void SetRateMode(RateMode_t mode); //Call this to allow different types of value
 extern float        gFade;  // Fade in/out time in seconds
 // --filter   Output filters (used in creating the output buffer)
 extern string       gGlobalFilters; // Output mapping
-// --proc
-
+// --proc   Object operations to be applied
+extern LprocList    gProcList;
 
 // Global time variables
 extern Milli_t      gTime;                  // Current time
 extern Milli_t      gStartTime;
 extern Milli_t      gEndTime;
+
+// These are requests from anywhere in the stack
+extern bool         gTerminateNow;
 
 // Standard loop functions
 typedef void (*ObjCallback_t)   (Lobj* obj);    // Called for each object during L::Run
