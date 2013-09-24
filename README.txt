@@ -18,7 +18,6 @@ Windows: set LDEV=ck:172.24.22.51/1
 sudo apt-get install libglew1.5
 sudo apt-get install libjpeg62
 
-
 * Mac Notes *
 Install SFML package according to instructions. Copy files to /usr/local and to frameworks
 Compiler Search paths:

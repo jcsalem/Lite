@@ -80,18 +80,18 @@ bool    WinBuffer::Update() {
     // Fiure out the radius and the space between
     sf::Vector2u size = iWindow.getSize();
     float width = 1.0 * size.x / GetCount();
-    float radius = (width < 17.0) ? width * .9 : 15.3;
-    float space = width - radius * 2.0;
-    if (radius < .5) {radius = .5; space = 0.0;}
+    float diameter = (width < 17.0) ? width * .9 : 15.3;
+    float space = width - diameter;
+    if (diameter < 1) {diameter = 1; space = 0.0;}
 
     float x = space * .5;
-    float y = .5 * size.y - radius;
-    if (y < radius) y = .5 * size.y;
+    float y = .5 * size.y - diameter * .5;
+    if (y < diameter * .5) y = .5 * size.y;
 
     // Clear everything
     iWindow.clear(sf::Color(60,60,60));
     // Create the shape
-    sf::CircleShape shape(radius);
+    sf::CircleShape shape(diameter * .5);
     RGBColor rgb;
 
     for (LBuffer::iterator i = begin(); i < end(); ++i) {
@@ -99,7 +99,7 @@ bool    WinBuffer::Update() {
         sf::Color color(rgb.rAsChar(), rgb.gAsChar(), rgb.bAsChar());
         shape.setFillColor(color);
         shape.setPosition(x,y);
-        x += radius * 2 + space;
+        x += diameter + space;
         iWindow.draw(shape);
     }
     iWindow.display();
