@@ -8,7 +8,7 @@
 
 #include "Config.h"
 
-#ifdef HAS_GPIO
+#if defined(HAS_GPIO) && HAS_GPIO
 #include <string>
 #include "utils.h"
 

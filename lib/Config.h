@@ -29,15 +29,18 @@
 // Feature settings
 //----------------------------------------------------------------------------
 
+#ifndef HAS_SFML
 #ifndef __arm__
-#define HAS_SFML
+#define HAS_SFML 1
+#endif
 #endif
 
+#ifndef HAS_GPIO
 #ifndef OS_WINDOWS
 //#ifdef __arm__
-#define HAS_GPIO
+#define HAS_GPIO 1
 #endif
-
+#endif
 
 //----------------------------------------------------------------------------
 // Windows Specific

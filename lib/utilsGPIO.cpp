@@ -3,7 +3,7 @@
 
 #include "utilsGPIO.h"
 
-#ifdef HAS_GPIO
+#if defined(HAS_GPIO) && HAS_GPIO
 #include <iostream>
 #include <fcntl.h>
 #include <sys/mman.h>
@@ -113,6 +113,6 @@ void Write(int gpio, bool value) {
 
 }; // namespace GPIO
 
-#endif // HAS_CPIO
+#endif // HAS_GPIO
 
 

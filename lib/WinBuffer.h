@@ -4,7 +4,7 @@
 
 #include "Config.h"
 
-#ifdef HAS_SFML
+#if defined(HAS_SFML) && HAS_SFML
 #include <SFML/Graphics.hpp>
 #include "LBuffer.h"
 

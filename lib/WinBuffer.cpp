@@ -8,7 +8,7 @@
 // Dummy function to force this file to be linked in.
 void ForceLinkWin() {}
 
-#ifdef HAS_SFML
+#if defined(HAS_SFML) && HAS_SFML
 WinBuffer::WinBuffer(int count, const WinInfo& winInfo, csref title) : LBufferPhys(count), iWinInfo(winInfo) {
     sf::ContextSettings cs;
     cs.antialiasingLevel = iWinInfo.antialiaslevel;

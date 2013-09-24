@@ -6,7 +6,7 @@
 
 #include "Config.h"
 
-#ifdef HAS_GPIO
+#if defined(HAS_GPIO) && HAS_GPIO
 #include "LBuffer.h"
 // // Currently for the Raspberry Pi and the WS2801-based LED strips from SparkFun
 
