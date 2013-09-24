@@ -8,7 +8,18 @@
 #ifndef CONFIG_H_INCLUDED
 #define CONFIG_H_INCLUDED
 
-// OS-specific ones
+//----------------------------------------------------------------------------
+// Feature Settings
+//----------------------------------------------------------------------------
+
+// Uncomment this to disable SFML.
+// Instructions for compiling with SFML are in the README.txt file.
+//#define HAS_SFML 0
+
+//----------------------------------------------------------------------------
+// OS-specific defines
+//----------------------------------------------------------------------------
+
 #ifdef _WIN32  // Windows 32 or 64 bit
 #define OS_WINDOWS
 #endif
@@ -26,7 +37,7 @@
 #endif
 
 //----------------------------------------------------------------------------
-// Feature settings
+// Feature defaults
 //----------------------------------------------------------------------------
 
 #ifndef HAS_SFML
