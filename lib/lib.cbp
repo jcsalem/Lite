@@ -34,7 +34,8 @@
 			</Target>
 		</Build>
 		<Compiler>
-			<Add directory="/usr/local/include" />
+			<Add option="-DSFML_STATIC" />
+			<Add directory="../../SFML-2.1/include" />
 		</Compiler>
 		<Unit filename="CKbuffer.cpp" />
 		<Unit filename="CKbuffer.h" />
