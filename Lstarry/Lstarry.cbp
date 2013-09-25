@@ -39,10 +39,7 @@
 			<Add option="../lib/bin/$(TARGET_NAME)/liblite.a" />
 			<Add option="$(#extralibs)" />
 			<Add option="-static-libgcc -static-libstdc++" />
-			<Add library="sfml-graphics$(#sfmlswitch)" />
-			<Add library="sfml-window$(#sfmlswitch)" />
-			<Add library="sfml-system$(#sfmlswitch)" />
-			<Add directory="../../SFML-2.1/lib" />
+			<Add option="$(#sfmllibs)" />
 		</Linker>
 		<ExtraCommands>
 			<Add after="cp bin/$(TARGET_NAME)/$(TARGET_OUTPUT_BASENAME)$(#FILEXT) ../bin/$(TARGET_OUTPUT_BASENAME)$(#FILEXT)" />

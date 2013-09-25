@@ -122,22 +122,20 @@ RandomSeed_t RandomGenerateSeed() {
 RandomSeed_t RandomGenerateSeed() {
     return 0x12345678;
 }
+
 #elif defined(__posix__) || defined(OS_LINUX) || defined(OS_MAC)
 #include <unistd.h>
 #include <stdio.h>
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-result"
 namespace{
 RandomSeed_t _ReadURandom() {
     FILE* file = fopen("/dev/urandom", "rb");
     if (!file) return 0;
     RandomSeed_t seed = 0;
-    fread(&seed, sizeof(seed), 1, file);
+    int numRead = fread(&seed, sizeof(seed), 1, file);
     fclose(file);
-    return seed;
+    if (numRead > 0 ) return seed;
+    else return 0;
 }
-#pragma GCC diagnostic pop
 
 #ifdef OS_LINUX
 #include <sys/syscall.h>

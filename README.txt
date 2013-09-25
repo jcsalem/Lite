@@ -1,10 +1,10 @@
 * Codeblocks Compilation Notes *
 There are two global variables that must be set every time: extralibs and fileext. CodeBlocks will prompt at the beginning of the session. Look up the appropriate value from the table below. If an entry is blank, enter a space instead.
-            fileext     extralibs                  sfmlswitch
-Windows      .exe        -lws2_32                   -s & .cflag=SFML_STATIC 
-Mac                      -lncurses -framework SFML
-Linux                    -lrt -lncurses
-RaspPi                   -lrt -lncurses
+            fileext    extralibs       sfmllibs              
+Windows      .exe      -lws2_32        -L../../SFML-2.1/lib -lsfml-graphics-s -lsfml-window-s -lsfml-system-s
+Mac                    -lncurses       -framework SFML -lsfml-graphics -lsfml-window -lsfml-system
+Linux                  -lrt -lncurses  -lsfml-graphics -lsfml-window -lsfml-system
+RaspPi                 -lrt -lncurses
 
 * Setting the LDEV environment variable *
 Linux/Mac: export LDEV='ck:172.24.22.51/1(72)'

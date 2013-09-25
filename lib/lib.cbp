@@ -34,11 +34,12 @@
 			</Target>
 		</Build>
 		<Compiler>
-			<Add option="-D$(#sfmlswitch.cflags)" />
 			<Add directory="../../SFML-2.1/include" />
 		</Compiler>
 		<Unit filename="CKbuffer.cpp" />
 		<Unit filename="CKbuffer.h" />
+		<Unit filename="CKdevice.cpp" />
+		<Unit filename="CKdevice.h" />
 		<Unit filename="Color.cpp" />
 		<Unit filename="Color.h" />
 		<Unit filename="ComboBuffer.cpp" />
