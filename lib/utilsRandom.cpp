@@ -126,6 +126,8 @@ RandomSeed_t RandomGenerateSeed() {
 #include <unistd.h>
 #include <stdio.h>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-result"
 namespace{
 RandomSeed_t _ReadURandom() {
     FILE* file = fopen("/dev/urandom", "rb");
@@ -135,6 +137,7 @@ RandomSeed_t _ReadURandom() {
     fclose(file);
     return seed;
 }
+#pragma GCC diagnostic pop
 
 #ifdef OS_LINUX
 #include <sys/syscall.h>
