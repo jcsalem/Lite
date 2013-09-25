@@ -11,33 +11,34 @@
 //----------------------------------------------------------------------------
 
 void ValidateNumArgs(csref command, int numArgs, int argc, int argp)
-    {
-        if (argc == argp + numArgs)
-            // Everything is correct
-            return;
-        L::ErrorExit(command + " expected " + IntToStr(numArgs) + " parameters but got " + IntToStr(argc - 2));
-    }
+{
+    if (argc == argp + numArgs)
+        // Everything is correct
+        return;
+    L::ErrorExit(command + " expected " + IntToStr(numArgs) + " parameters but got " + IntToStr(argc - 2));
+}
 
 DefProgramHelp(kPHprogram, "cktool");
 DefProgramHelp(kPHusage, "Performs various lighting commands: clear, all, set, wash, rotate, rotwash, bounce");
 DefProgramHelp(kPHadditionalArgs, "command [colorargs...]");
 DefProgramHelp(kPHhelp, "command is one of:\n"
-    "    clear \n"
-    "    all color\n"
-    "    rotate color\n"
-    "    rotwash color1 color2\n"
-    "    bounce color\n"
-    "    set idx color\n"
-    "    wash color1 color2\n"
-    "  color is \"r,g,b\" or \"HSV(h,s,v)\" or a named color, etc.  All components are scaled from 0.0 to 1.0"
-    );
+               "    clear \n"
+               "    all color\n"
+               "    rotate color\n"
+               "    rotwash color1 color2\n"
+               "    bounce color\n"
+               "    set idx color\n"
+               "    wash color1 color2\n"
+               "  color is \"r,g,b\" or \"HSV(h,s,v)\" or a named color, etc.  All components are scaled from 0.0 to 1.0"
+              );
 
 typedef enum {kStatic, kRotate, kBounce} Mode_t;
 Mode_t gMode;
 Color* gColor;      // Always set
 Color* gColor2;     // Only set if we're doing a color wash
 
-void LtoolCallback(Lobj* obj) {
+void LtoolCallback(Lobj* obj)
+{
     // Do the bounary stuff
     Lxy minBound(-.5,0);
     Lxy maxBound(L::gOutputBuffer->GetCount()-.5, 0);
@@ -126,7 +127,8 @@ int main(int argc, char** argv)
     if (! gColor) L::ErrorExit(errmsg);
 
     // Print summary
-    if (L::gVerbose) {
+    if (L::gVerbose)
+    {
         cout << "Cmd: " << command << "   Color: " << gColor->ToString();
         if (gColor2)
             cout << " Color2: " << gColor2->ToString();
@@ -141,20 +143,24 @@ int main(int argc, char** argv)
 
     // Allocate objects and set colors
     Lgroup objs;
-    if (idx != -1) {
+    if (idx != -1)
+    {
         // Just one light
         Lobj* obj = new Lobj();
         obj->pos.x = idx;
         obj->color = *gColor;
         obj->speed.x = speed;
         objs.Add(obj);
-    } else {
+    }
+    else
+    {
         // One light for each pixel
         HSVColorRange range;
         if (gColor2) range = HSVColorRange(*gColor, *gColor2);
 
         int numLights = L::gOutputBuffer->GetCount();;
-        for (int i = 0; i < numLights; ++i) {
+        for (int i = 0; i < numLights; ++i)
+        {
             Lobj* obj = new Lobj();
             obj->pos.x = i;
             if (gColor2)

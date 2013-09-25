@@ -34,16 +34,15 @@
 		<Compiler>
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
-			<Add option="-DSFML_STATIC" />
 			<Add directory="../lib" />
 		</Compiler>
 		<Linker>
 			<Add option="../lib/bin/$(TARGET_NAME)/liblite.a" />
 			<Add option="$(#extralibs)" />
 			<Add option="-static-libgcc -static-libstdc++" />
-			<Add library="sfml-graphics" />
-			<Add library="sfml-window" />
-			<Add library="sfml-system" />
+			<Add library="sfml-graphics$(#sfmlswitch)" />
+			<Add library="sfml-window$(#sfmlswitch)" />
+			<Add library="sfml-system$(#sfmlswitch)" />
 			<Add directory="../../SFML-2.1/lib" />
 		</Linker>
 		<ExtraCommands>

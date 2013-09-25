@@ -34,7 +34,7 @@
 			</Target>
 		</Build>
 		<Compiler>
-			<Add option="-DSFML_STATIC" />
+			<Add option="-D$(#sfmlswitch.cflags)" />
 			<Add directory="../../SFML-2.1/include" />
 		</Compiler>
 		<Unit filename="CKbuffer.cpp" />
