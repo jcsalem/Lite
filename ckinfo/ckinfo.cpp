@@ -2,7 +2,7 @@
 
 #include "utils.h"
 #include "utilsSocket.h"
-#include "CKbuffer.h"
+#include "CKdevice.h"
 #include "utilsOptions.h"
 #include "KiNET.h"
 #include <iostream>
