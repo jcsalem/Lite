@@ -11,3 +11,5 @@ bin/ck*
 bin/L*
 bin/testmix
 */bin
+CMakeFiles
+
