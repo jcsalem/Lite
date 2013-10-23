@@ -8,7 +8,7 @@ Windows: set LDEV=ck:172.24.22.51/1
 cd litedir
 mkdir build
 cd build
-cmake -G "generator name" ..
+cmake -G "generator name" <options> ..
 Then follow instructions below
 + Code Blocks (any platform) +
  Generator name: "CodeBlocks - MinGW Makefiles"
@@ -18,6 +18,14 @@ Then follow instructions below
  Start MinGW shell
  cd buildir
  mingw32-make
++ Linux +
+ Generator name: "Unix Makefiles"
+ make
+
+
+* CMAKE Command Line Options *
+<options> can be
+ -DCMAKE_
 
 * Linux and Raspberry Pi Notes *
 1) sudo apt-get install ncurses-dev
