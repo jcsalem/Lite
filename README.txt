@@ -1,14 +1,23 @@
-* Codeblocks Compilation Notes *
-There are two global variables that must be set every time: extralibs and fileext. CodeBlocks will prompt at the beginning of the session. Look up the appropriate value from the table below. If an entry is blank, enter a space instead.
-            fileext    extralibs       sfmllibs              
-Windows      .exe      -lws2_32        -L../../SFML-2.1/lib -lsfml-graphics-s -lsfml-window-s -lsfml-system-s
-Mac                    -lncurses       -framework SFML -lsfml-graphics -lsfml-window -lsfml-system
-Linux                  -lrt -lncurses  -lsfml-graphics -lsfml-window -lsfml-system
-RaspPi                 -lrt -lncurses
-
+* HOW TO RUN *
 * Setting the LDEV environment variable *
 Linux/Mac: export LDEV='ck:172.24.22.51/1(72)'
 Windows: set LDEV=ck:172.24.22.51/1
+
+* CMAKE COMPILATION INSTRUCTIONS *
++ For all platforms +
+cd litedir
+mkdir build
+cd build
+cmake -G "generator name" ..
+Then follow instructions below
++ Code Blocks (any platform) +
+ Generator name: "CodeBlocks - MinGW Makefiles"
+ Within CodeBlocks, open lite.cbp and compile
++ Windows: MinGW +
+ Generator name: "MinGW Makefiles"
+ Start MinGW shell
+ cd buildir
+ mingw32-make
 
 * Linux and Raspberry Pi Notes *
 1) sudo apt-get install ncurses-dev
@@ -33,3 +42,12 @@ I deleted this library search path as it didn't appear useful. It generated comp
 
 * Windows Notes *
 Install SFML-2.1 directory at the same level as Lite.
+
+* OBSOLETE: Codeblocks Compilation Notes *
+There are two global variables that must be set every time: extralibs and fileext. CodeBlocks will prompt at the beginning of the session. Look up the appropriate value from the table below. If an entry is blank, enter a space instead.
+            fileext    extralibs       sfmllibs              
+Windows      .exe      -lws2_32        -L../../SFML-2.1/lib -lsfml-graphics-s -lsfml-window-s -lsfml-system-s
+Mac                    -lncurses       -framework SFML -lsfml-graphics -lsfml-window -lsfml-system
+Linux                  -lrt -lncurses  -lsfml-graphics -lsfml-window -lsfml-system
+RaspPi                 -lrt -lncurses
+
