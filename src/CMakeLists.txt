@@ -10,6 +10,9 @@ IF(UNIX AND NOT APPLE)
  SET(MY_LIBS ${MY_LIBS} rt)
 ENDIF(UNIX AND NOT APPLE)
 
+# Add SFML support
+SET(MY_LIBS ${MY_LIBS} ${SFML_LIBRARIES})
+
 add_executable(Ltool Ltool.cpp)
 target_link_libraries(Ltool lite ${MY_LIBS})
 

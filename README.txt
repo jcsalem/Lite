@@ -1,7 +1,19 @@
+Lite
+A toolbox for addressable light art.
+
 * HOW TO RUN *
 * Setting the LDEV environment variable *
 Linux/Mac: export LDEV='ck:172.24.22.51/1(72)'
 Windows: set LDEV=ck:172.24.22.51/1
+
+Use --help for help on any command.
+
+Ltool: The Multi-tool. Commands: set, all, rotate, rotwash, wash, bounce
+Lsparkle: Sparkly lights
+Lstarry: Stars
+Lfirefly: Fireflies
+ckinfo: Reports information on ethernet-attached ColorKinetics fixtures via Kinet protocol.
+testmix: tests light mixing
 
 * CMAKE COMPILATION INSTRUCTIONS *
 + For all platforms +

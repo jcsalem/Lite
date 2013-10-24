@@ -40,17 +40,17 @@
 // Feature defaults
 //----------------------------------------------------------------------------
 
-#ifndef HAS_SFML
-#ifndef __arm__
-#define HAS_SFML 1
+//#ifndef HAS_SFML
+//#ifndef __arm__
+//#define HAS_SFML 1
 
-#ifdef OS_WINDOWS
-// Force static linking on Windows
-#define SFML_STATIC
-#endif
+//#ifdef OS_WINDOWS
+//// Force static linking on Windows
+//#define SFML_STATIC
+//#endif
 
-#endif // __arm__
-#endif // HAS_SFML
+//#endif // __arm__
+//#endif // HAS_SFML
 
 #ifndef HAS_GPIO
 #ifndef OS_WINDOWS
