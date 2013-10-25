@@ -345,7 +345,7 @@ SocketUDPServer::SocketUDPServer(const IPAddr& ip, int port) : SocketUDP() {
     SetSockAddr(SockAddr(ip, port));
 }
 SocketUDPServer::SocketUDPServer(int port) : SocketUDP() {
-    SetSockAddr(SockAddr(IPAddr(INADDR_ANY), port));
+    SetSockAddr(SockAddr(IPAddr((uint32)INADDR_ANY), port));
 }
 
 bool SocketUDPServer::SetSockAddr(const SockAddr& sa) {
