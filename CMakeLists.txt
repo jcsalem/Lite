@@ -17,6 +17,7 @@ SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake_modules"
 #-------------------------------------------------
 IF(WIN32)
 SET(SFML_STATIC_LIBRARIES TRUE)
+SET(SFML_ROOT "${PROJECT_SOURCE_DIR}/../SFML-2.1")
 ENDIF()
 find_package(SFML 2 COMPONENTS graphics window system)
 IF (SFML_FOUND)
@@ -32,7 +33,7 @@ SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 # LIBRARY is for dynamic libraries; ARCHIVE is for static libraries
 SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
-include_directories("${PROJECT_SOURCE_DIR}/libsrc" "${PROJECT_SOURCE_DIR}/src" SFML_INCLUDE_DIR)
+include_directories("${PROJECT_SOURCE_DIR}/libsrc" "${PROJECT_SOURCE_DIR}/src" ${SFML_INCLUDE_DIR})
 link_directories("${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
 
