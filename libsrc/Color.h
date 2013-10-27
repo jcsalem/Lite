@@ -24,9 +24,9 @@ public:
 
     // Default conversion functions can be overridden
     // These return the components as 8-bit chars from 0 to 255
-    virtual char rAsChar(void) const;
-    virtual char gAsChar(void) const;
-    virtual char bAsChar(void) const;
+	virtual unsigned char rAsChar(void) const;
+	virtual unsigned char gAsChar(void) const;
+	virtual unsigned char bAsChar(void) const;
     virtual void ToRGBColor(RGBColor*) const = 0; // Must be implemented by all classes
     };
 
@@ -55,9 +55,9 @@ public:
     float g;
     float b;
     // These return the components as 8-bit chars from 0 to 255
-    virtual char rAsChar(void) const;
-    virtual char gAsChar(void) const;
-    virtual char bAsChar(void) const;
+	virtual unsigned char rAsChar(void) const;
+	virtual unsigned char gAsChar(void) const;
+	virtual unsigned char bAsChar(void) const;
     virtual void ToRGBColor(RGBColor* colorptr) const {*colorptr = *this;}
     virtual string ToString() const;
   };

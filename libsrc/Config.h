@@ -62,11 +62,20 @@
 //----------------------------------------------------------------------------
 // Windows Specific
 //----------------------------------------------------------------------------
-//*** Visual C++ 6.0			                _MSC_VER is 1200
-//*** Visual Studio .NET (Visual C++ 7.0)		_MSC_VER is 1300
-//*** Visual Studio .NET 2003 (Visual C++ 7.1)	_MSC_VER is 1310
-//*** Visual Studio .NET 2005 (Visual C++ 8.0)	_MSC_VER is 1400
-//
+// MSVC++ 12.0 _MSC_VER == 1800 (Visual Studio 2013)
+// MSVC++ 11.0 _MSC_VER == 1700 (Visual Studio 2012)
+// MSVC++ 10.0 _MSC_VER == 1600 (Visual Studio 2010)
+// MSVC++ 9.0  _MSC_VER == 1500 (Visual Studio 2008)
+// MSVC++ 8.0  _MSC_VER == 1400 (Visual Studio 2005)
+// MSVC++ 7.1  _MSC_VER == 1310 (Visual Studio 2003)
+// MSVC++ 7.0  _MSC_VER == 1300 (Visual Studio .Net)
+// MSVC++ 6.0  _MSC_VER == 1200 (Visual C++ 6.0)
+// MSVC++ 5.0  _MSC_VER == 1100
+#ifdef _MSC_VER
+// Disable spurious "possible loss of data" and truncation from double to float warnings
+#pragma warning (disable: 4244 4267 4305)
+#endif // _MSC_VER
+
 // Windows versions:
 //*** Windows 2000:         WINVER is 0x0500
 //*** Windows 2003/XP:      WINVER is 0x0501

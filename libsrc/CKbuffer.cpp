@@ -12,7 +12,7 @@
 // KiNET utilities
 //---------------------------------------------------------------------
 // Returns the number of bytes copied or a negative number if there wasn't enough room.
-int CopyColorsToBuffer(char* buffer, int maxlen, LBuffer::const_iterator citer, int clen)
+int CopyColorsToBuffer(unsigned char* buffer, int maxlen, LBuffer::const_iterator citer, int clen)
 {
     int bytesNeeded = clen * 3;
     if (bytesNeeded > maxlen) return -bytesNeeded;
@@ -63,7 +63,7 @@ string CKbuffer::GetDescriptor() const
 bool CKbuffer::PortSync()
 {
     const int maxLen = 2048;
-    char outbuf[maxLen];
+    unsigned char outbuf[maxLen];
 
     // Initialize header
     KiNETportOutSync* header = (KiNETportOutSync*) outbuf;
@@ -78,11 +78,11 @@ bool CKbuffer::PortSync()
 void UpdateOneCKv1(CKdevice& device, LBuffer::const_iterator bufIter)
     {
     const int maxLen = 2048;
-    char outbuf[maxLen];
+    unsigned char outbuf[maxLen];
 
     KiNETdmxOut* header = (KiNETdmxOut*) outbuf;
     int hdrLen = KiNETdmxOut::GetSize();
-    char* dataPtr = outbuf + hdrLen;
+    unsigned char* dataPtr = outbuf + hdrLen;
 
     int len = device.GetCount();
     int dataLen = CopyColorsToBuffer(dataPtr, maxLen-hdrLen, bufIter, len);
@@ -102,11 +102,11 @@ void UpdateOneCKv1(CKdevice& device, LBuffer::const_iterator bufIter)
 void UpdateOneCKv2(CKdevice& device, LBuffer::const_iterator bufIter)
     {
     const int maxLen = 2048;
-    char outbuf[maxLen];
+    unsigned char outbuf[maxLen];
 
     KiNETportOut* header = (KiNETportOut*) outbuf;
     int hdrLen = KiNETportOut::GetSize();
-    char* dataPtr = outbuf + hdrLen;
+    unsigned char* dataPtr = outbuf + hdrLen;
 
     int len = device.GetCount();
     int dataLen = CopyColorsToBuffer(dataPtr, maxLen-hdrLen, bufIter, len);

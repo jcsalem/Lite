@@ -46,7 +46,7 @@ Milli_t Milliseconds()
 
     if (gFirstTime)
     {
-        gHasQPF = QueryPerformanceFrequency(&gQPFreq);
+		gHasQPF = (QueryPerformanceFrequency(&gQPFreq) != 0);
         gFirstTime = false;
     }
     LARGE_INTEGER t;

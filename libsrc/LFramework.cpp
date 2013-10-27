@@ -202,10 +202,8 @@ void Startup(int *argc, char** argv, int numPositionalArgs) {
     Option::ParseArglist(argc, argv, numPositionalArgs);
 
     // Create the OutputBuffer
-    if (gOutputDeviceArg.empty()) {
-        const char* envval = getenv("LDEV");
-        if (envval && envval[0] != '\0') gOutputDeviceArg = TrimWhitespace(envval);
-    }
+    if (gOutputDeviceArg.empty()) 
+		gOutputDeviceArg = TrimWhitespace(GetEnvStr("LDEV"));
     if (gOutputDeviceArg.empty())
         ErrorExit("No output device was specified via --dev or the LDEV environment variable.");
 

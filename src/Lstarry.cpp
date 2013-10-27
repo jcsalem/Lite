@@ -8,7 +8,6 @@
 #include "LFramework.h"
 #include "LSparkle.h"
 #include <iostream>
-#include <getopt.h>
 #include <stdio.h>
 
 DefProgramHelp(kPHprogram, "ckstarry");

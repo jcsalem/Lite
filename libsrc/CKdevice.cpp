@@ -59,7 +59,7 @@ bool CKinfo::SetFromDiscoverReply(const char* buffer, int buflen, string* errmsg
 
     ipaddr = ntohl(reply->ip);
     char macaddrstr[20];
-    sprintf(macaddrstr, "%02X:%02X:%02X:%02X:%02X:%02X",
+    snprintf(macaddrstr, sizeof(macaddrstr), "%02X:%02X:%02X:%02X:%02X:%02X",
             reply->mac[0], reply->mac[1], reply->mac[2], reply->mac[3], reply->mac[4], reply->mac[5]);
     macaddr     = macaddrstr;
     kinetVersion= reply->kinetVersion;
@@ -189,7 +189,7 @@ string CKdevice::GetDescriptor() const
     return r;
 }
 
-bool CKdevice::Write(const char* buffer, int len)
+bool CKdevice::Write(const unsigned char* buffer, int len)
 {
     if (! iSocket.IsOpen())
     {
@@ -203,7 +203,7 @@ bool CKdevice::Write(const char* buffer, int len)
         }
     }
 
-    iSocket.Write(buffer, len);
+    iSocket.Write((const char*) buffer, len);
     //cout << "Wrote " << len << " bytes" << endl;
     if (iSocket.HasError())
     {

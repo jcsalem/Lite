@@ -4,6 +4,7 @@
 #include "LSparkle.h"
 #include "utilsRandom.h"
 #include "utilsOptions.h"
+#include <algorithm> // for min and max
 
 //----------------------------------------------------------------------
 // LSparkle member functions

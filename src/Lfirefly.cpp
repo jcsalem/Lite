@@ -9,6 +9,7 @@
 #include "LFramework.h"
 #include <iostream>
 #include <stdio.h>
+#include <algorithm> // for min/max
 
 // Configuration
 Milli_t     gFrameDuration  = 40;    // duration of each frame of animation (in MS)

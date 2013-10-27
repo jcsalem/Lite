@@ -1,7 +1,9 @@
 // For Windows to force the definition of rand_s in stdlib.h (only supported on XP/2003 and later)
 #include "utils.h"
 #include "utilsRandom.h"
+#define _USE_MATH_DEFINES
 #include <math.h>
+#include <algorithm> // for min/max
 
 //------------------------------------------------
 // Random Utilities

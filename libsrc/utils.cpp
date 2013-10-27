@@ -6,7 +6,7 @@
 #include <sstream>
 #include <iomanip>
 #include <limits.h>
-#include <strings.h>
+//#include <strings.h>
 
 #ifdef OS_WINDOWS
 #include "Windows.h"
@@ -144,44 +144,19 @@ unsigned StrToUnsigned(csref str) {
 
 string IntToStr(int val)
     {
-#ifdef OS_WINDOWS
-    char buffer[32]; // good enough for 64 bit ints
-    itoa(val, buffer, 10);
-    return string(buffer);
-#else
-    // Runs everywhere
     stringstream ss;
     ss << val;
     return ss.str();
-#endif
     }
 
 string IntToHex(int val, bool noprefix) {
-#ifdef OS_WINDOWS
-    char buffer[32]; // good enough for 64 bit ints
-    char* bptr = buffer;
-    if (! noprefix)
-        {
-        if (val < 0)
-            {
-            *bptr++ = '-';
-            val = -val;
-            }
-        *bptr++ = '0';
-        *bptr++ = 'x';
-        }
-    itoa(val, bptr, 16);
-    return string(buffer);
-#else
-    // Runs everywhere
     stringstream ss;
-    if (noprefix) {
+    if (! noprefix) {
         if (val < 0) {ss << "-"; val = -val;}
         ss << "0x";
     }
     ss << hex << val;
     return ss.str();
-#endif
 }
 
 string FltToStr(float val, int maxWidth) {
@@ -255,6 +230,29 @@ string ErrorCodeString(int err)
 	return ErrorCodeStringInternal(err) +" (Code=" + IntToHex(err) + ")";
     }
 
+#include <iostream>
+// Environment variables
+string GetEnvStr(csref name)
+	{
+#ifdef _MSC_VER
+	// This version works with the MSVS secure CRT library
+	// Get size needed
+	size_t len = 0;
+	getenv_s(&len, NULL, 0, name.c_str());
+	if (len == 0) return "";
+	// Allocate buffer 
+	char* buffer = new char[len];
+	buffer[0] = '\0';
+	if (getenv_s(&len, buffer, len, name.c_str()) != NO_ERROR) return "";
+	return string(buffer);
+#else 
+	// Standard portable version
+	char* buffer = getenv(name.c_str());
+	if (!buffer) return "";
+	return string(buffer);
+#endif
+	}
+
 //-------------------------------------------------------------------------
 // Windows specific stuff
 //-------------------------------------------------------------------------
@@ -283,3 +281,14 @@ void* GetDLLFunctionAddress(csref fcnName, csref dllName, string *errmsg)
 		return fcnPtr;
 	}
 #endif
+
+// Workarounds for Microsoft secure library
+#if defined(_MSC_VER)
+int snprintf(char* buffer, size_t count, const char* format, ...) {
+	va_list args;
+	va_start(args, format);
+	int r = _vsnprintf_s(buffer, count, count, format, args);
+	va_end(args);
+	return r;
+}
+#endif // _MSC_VER

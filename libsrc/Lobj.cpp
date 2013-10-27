@@ -215,7 +215,7 @@ void Lgroup::FreeIf(Lobj::FreeIfFcn_t fcn, const void* info) {
     for (iterator i = begin(); i != end();) {
         if (fcn(*i, info)) {
             delete *i;
-            iObjs.erase(i);
+            i = iObjs.erase(i);
         } else
             ++i;
     }

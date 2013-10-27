@@ -52,10 +52,22 @@ bool    StrToFlt(csref str, float* i); // returns false on error
 // Error related
 string ErrorCodeString          (int err = errno);
 
-// Windows specific utilities
+// A safe string version of getenv.
+string GetEnvStr(csref name);
+
+//--------------------------------------------------------------------------------
+// Windows specific function definitions
+//--------------------------------------------------------------------------------
 #ifdef OS_WINDOWS
 // Returns a pointer to a function in a windows DLL or NULL if it couldn't be found
 void* GetDLLFunctionAddress(csref fcnName, csref dllName, string *errmsg = NULL);
 #endif
+
+// Workaround for Microsoft C++ differences from C99 spec.
+#if defined(_MSC_VER)
+int snprintf(char* buffer, size_t count, const char* format, ...);
+#define strcasecmp	_stricmp 
+#define strncasecmp _strnicmp 
+#endif // _MSC_VER
 
 #endif // __UTILS_H

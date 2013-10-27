@@ -122,19 +122,19 @@ string CheckAndRemoveParens(csref strarg, string* errmsg) {
 //--------------------------------------------------------------------------
 // Base Color stuff
 //--------------------------------------------------------------------------
-char Color::rAsChar(void) const {
+unsigned char Color::rAsChar(void) const {
     RGBColor rgb;
     ToRGBColor(&rgb);
     return rgb.rAsChar();
 }
 
-char Color::gAsChar(void) const {
+unsigned char Color::gAsChar(void) const {
     RGBColor rgb;
     ToRGBColor(&rgb);
     return rgb.gAsChar();
 }
 
-char Color::bAsChar(void) const {
+unsigned char Color::bAsChar(void) const {
     RGBColor rgb;
     ToRGBColor(&rgb);
     return rgb.bAsChar();
@@ -212,7 +212,7 @@ bool RGBColor::FromString(csref str, RGBColor* rgb, string* errmsg, bool ignoreR
 
 string RGBColor::ToString() const {
     char buffer[50];
-    sprintf(buffer, "RGB(%f,%f,%f)", r, g, b);
+    snprintf(buffer, sizeof(buffer), "RGB(%f,%f,%f)", r, g, b);
     return string(buffer);
 }
 
@@ -276,21 +276,21 @@ RGBColor& RGBColor::operator/=(const float& v) {
 }
 
 // Convert to 8 bit color values
-char RGBColor::rAsChar(void) const {
+unsigned char RGBColor::rAsChar(void) const {
   if (r < 0) return 0;
   else if (r >= 1.0) return 255;
   short ret = (r * 255.0) + 0.5;
   return ret;
 }
 
-char RGBColor::gAsChar(void) const {
+unsigned char RGBColor::gAsChar(void) const {
   if (g < 0) return 0;
   else if (g >= 1.0) return 255;
   short ret = (g * 255.0) + 0.5;
   return ret;
 }
 
-char RGBColor::bAsChar(void) const {
+unsigned char RGBColor::bAsChar(void) const {
   if (b < 0) return 0;
   else if (b >= 1.0) return 255;
   short ret = (b * 255.0) + 0.5;
@@ -426,7 +426,7 @@ bool HSVColor::FromString(csref str, HSVColor* hsv, string* errmsg, bool ignoreR
 
 string HSVColor::ToString() const {
     char buffer[64];
-    sprintf(buffer, "HSV(%.3f,%.3f,%.3f)", h, s, v);
+    snprintf(buffer, sizeof(buffer), "HSV(%.3f,%.3f,%.3f)", h, s, v);
     return string(buffer);
 }
 

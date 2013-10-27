@@ -55,7 +55,7 @@ public:
     bool        UpdateKiNetVersion(string* errmsg = NULL);           // Ask the light what version it is
 
     // Writes a KiNET UDP packet to this device
-    bool        Write(const char* buffer, int len);
+    bool        Write(const unsigned char* buffer, int len);
 
     // Copying (copy everything but socket and error)
     CKdevice(const CKdevice& dev) : iIP(dev.iIP), iUniverse(dev.iUniverse), iPort(dev.iPort), iCount(dev.iCount), iKiNetVersion(dev.iKiNetVersion) {}
