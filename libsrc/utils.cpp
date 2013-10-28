@@ -6,7 +6,6 @@
 #include <sstream>
 #include <iomanip>
 #include <limits.h>
-//#include <strings.h>
 
 #ifdef OS_WINDOWS
 #include "Windows.h"
@@ -42,6 +41,14 @@ string StrToUpper(csref s) {
         r[i] = toupper(s[i]);
     return r;
 }
+
+// Define strcasecmp and strncasecmp
+#ifdef _MSC_VER
+#define strcasecmp	_stricmp 
+#define strncasecmp _strnicmp 
+#else
+#include <strings.h>
+#endif
 
 bool StrEQ(csref a, csref b)
 {

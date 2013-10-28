@@ -66,8 +66,6 @@ void* GetDLLFunctionAddress(csref fcnName, csref dllName, string *errmsg = NULL)
 // Workaround for Microsoft C++ differences from C99 spec.
 #if defined(_MSC_VER)
 int snprintf(char* buffer, size_t count, const char* format, ...);
-#define strcasecmp	_stricmp 
-#define strncasecmp _strnicmp 
 #endif // _MSC_VER
 
 #endif // __UTILS_H
