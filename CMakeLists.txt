@@ -9,7 +9,6 @@ if(CMAKE_BUILD_TYPE STREQUAL "")
   set(CMAKE_BUILD_TYPE Debug)
 endif()
 
-
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake_modules")
 
 #-------------------------------------------------
@@ -19,12 +18,18 @@ IF(WIN32)
 SET(SFML_STATIC_LIBRARIES TRUE)
 SET(SFML_ROOT "${PROJECT_SOURCE_DIR}/../SFML-2.1")
 ENDIF()
-find_package(SFML 2 COMPONENTS graphics window system)
-IF (SFML_FOUND)
+if (NOT MSVC)
+  # SFML too complicated to support for MSVS
+  find_package(SFML 2 COMPONENTS graphics window system)
+  if (SFML_FOUND)
     add_definitions(-DHAS_SFML=1)
-ELSE()
+    include_directories( ${SFML_INCLUDE_DIR})
+  ELSE(SFML_FOUND)
     message(WARNING "SFML Library not found. Windowing not installed.")
-ENDIF()
+  ENDIF(SFML_FOUND)
+ELSE(NOT MSVC)
+  message("SFML not supported for Visual Studio. Windowing not installed.")
+ENDIF(NOT MSVC)
 
 #-------------------------------------------------
 # GLOBAL COMPILE/LINK OPTIONS
@@ -33,7 +38,7 @@ SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 # LIBRARY is for dynamic libraries; ARCHIVE is for static libraries
 SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
-include_directories("${PROJECT_SOURCE_DIR}/libsrc" "${PROJECT_SOURCE_DIR}/src" ${SFML_INCLUDE_DIR})
+include_directories("${PROJECT_SOURCE_DIR}/libsrc" "${PROJECT_SOURCE_DIR}/src")
 link_directories("${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
 

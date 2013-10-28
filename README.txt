@@ -30,6 +30,10 @@ Then follow instructions below
  Start MinGW shell
  cd buildir
  mingw32-make
++ Windows: Visual Studio +
+ Generator name: "Visual Studio 12" or "Visual Studio 12 Win64"
+ (Note that these builds don't include SFML which I found too complex to install.)
+ Open lite.sln and compile
 + Linux or MacOS: Unix make +
  Generator name: "Unix Makefiles"
  make
@@ -54,6 +58,7 @@ Install SFML package according to instructions. Copy files to /usr/local and to 
 
 * Windows Notes *
 Install SFML-2.1 directory at the same level as Lite.
+Pick the right version for your compiler. For CodeBlocks/Ming I picked the 32-bit version.
 
 * OBSOLETE: Mac Notes *
 Install SFML package according to instructions. Copy files to /usr/local and to frameworks
