@@ -1,11 +1,12 @@
 Lite
 A toolbox for addressable light art.
 
-* HOW TO RUN *
-* Setting the LDEV environment variable *
-Linux/Mac: export LDEV='ck:172.24.22.51/1(72)'
-Windows: set LDEV=ck:172.24.22.51/1
+*** HOW TO RUN ***
++ Setting the LDEV environment variable +
+Linux/Mac/MinGW: export LDEV='ck:172.24.22.51/1(72)'
+Windows Command Prompt: set LDEV=ck:172.24.22.51/1
 
++ List of Commands +
 Use --help for help on any command.
 
 Ltool: The Multi-tool. Commands: set, all, rotate, rotwash, wash, bounce
@@ -15,7 +16,7 @@ Lfirefly: Fireflies
 ckinfo: Reports information on ethernet-attached ColorKinetics fixtures via Kinet protocol.
 testmix: tests light mixing
 
-* CMAKE COMPILATION INSTRUCTIONS *
+*** CMAKE COMPILATION INSTRUCTIONS ***
 + For all platforms +
 cd litedir
 mkdir build
@@ -26,9 +27,10 @@ Then follow instructions below
  Generator name: "CodeBlocks - MinGW Makefiles"
  Within CodeBlocks, open lite.cbp and compile
 + Windows: MinGW +
- Generator name: "MinGW Makefiles"
+ [Generator name: "MinGW Makefiles"]
  Start MinGW shell
  cd buildir
+ cmake -G "MinGW Makefiles" ..
  mingw32-make
 + Windows: Visual Studio +
  Generator name: "Visual Studio 12" or "Visual Studio 12 Win64"
