@@ -1,0 +1,11 @@
+* Basic setup *
+
+Info on upgrading Raspian: http://www.raspberrypi.org/documentation/raspbian/updating.md
+Basically, you can run apt-get update and apt-get upgrade for latest stable or run rpi-update for latest firmware
+
+raspi-config 
+  Basic settings
+
+Edit /etc/defaults/keyboard to change language from GB to US
+
+setupcon  will improve the boot speed without a keyboard
