@@ -1,11 +1,35 @@
-* Basic setup *
+This file has info on installing the Lite code onto a Raspberry Pi
 
-Info on upgrading Raspian: http://www.raspberrypi.org/documentation/raspbian/updating.md
-Basically, you can run apt-get update and apt-get upgrade for latest stable or run rpi-update for latest firmware
+*** Basic setup ***
 
-raspi-config 
-  Basic settings
+* Upgrade OS and firmware *
+Info on upgrading Raspian: 
+  http://www.raspberrypi.org/documentation/raspbian/updating.md
+Basically, you can run apt-get update and apt-get upgrade for latest stable
+or run rpi-update for latest firmware
 
-Edit /etc/defaults/keyboard to change language from GB to US
+* Enable sshd and setup keyboard *
+A) raspi-config 
+  Enable ssh, reduce GPU memory, set locale and keyboard
+B) Edit /etc/defaults/keyboard 
+  Change language from GB to US (requires reboot)
+C) setupcon  
+  Will improve the boot speed without a keyboard
 
-setupcon  will improve the boot speed without a keyboard
+* Setup static IP address *
+TBD
+
+*** Install Lite ***
+* Mount git repo *
+TBD
+* Clone code *
+git clone ...
+* Install startup script * 
+TBD
+
+*** Future ***
+Configure wifi
+
+*** Other tweaks ***
+Includes saving memory
+http://www.sbprojects.com/projects/raspberrypi/tweaks.php
