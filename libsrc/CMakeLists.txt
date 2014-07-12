@@ -20,3 +20,8 @@ utilsRandom.cpp
 utilsSocket.cpp
 utilsTime.cpp
 WinBuffer.cpp)
+
+install(DIRECTORY "${PROJECT_SOURCE_DIR}/libsrc/" 
+		  DESTINATION "${CMAKE_BINARY_DIR}/include"
+		  FILES_MATCHING PATTERN "*.h")
+

@@ -42,7 +42,9 @@ include_directories("${PROJECT_SOURCE_DIR}/libsrc" "${PROJECT_SOURCE_DIR}/src")
 link_directories("${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
 
-# Some examples explicitly set the path to ${PROJECT_SOURCE_DIR}
-# This may be needed when you want to build out of the source dir rather than the bin directory
+#-------------------------------------------------
+# Subdirectories
+#-------------------------------------------------
 add_subdirectory(libsrc)
 add_subdirectory(src)
+
