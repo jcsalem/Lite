@@ -119,6 +119,9 @@ int PackRGB(const RGBColor& color, bool flip) {
     int r = min(255, max(0, ((int) color.r * 256)));
     int g = min(255, max(0, ((int) color.g * 256)));
     int b = min(255, max(0, ((int) color.b * 256)));
+    if (color.r > 0) cout << r << "R ";
+    if (color.g > 0) cout << r << "G ";
+    if (color.b > 0) cout << r << "B ";
 
     if (flip)
         return r * 0x10000 + g * 0x100 + b;
