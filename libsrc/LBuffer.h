@@ -7,9 +7,6 @@
 #include <vector>
 #include "utilsTime.h"
 
-// ToDo
-// Move mapping to special class. Remove from base class entirely
-
 class LBuffer
     {
     friend class LBufferIter;
@@ -17,6 +14,7 @@ class LBuffer
     friend class ComboBuffer;
     friend class ReverseBuffer;
     friend class LBufferMap;
+    friend class PlaneNavigationBuffer;
   public:
     // Creating new LBuffers
     // The descriptor is of the format:  <type>:<details> where type defines the type of the LBuffer. Colon is optional if there are reasonable defaults
@@ -132,7 +130,7 @@ class LBufferPhys : public LBuffer
     vector<RGBColor>    iBuffer;
 
     //$$$ Temporary  this needs to go away to be replaced by the ComboBuffer
-    void        Alloc(int count); // erases the old buffer and map
+    void        Alloc(int count); // erases the old buffer
 
     // Functions for writing directly to the buffer
     virtual RGBColor& GetRawRGB(int idx)        {return iBuffer[idx];}

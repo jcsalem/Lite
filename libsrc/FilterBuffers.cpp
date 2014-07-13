@@ -110,3 +110,50 @@ LBuffer* Skip2BufferCreate(csref descStr, LBuffer* buffer, string* errmsg)
 DEFINE_LBUFFER_FILTER_TYPE(skip2, Skip2BufferCreate, "skip2",
                     "Interleaves the order of pixels.");
 
+//-----------------------------------------------------------------------------
+// PlaneNavigationBuffer
+//-----------------------------------------------------------------------------
+// Makes one end red and the other end green
+
+class PlaneNavigationBuffer : public LBuffer
+{
+public:
+  PlaneNavigationBuffer(LBuffer* buffer) 
+    : LBuffer(), iBuffer(buffer), iNumPixels(-1) {}
+    virtual ~PlaneNavigationBuffer() {}
+
+    virtual int     GetCount() const {return iBuffer->GetCount();}
+    virtual string  GetDescriptor() const {return "plane|" + iBuffer->GetDescriptor();}
+    virtual bool    Update() {return iBuffer->Update();}
+
+protected:
+  virtual RGBColor&   GetRawRGB(int idx);
+
+private:
+    LBuffer* iBuffer;
+    int iNumPixels;
+};
+
+#include <iostream>
+RGBColor& PlaneNavigationBuffer::GetRawRGB(int idx)
+{
+  static RGBColor temp[1000];
+
+  int numPixels = (iNumPixels < 0) ? 10 : iNumPixels;
+  temp[idx].r = 255; temp[idx].g = 1.0; temp[idx].b = 1.0;
+  return temp[idx];
+#if 0
+  if (idx < numPixels) {temp = GREEN; cout << "GREEN" << endl; temp.g = 255.0; return temp;}
+  else if (idx >= iBuffer->GetCount() - numPixels) {temp = RED; return temp;}
+  else return iBuffer->GetRawRGB(idx);
+#endif
+}
+
+LBuffer* PlaneNavigationBufferCreate(csref descStr, LBuffer* buffer, string* errmsg)
+{
+    return new PlaneNavigationBuffer(buffer);
+}
+
+DEFINE_LBUFFER_FILTER_TYPE(plane, PlaneNavigationBufferCreate, "plane:N",
+        "Adds green and red navigation lites for the last N pixels (default 10)");
+
