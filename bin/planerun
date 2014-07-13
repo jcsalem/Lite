@@ -7,26 +7,35 @@ fi
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 DIR=`dirname $DIR`
 DIR="$DIR/build/bin"
-DIR="/home/pi/lite/build/bin"
+#DIR="/home/pi/lite/build/bin"
 
 echo "LDEV=$LDEV"
 
 set -x
 
 while true; do
-$DIR/Ltool --time 6 --rate 1.0 rotate red
-$DIR/Ltool --time 5 --rate 1.5 rotate white
-$DIR/Ltool --time 4 --rate 2.25 rotate blue
-$DIR/Ltool --time 3 --rate 3.375 rotate white
-$DIR/Ltool --time 4 --fade 2 --rate 5.0625 rotate white
+$DIR/Ltool --time 7 --rate 1.0 rotate red
+$DIR/Ltool --time 6 --rate 1.5 rotate white
+$DIR/Ltool --time 5 --rate 2.25 rotate blue
+$DIR/Ltool --time 4 --rate 3.375 rotate white
+$DIR/Ltool --time 3 --rate 5.0625 rotate white
+
 $DIR/Ltool --time 5 --fade 2 plane
 
+$DIR/Ltool --time 8 rotwash red red
+$DIR/Ltool --time 8 rotwash "HSV(-.15,1,1)" "HSV(1.15,1,1)"
 
-$DIR/Lstarry --time 10 --color halloween
-
-$DIR/Lfirefly --time 15 --rate 3 --color bright
-
-$DIR/Ltool --time 10 rotwash red red
+$DIR/Ltool --time 10 --rate 2 rotwash red red
 $DIR/Ltool --time 10 --rate 3 rotwash red red
+$DIR/Ltool --time  5 --rate 4 rotwash red red
+$DIR/Ltool --time  5 --rate 5 rotwash red red
+
 $DIR/Ltool --time 10 --rate 2 --filter skip2 rotwash red red
+
+$DIR/Lfirefly --time 20 --rate 3 --color bright
+
+$DIR/Ltool --time 20 --fade 3 plane
+
+$DIR/Lstarry --time 15 --fade 2 --density .1 --sparklerate 20
+
 done
