@@ -10,7 +10,7 @@
 ### END INIT INFO
 
 RETVAL=0
-LSCRIPT=/home/pi/lite/bin/pirun
+LSCRIPT=/home/pi/lite/bin/planerun
 
 SCRIPTNAME=""`basename $LSCRIPT`""
 

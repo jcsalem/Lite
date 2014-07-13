@@ -1,0 +1,27 @@
+#!/bin/bash
+
+if [ -z "$LDEV" ]; then
+	export LDEV="strip:AX,strip:B"
+fi
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+echo "LDEV=$LDEV"
+
+set -x
+
+while true; do
+./Ltool --time 15 --rate 1.0 rotate red
+./Ltool --time 15 --rate 2.0 rotate blue
+./Ltool --time 10 --rate 4.0 rotate purple
+
+./Ltool --time 15 --rate -1 rotate white
+
+./Lstarry --time 15 --color halloween
+
+./Lfirefly --time 20 --rate 3 --color bright
+
+./Ltool --time 15 rotwash red red
+./Ltool --time 15 --rate 3 rotwash red red
+./Ltool --time 15 --rate 2 --filter skip2 rotwash red red
+done
