@@ -1,6 +1,6 @@
 #! /bin/sh
 ### BEGIN INIT INFO
-# Provides: ckrun
+# Provides: literun
 # Required-Start: $network
 # Required-Stop: $network
 # Default-Start: 2 3 4 5

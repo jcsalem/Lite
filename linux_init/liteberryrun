@@ -1,0 +1,59 @@
+#! /bin/sh
+### BEGIN INIT INFO
+# Provides: liteberryrun
+# Required-Start: $network
+# Required-Stop: $network
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Short-description: Lite lighting control software for Raspberry Pi
+# Description: Start and stop the appropriate run script (see below)
+### END INIT INFO
+
+RETVAL=0
+LSCRIPT=/home/pi/lite/bin/pirun
+
+SCRIPTNAME=""`basename $LSCRIPT`""
+
+start() {
+echo -n ""Starting Liteberryrun $SCRIPTNAME: ""
+pgrep -f $SCRIPTNAME
+RETVAL=$?
+[ $RETVAL -eq 0 ] && echo ""$SCRIPTNAME already running: Exiting"" && exit 1
+
+# this call actually starts the script
+$LSCRIPT > /dev/null 2>&1 &
+RETVAL=$?
+[ $RETVAL -eq 0 ] && echo -n ""done""
+echo
+return $RETVAL
+}
+
+stop() {
+echo -n ""Stopping Lightberryrun $SCRIPTNAME: ""
+pkill -f dandrun
+RETVAL=$?
+echo
+[ $RETVAL -eq 0 ] && echo -n ""done""
+echo
+return $RETVAL
+}
+
+# See how we were called.
+case ""$1"" in
+start)
+start
+;;
+stop)
+stop
+;;
+restart|reload)
+stop
+sleep 1
+start
+RETVAL=$?
+;;
+*)
+echo ""Usage: $0 {start|stop|restart}""
+exit 1
+esac
+exit $RETVAL

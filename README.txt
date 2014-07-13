@@ -48,12 +48,18 @@ Then follow instructions below
  -DCMAKE_BUILD_TYPE=Debug   This setting is sticky and enables Debug builds
 
 * Linux and Raspberry Pi Notes *
-1) sudo apt-get install ncurses-dev cmake
-2) Install sfml 2.1 or later from the SFML web site.
-   Copy files to /usr/local
-3) Install dependencies
-sudo apt-get install libglew1.5
-sudo apt-get install libjpeg62
+1) Install requirements
+     sudo apt-get install ncurses-dev cmake
+2) IF WINDOWING DESIRED:
+  2A) Install sfml 2.1 or later from the SFML web site.
+       Copy files to /usr/local
+  2B) Install dependencies
+       sudo apt-get install libglew1.5
+       sudo apt-get install libjpeg62
+3)Build
+  cd builddir  # A subdirectory of this one
+  cmake -G "Unix Makefiles" ..
+  make
 
 * MacOS Notes *
 Install SFML package according to instructions. Copy files to /usr/local and to frameworks
