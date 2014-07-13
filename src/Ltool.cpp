@@ -18,8 +18,8 @@ void ValidateNumArgs(csref command, int numArgs, int argc, int argp)
     L::ErrorExit(command + " expected " + IntToStr(numArgs) + " parameters but got " + IntToStr(argc - 2));
 }
 
-DefProgramHelp(kPHprogram, "cktool");
-DefProgramHelp(kPHusage, "Performs various lighting commands: clear, all, set, wash, rotate, rotwash, bounce");
+DefProgramHelp(kPHprogram, "Ltool");
+DefProgramHelp(kPHusage, "Performs various lighting commands: clear, all, set, wash, rotate, rotwash, bounce, plane");
 DefProgramHelp(kPHadditionalArgs, "command [colorargs...]");
 DefProgramHelp(kPHhelp, "command is one of:\n"
                "    clear \n"
@@ -29,6 +29,7 @@ DefProgramHelp(kPHhelp, "command is one of:\n"
                "    bounce color\n"
                "    set idx color\n"
                "    wash color1 color2\n"
+	       "    plane\n"
                "  color is \"r,g,b\" or \"HSV(h,s,v)\" or a named color, etc.  All components are scaled from 0.0 to 1.0"
               );
 
@@ -118,6 +119,13 @@ int main(int argc, char** argv)
         speed = 40 * L::gRate;
         gMode = kRotate;
     }
+    else if (command == "plane")
+    {
+        gColor  = new GREEN;
+	gColor2 = new RED;
+        ValidateNumArgs(command, 0, argc, argp);
+        if (L::gRunTime < 0) L::gRunTime = 0;  // If no run time specified, return immediately
+    }
     else
     {
         L::ErrorExit("Unknown command \"" + command + "\"");
@@ -152,6 +160,18 @@ int main(int argc, char** argv)
         obj->speed.x = speed;
         objs.Add(obj);
     }
+    else if (command == "plane")
+    {
+        // Plane colors (Left side green, Right side red)
+        int numLights = L::gOutputBuffer->GetCount();;
+        for (int i = 0; i < numLights; ++i)
+        {
+            Lobj* obj = new Lobj();
+            obj->pos.x = i;
+	    obj->color = i < numLights/2 ? *gColor : *gColor2;
+            objs.Add(obj);
+	}
+    }        
     else
     {
         // One light for each pixel

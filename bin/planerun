@@ -13,17 +13,18 @@ echo "LDEV=$LDEV"
 set -x
 
 while true; do
-$DIR/Ltool --time 15 --rate 1.0 rotate red
-$DIR/Ltool --time 15 --rate 2.0 rotate blue
-$DIR/Ltool --time 10 --rate 4.0 rotate purple
+$DIR/Ltool --time 10 --rate 1.0 rotate red
+$DIR/Ltool --time 8 --rate 2.0 rotate blue
+$DIR/Ltool --time 6 --rate 4.0 rotate purple
 
-$DIR/Ltool --time 15 --rate -1 rotate white
+#$DIR/Ltool --time 15 --rate -1 rotate white
 
-$DIR/Lstarry --time 15 --color halloween
+$DIR/Lstarry --time 10 --color halloween
 
-$DIR/Lfirefly --time 20 --rate 3 --color bright
+$DIR/Lfirefly --time 15 --rate 3 --color bright
 
-$DIR/Ltool --time 15 rotwash red red
-$DIR/Ltool --time 15 --rate 3 rotwash red red
-$DIR/Ltool --time 15 --rate 2 --filter skip2 rotwash red red
+$DIR/Ltool --time 10 rotwash red red
+$DIR/Ltool --time 10 --rate 3 rotwash red red
+$DIR/Ltool --time 10 --rate 2 --filter skip2 rotwash red red
+$DIR/Ltool --time 10 plane
 done
