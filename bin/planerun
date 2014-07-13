@@ -4,6 +4,12 @@ if [ -z "$LDEV" ]; then
 	export LDEV="flip|strip:A,strip:B"
 fi
 
+if [ -e /boot/planerun ]; then
+    echo "Sourcing /boot/planerun"
+    source /boot/planerun
+    exit 1
+fi
+
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 DIR=`dirname $DIR`
 DIR="$DIR/build/bin"
