@@ -120,8 +120,8 @@ const int gDefaultPlaneNavigationWidth = 10;
 class PlaneNavigationBuffer : public LBuffer
 {
 public:
-  PlaneNavigationBuffer(LBuffer* buffer) 
-    : LBuffer(), iBuffer(buffer), iNumPixels(gDefaultPlaneNavigationWidth) {}
+  PlaneNavigationBuffer(LBuffer* buffer, int pixelWidth = gDefaultPlaneNavigationWidth) 
+    : LBuffer(), iBuffer(buffer), iNumPixels(pixelWidth) {}
   virtual ~PlaneNavigationBuffer() {}
 
   virtual int     GetCount() const {return max(iBuffer->GetCount() - 2 * iNumPixels, 0);}
@@ -152,10 +152,10 @@ bool PlaneNavigationBuffer::Update()
    int count = iBuffer->GetCount();
    int stoppos = min(iNumPixels, count);
    for (int i = 0; i < stoppos; ++i)
-     iBuffer->SetRGB(i, green);
+     iBuffer->SetRGB(i, red);
    stoppos = max(count-iNumPixels,0);
    for (int i = count-1; i >= stoppos;--i)
-     iBuffer->SetRGB(i, red);
+     iBuffer->SetRGB(i, green);
    return iBuffer->Update();
  }
 
@@ -169,8 +169,16 @@ RGBColor& PlaneNavigationBuffer::GetRawRGB(int idx)
 
 LBuffer* PlaneNavigationBufferCreate(csref descStr, LBuffer* buffer, string* errmsg)
 {
-  // TODO: Need to parse the width argument
+  unsigned numPixels;
+
+  if (descStr.empty())
     return new PlaneNavigationBuffer(buffer);
+  if (!StrToUnsigned(descStr, &numPixels))
+    {
+      if (errmsg) *errmsg = "The argument to \"plane\" must be a non-negative number.";
+      return NULL;
+    }
+  return new PlaneNavigationBuffer(buffer, numPixels);
 }
 
 DEFINE_LBUFFER_FILTER_TYPE(plane, PlaneNavigationBufferCreate, "plane:N",
