@@ -1,0 +1,40 @@
+*** Lite: Rendering Pipeline ***
+
+Lite implements an object based approach to rendering.
+During each rendering loop, all the Lobjs are updated and then rendered into an LBuffer.
+
+** Data Types **
+Lobj is the basic object class. It has a speed, position, and color. Lobjs are rendered onto 
+an Lbuffer. 
+An Lbuffer is the basic output class. It has a number of lights organized in a 1D strip.
+There are three types of Lbuffers: 
+ 1) Output device Lbuffers (e.g., LBufferPhys, CKbuffer and StripBuffer). 
+    Represents an actual output device.
+ 2) Filter buffers: These cascade on top of any Output buffer and modify the reading and 
+    writing to that device.
+ 3) ComboBuffer: These combine other buffers, end-to-end.
+
+An Lproc is a procedure that is applied to every Lobj during rendering.
+
+An Lgroup is a collection of objects.
+A group proc is a procedure that is called once per group just after rendering a frame.
+
+** Rendering Loop **
+
+Loop forever:
+  Clear output buffer
+  For each Lobj in Lgroup:
+     Update position
+     Update Color 
+     Run all Lprocs
+     Render the Lobj into the output buffer
+  Display using output buffer
+  Run Group Function  
+
+
+** Filters **
+Filters are implemented using Lbuffers. The operate on the 1D image buffer level. 
+Filters are most often used to remap the coordinates.
+
+** LProcs **
+LProcs apply at the object level and can change the color or location of an object.

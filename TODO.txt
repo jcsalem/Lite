@@ -1,6 +1,5 @@
 ** Bugs **
 --rate broken/confusing on Lsparkle (Lstarry doc is wrong)
-Fix planenavigation filter
 Faster sparkler
 
 ** New **

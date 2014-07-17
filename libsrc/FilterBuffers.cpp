@@ -113,44 +113,63 @@ DEFINE_LBUFFER_FILTER_TYPE(skip2, Skip2BufferCreate, "skip2",
 //-----------------------------------------------------------------------------
 // PlaneNavigationBuffer
 //-----------------------------------------------------------------------------
-// Makes one end red and the other end green
+// Makes one end red and the other end green. Hides those portions of iBuffer
+
+const int gDefaultPlaneNavigationWidth = 10;
 
 class PlaneNavigationBuffer : public LBuffer
 {
 public:
   PlaneNavigationBuffer(LBuffer* buffer) 
-    : LBuffer(), iBuffer(buffer), iNumPixels(-1) {}
-    virtual ~PlaneNavigationBuffer() {}
+    : LBuffer(), iBuffer(buffer), iNumPixels(gDefaultPlaneNavigationWidth) {}
+  virtual ~PlaneNavigationBuffer() {}
 
-    virtual int     GetCount() const {return iBuffer->GetCount();}
-    virtual string  GetDescriptor() const {return "plane|" + iBuffer->GetDescriptor();}
-    virtual bool    Update() {return iBuffer->Update();}
+  virtual int     GetCount() const {return max(iBuffer->GetCount() - 2 * iNumPixels, 0);}
+  virtual string  GetDescriptor() const;
+  virtual bool    Update();
 
 protected:
   virtual RGBColor&   GetRawRGB(int idx);
 
 private:
-    LBuffer* iBuffer;
-    int iNumPixels;
+  LBuffer*   iBuffer;
+  int 	     iNumPixels;
 };
 
-#include <iostream>
+string PlaneNavigationBuffer::GetDescriptor() const
+{
+  string desc = "plane";
+  if (iNumPixels != iNumPixels) desc += ":" + IntToStr(iNumPixels);
+  desc += "|" + iBuffer->GetDescriptor();
+  return desc;
+}
+
+bool PlaneNavigationBuffer::Update()
+ {
+   // Force beginning to be red and end to be green
+   RGBColor green(GREEN);
+   RGBColor red(RED);
+   int count = iBuffer->GetCount();
+   int stoppos = min(iNumPixels, count);
+   for (int i = 0; i < stoppos; ++i)
+     iBuffer->SetRGB(i, green);
+   stoppos = max(count-iNumPixels,0);
+   for (int i = count-1; i >= stoppos;--i)
+     iBuffer->SetRGB(i, red);
+   return iBuffer->Update();
+ }
+
 RGBColor& PlaneNavigationBuffer::GetRawRGB(int idx)
 {
-  static RGBColor temp[1000];
-
-  int numPixels = (iNumPixels < 0) ? 10 : iNumPixels;
-  temp[idx].r = 255; temp[idx].g = 1.0; temp[idx].b = 1.0;
-  return temp[idx];
-#if 0
-  if (idx < numPixels) {temp = GREEN; cout << "GREEN" << endl; temp.g = 255.0; return temp;}
-  else if (idx >= iBuffer->GetCount() - numPixels) {temp = RED; return temp;}
+  int count = iBuffer->GetCount();
+  idx += iNumPixels;
+  if (idx >= count) return iBuffer->GetRawRGB(max(count-1,0)); // Only happens if iNumPixels is too big
   else return iBuffer->GetRawRGB(idx);
-#endif
 }
 
 LBuffer* PlaneNavigationBufferCreate(csref descStr, LBuffer* buffer, string* errmsg)
 {
+  // TODO: Need to parse the width argument
     return new PlaneNavigationBuffer(buffer);
 }
 
