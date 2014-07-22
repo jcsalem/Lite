@@ -26,6 +26,7 @@ class IPAddr
         bool operator==(const IPAddr& ip) const     {return iIP == ip.iIP;}
         bool operator!=(const IPAddr& ip) const     {return !(*this == ip);}
 
+	bool InARPCache(bool defaultValue = false) const; // returns true if the IP is in the arp cache.  Returns defaultValue if it's can't be determined.
 
     private:
         void Init(const char* name);
