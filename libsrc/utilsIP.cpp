@@ -88,18 +88,20 @@ void ReportInARPCacheError(csref errmsg)
 // InARPCache
 // Returns true if the IP is in the ARP cache
 #if defined(OS_LINUX)
+#include <fstream>
 bool IPAddr::InARPCache(bool defaultValue) const
 {
   // On Linux, check /proc/net/arp
   ifstream pf("/proc/net/arp");
   if (pf.bad()) {
-    ReportInARPCacheError("InARPCache: Error opening /proc/net/arp: " + String(strerror(errno)));
+    ReportInARPCacheError("InARPCache: Error opening /proc/net/arp: " + string(strerror(errno)));
     return defaultValue;
   }
   string ipstr = GetString(); 
   while (pf.good()) 
     {
-      string line << pf;
+      string line;
+      pf >> line;
       pos = line.find(" ");
       if (pos != string::npos && StrEQ(ipstr, line.substr(0,pos)))
 	return true;
