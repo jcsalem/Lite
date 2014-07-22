@@ -106,7 +106,7 @@ bool IPAddr::InARPCache(bool defaultValue) const
     }
   return false;
 }
-#elif defined(OS_MAC) || defined(OS_LINUX)
+#elif defined(OS_MAC)
 // This may work for BSD systems as well.
 #include <net/route.h>
 #include <netinet/if_ether.h>

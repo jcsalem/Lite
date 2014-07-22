@@ -22,6 +22,9 @@ target_link_libraries(ckinfo lite ${MY_LIBS})
 add_executable(Lfirefly Lfirefly.cpp)
 target_link_libraries(Lfirefly lite ${MY_LIBS})
 
+add_executable(Lflash Lflash.cpp)
+target_link_libraries(Lflash lite ${MY_LIBS})
+
 add_executable(Lstarry Lstarry.cpp)
 target_link_libraries(Lstarry lite ${MY_LIBS})
 

@@ -193,7 +193,7 @@ DefOption(fade, FadeCallback, "fadeduration", "sets the fade in and out in time 
 
 void ErrorExit(csref msg) {
     cerr << ProgramHelp::GetString(kPHprogram) << ": " << msg << endl;
-    cerr << ProgramHelp::GetUsage();
+    cerr << ProgramHelp::GetUsage() << endl;
     exit(EXIT_FAILURE);
     }
 
