@@ -54,10 +54,11 @@
 
 #ifndef HAS_GPIO
 #ifndef OS_WINDOWS
-//#ifdef __arm__
+#ifndef OS_MAC
 #define HAS_GPIO 1
 #endif
 #endif
+#endif 
 
 //----------------------------------------------------------------------------
 // Windows Specific
