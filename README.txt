@@ -16,13 +16,48 @@ Lfirefly: Fireflies
 ckinfo: Reports information on ethernet-attached ColorKinetics fixtures via Kinet protocol.
 testmix: tests light mixing
 
-*** CMAKE COMPILATION INSTRUCTIONS ***
-+ For all platforms +
+* Linux and Raspberry Pi Notes *
+1) Install requirements
+     sudo apt-get install ncurses-dev cmake
+2) IF WINDOWING DESIRED:
+  2A) Install sfml 2.1 or later from the SFML web site.
+       Copy files to /usr/local
+  2B) Install dependencies
+       sudo apt-get install libglew1.5
+       sudo apt-get install libjpeg62
+3)Build
+  cd builddir  # A subdirectory of this one
+  cmake -G "Unix Makefiles" ..
+  make
+
+* MacOS Notes *
+0) Install homebrew
+1) brew install cmake
+2A) If desired, install SFML package according to instructions. If you're using Mavericks (10.9) or later, you need to download the libc++ version.
+2B) In the SFML directory, run install.sh SFML files to /usr/local and to frameworks. Ignore the error about being unable to install the Xcode templates for SFML
+3) cd lite; mkdir build
+4) cd build
+5) cmake --G "Unix Makefiles" ..
+
+* Windows Notes *
+Install SFML-2.1 directory at the same level as Lite.
+Pick the right version for your compiler. For CodeBlocks/Ming I picked the 32-bit version.
+
+*** CMAKE INSTRUCTIONS ***
+** Basic cmake instructions for all platforms **
 cd litedir
 mkdir build
 cd build
 cmake -G "generator name" <options> ..
-Then follow instructions below
+
+* CMAKE Command Line Options *
+<options> can be
+ -DNO_SFML=1  Set this to disable compiling/linking with SFML libraries 
+ -DCMAKE_BUILD_TYPE=Debug   Enables Debug builds
+ -DCMAKE_OSX_ARCHITECTURES=x86_64  Force 64 bit compile on MacOSX
+Note that options are sticky.
+
+** cmake Options for Specific Platforms **
 + Windows: CodeBlocks +
  Generator name: "CodeBlocks - MinGW Makefiles"
  Within CodeBlocks, open lite.cbp and compile
@@ -43,31 +78,7 @@ Then follow instructions below
  Generator name: "CodeBlocks - Unix Makefiles"
  Within CodeBlocks, open lite.cbp and compile
 
-* CMAKE Command Line Options *
-<options> can be
- -DCMAKE_BUILD_TYPE=Debug   This setting is sticky and enables Debug builds
-
-* Linux and Raspberry Pi Notes *
-1) Install requirements
-     sudo apt-get install ncurses-dev cmake
-2) IF WINDOWING DESIRED:
-  2A) Install sfml 2.1 or later from the SFML web site.
-       Copy files to /usr/local
-  2B) Install dependencies
-       sudo apt-get install libglew1.5
-       sudo apt-get install libjpeg62
-3)Build
-  cd builddir  # A subdirectory of this one
-  cmake -G "Unix Makefiles" ..
-  make
-
-* MacOS Notes *
-Install SFML package according to instructions. Copy files to /usr/local and to frameworks
-
-* Windows Notes *
-Install SFML-2.1 directory at the same level as Lite.
-Pick the right version for your compiler. For CodeBlocks/Ming I picked the 32-bit version.
-
+-------------------------------------------------------------
 * OBSOLETE: Mac Notes *
 Install SFML package according to instructions. Copy files to /usr/local and to frameworks
 Compiler Search paths:

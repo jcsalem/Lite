@@ -54,6 +54,7 @@ void NetCleanup()
 
 #else // !WIN32
 
+#include "unistd.h"
 #include <sys/socket.h>
 #include <netinet/in.h>
 #define INVALID_SOCKET -1

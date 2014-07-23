@@ -30,8 +30,7 @@
 // Dummy function to force this file to be linked in.
 void ForceLinkStrip() {}
 
-#ifndef OS_WINDOWS
-//#ifdef __arm__
+#ifdef HAS_GPIO
 #include "utils.h"
 #include "Color.h"
 #include "utilsGPIO.h"

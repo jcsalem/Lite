@@ -139,7 +139,7 @@ private:
 string PlaneNavigationBuffer::GetDescriptor() const
 {
   string desc = "plane";
-  if (iNumPixels != iNumPixels) desc += ":" + IntToStr(iNumPixels);
+  if (iNumPixels != gDefaultPlaneNavigationWidth) desc += ":" + IntToStr(iNumPixels);
   desc += "|" + iBuffer->GetDescriptor();
   return desc;
 }
