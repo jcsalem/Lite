@@ -10,6 +10,7 @@ Windows Command Prompt: set LDEV=ck:172.24.22.51/1
 Use --help for help on any command.
 
 Ltool: The Multi-tool. Commands: set, all, rotate, rotwash, wash, bounce
+Lflash: Flashes the display
 Lsparkle: Sparkly lights
 Lstarry: Stars
 Lfirefly: Fireflies
@@ -39,9 +40,13 @@ testmix: tests light mixing
 4) cd build
 5) cmake --G "Unix Makefiles" ..
 
-* Windows Notes *
-Install SFML-2.1 directory at the same level as Lite.
-Pick the right version for your compiler. For CodeBlocks/Ming I picked the 32-bit version.
+* Windows MinGW Notes *
+0) Install MinGW
+1) Install SFML-2.1 directory at the same level as Lite.
+   Pick the right version for your compiler. For CodeBlocks/Ming I picked the 32-bit version.
+2) Run this inside a cmake -G "MinGW Makefiles" ..
+3) Start a mingw32 shell and cd to the build directory
+4) mingw32-make
 
 *** CMAKE INSTRUCTIONS ***
 ** Basic cmake instructions for all platforms **
