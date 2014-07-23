@@ -135,22 +135,22 @@ bool Socket::setsockopt_bool(int level, int optname, bool value) {
 }
 
 //--------------------------------------------------------------------------
-// SocketUDP
+// SocketIP
 //--------------------------------------------------------------------------
 
-SocketUDP::SocketUDP() : Socket() {}
+SocketIP::SocketIP() : Socket() {}
 
-SocketUDP::SocketUDP (const IPAddr& addr, int port)
+SocketIP::SocketIP (const IPAddr& addr, int port)
 	: Socket() {
 	SetSockAddr(addr, port);
 }
 
-SocketUDP::SocketUDP(const SockAddr& sa)
+SocketIP::SocketIP(const SockAddr& sa)
 	: Socket() {
 	SetSockAddr(sa);
 }
 
-bool SocketUDP::SetSockAddr(const SockAddr& sa) {
+bool SocketIP::SetSockAddr(const SockAddr& sa) {
 	if (! sa.IsValid())
 		{
 		if (iIsOpen) Close();
@@ -338,18 +338,18 @@ bool SocketUDPClient::HasData(int timeoutInMS) {
 // SocketUDPServer
 //--------------------------------------------------
 
-SocketUDPServer::SocketUDPServer(const SockAddr& sa) : SocketUDP() {
+SocketUDPServer::SocketUDPServer(const SockAddr& sa) : SocketIP() {
     SetSockAddr(sa);
 }
-SocketUDPServer::SocketUDPServer(const IPAddr& ip, int port) : SocketUDP() {
+SocketUDPServer::SocketUDPServer(const IPAddr& ip, int port) : SocketIP() {
     SetSockAddr(SockAddr(ip, port));
 }
-SocketUDPServer::SocketUDPServer(int port) : SocketUDP() {
+SocketUDPServer::SocketUDPServer(int port) : SocketIP() {
     SetSockAddr(SockAddr(IPAddr((uint32)INADDR_ANY), port));
 }
 
 bool SocketUDPServer::SetSockAddr(const SockAddr& sa) {
-    if (! SocketUDP::SetSockAddr(sa))
+    if (! SocketIP::SetSockAddr(sa))
         return false;
     if (bind(iSocket, iSockAddr.GetStruct(), iSockAddr.GetStructSize())) {
         iLastError = "Error binding socket to " + iSockAddr.GetString() + ": " + SocketErrorString();

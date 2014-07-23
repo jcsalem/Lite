@@ -121,6 +121,9 @@ void UpdateOneCKv2(CKdevice& device, LBuffer::const_iterator bufIter)
       }
     }
 
+// IMPORTANT: Early UDP packets may be dropped if the connection is not in the ARP tables.
+// This can cause some single frame displays to fail.
+
 bool CKbuffer::Update()
     {
     const_iterator bufIter = const_cast<const CKbuffer*>(this)->begin();
@@ -133,11 +136,8 @@ bool CKbuffer::Update()
             UpdateOneCKv1(iDevice, bufIter);
             break;
         }
-
-    PortSync();
-    // Force a millisecond delay. Otherwise, if we are going to the next port on the same PDS, we could lose data.
-    SleepMilli(1);
-
+    // Not using sync. To enable, I think there is a flag that must be set with the PortOut command.
+    // PortSync();
     return !HasError();
     }
 

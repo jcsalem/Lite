@@ -59,37 +59,39 @@ class Socket
 // IP type socket (base class)
 //---------------------------------------------
 
-class SocketUDP : public Socket
+class SocketIP : public Socket
 	{
 	public:
-		SocketUDP();
-		virtual ~SocketUDP() {}
+		SocketIP();
+		virtual ~SocketIP() {}
 
-		SocketUDP                   (const SockAddr& sa);
+		SocketIP                   (const SockAddr& sa);
 		virtual bool    SetSockAddr (const SockAddr& sa);
 
-		SocketUDP    		        (const IPAddr& ip, int port);
+		SocketIP    		        (const IPAddr& ip, int port);
 		bool            SetSockAddr	(const IPAddr& ip, int port) {return SetSockAddr(SockAddr(ip, port));}
+
+		bool 			EnsureNextHopReachable(string* errmsg = NULL);
 
 	protected:
 	    SockAddr    iSockAddr;
 
     private:
 		// Disallow copying
-		SocketUDP(const SocketUDP&);
-		const SocketUDP& operator=(const SocketUDP&);
+		SocketIP(const SocketIP&);
+		const SocketIP& operator=(const SocketIP&);
 	};
 
 //---------------------------------------------
 // SocketUDPClient
 //---------------------------------------------
 
-class SocketUDPClient : public SocketUDP
+class SocketUDPClient : public SocketIP
 	{
 	public:
-		SocketUDPClient() : SocketUDP() {}
-		SocketUDPClient(const SockAddr& sa) : SocketUDP(sa) {}
-		SocketUDPClient(const IPAddr& ip, int port) : SocketUDP(ip, port) {}
+		SocketUDPClient() : SocketIP() {}
+		SocketUDPClient(const SockAddr& sa) : SocketIP(sa) {}
+		SocketUDPClient(const IPAddr& ip, int port) : SocketIP(ip, port) {}
 
 		bool	Write       (const char* source, int len);
 
@@ -111,10 +113,10 @@ class SocketUDPClient : public SocketUDP
 // SocketUDPServer
 //---------------------------------------------
 
-class SocketUDPServer : public SocketUDP
+class SocketUDPServer : public SocketIP
 	{
 	public:
-		SocketUDPServer() : SocketUDP() {}
+		SocketUDPServer() : SocketIP() {}
 		SocketUDPServer(const SockAddr& sa);
         SocketUDPServer(const IPAddr& ip, int port);
 		SocketUDPServer(int port);

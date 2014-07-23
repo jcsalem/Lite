@@ -140,7 +140,7 @@ struct KiNETportOut : public KiNETheader
     static int GetSize() {return sizeof(KiNETportOut);}
     uint32  universe;   //
     uint8   port;       // Port number.  Generally starts at 1.
-    uint8   padding;    // zero
+    uint8   padding;    // Normally zero, but I see some frames where this is 0xBA
     uint16  flags;
     uint16  len;        // Payload length
     uint16  startcode;  // Not sure how this is used. Leave as zero
