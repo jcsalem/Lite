@@ -155,20 +155,26 @@ void Lobj::UpdateRender(LBuffer* buffer) {
 //----------------------------------------------------------------------
 // Lobj Operations
 //----------------------------------------------------------------------
-void Lobj::Wrap(const Lxy& minBound, const Lxy& maxBound) {
-    Lxy range = maxBound - minBound;
+float WrapOne(float val, float minb, float maxb)
+{
+  float range = maxb - minb; // Assume this is always non-negative
+  val = val - minb;
+  if (val >= 0) return fmod(val, range) + minb;
+  else          return fmod(val, range) + maxb; // fmod is negative if val is negative
+}
 
-    float newX = fmod(pos.x - minBound.x, range.x) + minBound.x;
-    float newY = fmod(pos.y - minBound.y, range.y) + minBound.y;
-    //cout << "Wrap: " << pos.x << " to " << minBound.x << "," << maxBound.x << "  Result: " << newX << endl;
-    pos = Lxy(newX, newY);
+void Lobj::Wrap(const Lxy& minBound, const Lxy& maxBound) {
+  float newX = WrapOne(pos.x, minBound.x, maxBound.x);
+  float newY = WrapOne(pos.y, minBound.y, maxBound.y);
+  //cout << "Wrap: " << pos.x << " to " << minBound.x << "," << maxBound.x << "  Result: " << newX << endl;
+  pos = Lxy(newX, newY);
 }
 
 void Lobj::Bounce(const Lxy& minBound, const Lxy& maxBound) {
-    if      (pos.x <  minBound.x) {speed.x = -speed.x; pos.x = 2 * minBound.x - pos.x;}
-    else if (pos.x >= maxBound.x) {speed.x = -speed.x; pos.x = 2 * maxBound.x - pos.x;}
-    if      (pos.y <  minBound.y) {speed.y = -speed.y; pos.y = 2 * minBound.y - pos.y;}
-    else if (pos.y >= maxBound.y) {speed.y = -speed.y; pos.y = 2 * maxBound.y - pos.y;}
+  if      (pos.x <  minBound.x) {speed.x = -speed.x; pos.x = 2 * minBound.x - pos.x;}
+  else if (pos.x >= maxBound.x) {speed.x = -speed.x; pos.x = 2 * maxBound.x - pos.x;}
+  if      (pos.y <  minBound.y) {speed.y = -speed.y; pos.y = 2 * minBound.y - pos.y;}
+  else if (pos.y >= maxBound.y) {speed.y = -speed.y; pos.y = 2 * maxBound.y - pos.y;}
 }
 
 bool Lobj::IsOutOfBounds(const Lxy& minBound, const Lxy& maxBound) const {

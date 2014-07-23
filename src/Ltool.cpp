@@ -10,12 +10,27 @@
 // Options
 //----------------------------------------------------------------------------
 
-void ValidateNumArgs(csref command, int numArgs, int argc, int argp)
+void ValidateNumArgs(csref command, int minArgs, int maxArgs, int argc, int argp)
 {
-    if (argc == argp + numArgs)
+    if (argc >= argp + minArgs && argc <= argp + maxArgs)
         // Everything is correct
         return;
-    L::ErrorExit(command + " expected " + IntToStr(numArgs) + " parameters but got " + IntToStr(argc - 2));
+    string msg = command + " expected ";
+    if (minArgs == maxArgs)
+      msg += IntToStr(minArgs);
+    else 
+      msg += "between " + IntToStr(minArgs) + " and " + IntToStr(maxArgs);
+    msg += " parameters but got " + IntToStr(argc - 2);
+    L::ErrorExit(msg);
+}
+
+void ValidateZeroOrTwoArgs(csref command, int argc, int argp)
+{
+    if (argc == argp || argc == argp + 2)
+        // Everything is correct
+        return;
+    string msg = command + " expected either zero or two parameters but got " + IntToStr(argc - 2);
+    L::ErrorExit(msg);
 }
 
 DefProgramHelp(kPHprogram, "Ltool");
@@ -77,54 +92,74 @@ int main(int argc, char** argv)
 
     if (command == "clear")
     {
-        ValidateNumArgs(command, 0, argc, argp);
-        gColor = new BLACK;
-        if (L::gRunTime < 0) L::gRunTime = 0;  // If no run time specified, return immediately
+      ValidateNumArgs(command, 0, 0, argc, argp);
+      gColor = new BLACK;
+      if (L::gRunTime < 0) L::gRunTime = 0;  // If no run time specified, return immediately
     }
     else if (command == "set")
     {
-        ValidateNumArgs(command, 2, argc, argp);
-        idx   = atoi(argv[argp++]);
-        gColor = Color::AllocFromString(argv[argp++], &errmsg);
-        if (L::gRunTime < 0) L::gRunTime = 0;  // If no run time specified, return immediately
+      ValidateNumArgs(command, 1, 2, argc, argp);
+      idx   = atoi(argv[argp++]);
+      if (argp > argc)
+	gColor = new WHITE;
+      else
+	gColor = Color::AllocFromString(argv[argp++], &errmsg);
+      if (L::gRunTime < 0) L::gRunTime = 0;  // If no run time specified, return immediately
     }
     else if (command == "all")
     {
-        ValidateNumArgs(command, 1, argc, argp);
-        gColor = Color::AllocFromString(argv[argp++], &errmsg);
-        if (L::gRunTime < 0) L::gRunTime = 0;  // If no run time specified, return immediately
+      ValidateNumArgs(command, 0, 1, argc, argp);
+      if (argp >= argc)
+	gColor = new WHITE;
+      else
+	gColor = Color::AllocFromString(argv[argp++], &errmsg);
+      if (L::gRunTime < 0) L::gRunTime = 0;  // If no run time specified, return immediately
     }
     else if (command == "rotate" || command == "bounce")
     {
-        ValidateNumArgs(command, 1, argc, argp);
-        idx = 0;
+      ValidateNumArgs(command, 0, 1, argc, argp);
+      if (argp >= argc)
+	gColor = new WHITE;
+      else
         gColor = Color::AllocFromString(argv[argp++], &errmsg);
-        speed = 20 * L::gRate;
-        gMode = (command == "bounce") ? kBounce : kRotate;
+      if (L::gRate >= 0)
+	idx = 0;
+      else // start at right side if negative rate
+	idx = L::gOutputBuffer->GetCount() - 1;
+      speed = 20 * L::gRate;
+      gMode = (command == "bounce") ? kBounce : kRotate;
     }
-    else if (command == "wash")
+    else if (command == "wash" || command == "rotwash")
     {
-        ValidateNumArgs(command, 2, argc, argp);
-        gColor = Color::AllocFromString(argv[argp++], &errmsg);
-        gColor2 = gColor ? Color::AllocFromString(argv[argp++], &errmsg) : NULL;
-        if (!gColor2) gColor = NULL;
-        if (L::gRunTime < 0) L::gRunTime = 0;  // If no run time specified, return immediately
-    }
-    else if (command == "rotwash")
-    {
-        ValidateNumArgs(command, 2, argc, argp);
-        gColor = Color::AllocFromString(argv[argp++], &errmsg);
-        gColor2 = gColor ? Color::AllocFromString(argv[argp++], &errmsg) : NULL;
-        if (!gColor2) gColor = NULL;
-        speed = 40 * L::gRate;
-        gMode = kRotate;
+      ValidateZeroOrTwoArgs(command, argc, argp);
+      if (argp >=  argc)
+	{
+	  gColor  = new RED;
+	  gColor2 = new RED;
+	}
+      else
+	{
+	  gColor  = Color::AllocFromString(argv[argp++], &errmsg);
+	  gColor2 = Color::AllocFromString(argv[argp++], &errmsg);
+	  if (!gColor)  gColor2 = NULL;
+	  if (!gColor2) gColor  = NULL;
+	}
+      if (command == "wash")
+	{
+	  if (L::gRunTime < 0) L::gRunTime = 0;  // If no run time specified, return immediately
+	}
+      else
+	{ // Rotwash
+	  speed = 40 * L::gRate;
+	  gMode = kRotate;
+	}
     }
     else if (command == "plane")
     {
-        gColor  = new GREEN;
-	gColor2 = new RED;
-        ValidateNumArgs(command, 0, argc, argp);
-        if (L::gRunTime < 0) L::gRunTime = 0;  // If no run time specified, return immediately
+      ValidateNumArgs(command, 0, 0, argc, argp);
+      gColor  = new RED;
+      gColor2 = new GREEN;
+      if (L::gRunTime < 0) L::gRunTime = 0;  // If no run time specified, return immediately
     }
     else
     {
@@ -162,7 +197,7 @@ int main(int argc, char** argv)
     }
     else if (command == "plane")
     {
-        // Plane colors (Left side green, Right side red)
+        // Plane colors (Left side red, Right side green)
         int numLights = L::gOutputBuffer->GetCount();;
         for (int i = 0; i < numLights; ++i)
         {
