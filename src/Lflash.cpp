@@ -66,8 +66,6 @@ int main(int argc, char** argv)
     Option::DeleteOption("color");
     L::Startup(&argc, argv, Option::kVariable);
 
-    IPAddr ip(argv[1]);
-    cout << "InARPCache " << ip.GetString() << " is " << ip.InARPCache() << endl;
     exit(0);
 
 
