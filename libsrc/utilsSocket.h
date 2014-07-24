@@ -56,25 +56,41 @@ class Socket
 	};
 
 //---------------------------------------------
-// IP type socket (base class)
+// IP socket (RAW IP type)
 //---------------------------------------------
 
 class SocketIP : public Socket
 	{
 	public:
-		SocketIP();
-		virtual ~SocketIP() {}
-
-		SocketIP                   (const SockAddr& sa);
-		virtual bool    SetSockAddr (const SockAddr& sa);
-
-		SocketIP    		        (const IPAddr& ip, int port);
+	    virtual ~SocketIP() {}
+	    SocketIP() : Socket() {}
+	    SocketIP(const SockAddr& sa) : Socket() {SetSockAddr(sa);}
+	    SocketIP(const IPAddr& ip, int port) : Socket() {SetSockAddr(ip, port);}
+		
 		bool            SetSockAddr	(const IPAddr& ip, int port) {return SetSockAddr(SockAddr(ip, port));}
+		virtual bool    SetSockAddr (const SockAddr& sa);
+		
+		bool	Write       (const char* source, int len);
 
-		bool 			EnsureNextHopReachable(string* errmsg = NULL);
+		struct Buffer {const void* ptr; int len; Buffer(const void* ptrArg = NULL, int lenArg = 0) : ptr(ptrArg), len(lenArg) {}};
+		bool	MultiWrite  (const Buffer* buffers, int count);
+
+		// Returns true when the socket has data. Returns false if an error or a timeout occurs.	   
+		bool    HasData     (int timeoutInMS = kInfinite); 
+
+		// Discards everything that's in the receive queue
+		bool    Discard     ();
+
+        // For SocketUDPClient, reads must only be done after writes (since writing sets the local port). 
+		// Use the SocketUDPServer if you're making a server. This binds the local port during initialization
+		bool    Read        (char* buffer, int buflen, int* bytesRead = NULL);
+		bool    Read        (char* buffer, int buflen, SockAddr* srcAddr, int* bytesRead = NULL); // Returns the receiving socket
+
 
 	protected:
-	    SockAddr    iSockAddr;
+	    SockAddr        iSockAddr;
+		virtual int     GetIPtype() const {return SOCK_RAW;}
+		virtual int     GetIPproto() const {return IPPROTO_IP;}
 
     private:
 		// Disallow copying
@@ -83,24 +99,61 @@ class SocketIP : public Socket
 	};
 
 //---------------------------------------------
+// ICMP type socket
+//---------------------------------------------
+
+class SocketICMP : public SocketIP
+	{
+	public:
+     	SocketICMP() : SocketIP() {}
+		virtual ~SocketICMP() {}
+
+		SocketICMP (const SockAddr& sa) : SocketIP(sa) {}
+		SocketICMP (const IPAddr& ip, int port) : SocketIP(ip, port) {}
+
+	protected:
+		virtual int     GetIPtype() const {return SOCK_DGRAM;}
+		virtual int     GetIPproto() const {return IPPROTO_ICMP;}
+
+    private:
+		// Disallow copying
+		SocketICMP(const SocketICMP&);
+		const SocketICMP& operator=(const SocketICMP&);
+	};
+
+//---------------------------------------------
+// UDP type socket (base class)
+//---------------------------------------------
+
+class SocketUDP : public SocketIP
+	{
+	public:
+		virtual ~SocketUDP() {}
+     	SocketUDP() : SocketIP() {}
+		SocketUDP(const SockAddr& sa) : SocketIP(sa) {}
+		SocketUDP(const IPAddr& ip, int port) : SocketIP(ip, port) {}
+
+	protected:
+		virtual int     GetIPtype() const {return SOCK_DGRAM;}
+		virtual int     GetIPproto() const {return IPPROTO_UDP;}
+
+    private:
+		// Disallow copying
+		SocketUDP(const SocketUDP&);
+		const SocketUDP& operator=(const SocketUDP&);
+	};
+
+//---------------------------------------------
 // SocketUDPClient
 //---------------------------------------------
 
-class SocketUDPClient : public SocketIP
+class SocketUDPClient : public SocketUDP
 	{
 	public:
-		SocketUDPClient() : SocketIP() {}
-		SocketUDPClient(const SockAddr& sa) : SocketIP(sa) {}
-		SocketUDPClient(const IPAddr& ip, int port) : SocketIP(ip, port) {}
-
-		bool	Write       (const char* source, int len);
-
-		struct Buffer {const void* ptr; int len; Buffer(const void* ptrArg = NULL, int lenArg = 0) : ptr(ptrArg), len(lenArg) {}};
-		bool	MultiWrite  (const Buffer* buffers, int count);
-
-        // For SocketUDPClient, reads must only be done after writes (since writing sets the local port). Use the SocketUDPServer if you're making a server.
-		bool    Read        (char* buffer, int buflen, int* bytesRead = NULL);
-		bool    HasData     (int timeoutInMS = kInfinite); // Returns true when the socket has data. Returns false if an error or a timeout occurs.
+		virtual ~SocketUDPClient() {}
+		SocketUDPClient() : SocketUDP() {}
+		SocketUDPClient(const SockAddr& sa) : SocketUDP(sa) {}
+		SocketUDPClient(const IPAddr& ip, int port) : SocketUDP(ip, port) {}
 
 	private:
 		// Disallow copying
@@ -113,26 +166,19 @@ class SocketUDPClient : public SocketIP
 // SocketUDPServer
 //---------------------------------------------
 
-class SocketUDPServer : public SocketIP
+class SocketUDPServer : public SocketUDP
 	{
 	public:
-		SocketUDPServer() : SocketIP() {}
-		SocketUDPServer(const SockAddr& sa);
-        SocketUDPServer(const IPAddr& ip, int port);
-		SocketUDPServer(int port);
+		virtual ~SocketUDPServer() {}
+		SocketUDPServer() : SocketUDP() {}
+		SocketUDPServer(const SockAddr& sa) : SocketUDP(sa) {}
+		SocketUDPServer(const IPAddr& ip, int port) : SocketUDP(ip, port) {}
+	    SocketUDPServer(int port) : SocketUDP(IPAddr((uint32)INADDR_ANY), port) {}
 
+        // Need to override this because we bind the socket rather than simply open it
 		virtual bool SetSockAddr(const SockAddr& sa);
 
-        // Reads a UDP packet.
-		bool    Read        (char* buffer, int buflen, int* bytesRead = NULL);
-		bool    HasData     (int timeoutInMS = kInfinite); // Returns true when the socket has data. Returns false if an error or a timeout occurs.
-
-        // Writes (TBD)
-        // These need to write to the address that was most recently read from
-
 	private:
-	    SockAddr iLastSockAddr; // The sockaddr of the last packet received
-
 		// Disallow copying
 		SocketUDPServer(const SocketUDPServer&);
 		const SocketUDPServer& operator=(const SocketUDPServer&);
