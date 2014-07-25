@@ -24,8 +24,9 @@ public:
 
     static const int kVariable = -1;
     // Returns false if an error occurred and a help message was printed.
-    // numPositionArgs is the number of positional arguments after the options. Use kVariable if it can be any number of arguments..
-    static void ParseArglist(int *argc, char** argv, int numPositionArgs = 0);
+    // minPositionArgs is the minimum number of positional arguments after the options. Use kVariable if it can be any number of arguments..
+    // maxPositionArgs is the maximum number of positional arguments after the options. Defaults to minPositionalArgs
+    static void ParseArglist(int *argc, char** argv, int minPositionArgs = 0, int maxPositionalArgs = -1);
     static bool DeleteOption(csref name);
     static bool Exists(csref name);
 private:

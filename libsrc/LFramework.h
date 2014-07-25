@@ -44,7 +44,10 @@ extern bool         gTerminateNow;
 // Standard loop functions
 typedef void (*ObjCallback_t)   (Lobj* obj);    // Called for each object during L::Run
 typedef void (*GroupCallback_t) (Lgroup* obj);  // Called once for the group at the end of L::Run
- void Startup(int *argc, char** argv, int minPositionalArgs = 0, int maxPositionalArgs = minPositionalArgs);
+
+// This handles all of the startup functions. minPositionalArgs may be kVariable if any number of positional args are allowed or you can specify a range. 
+// If maxPositionalArgs is not specified is defaulted to the value of minPositionalArgs
+void Startup(int *argc, char** argv, int minPositionalArgs = 0, int maxPositionalArgs = -1);
 //void Startup(); // Must have already initialized gOutputBuffer to call this one
 void Run(Lgroup& objgroup, ObjCallback_t fcn = NULL, GroupCallback_t gfcn = NULL); // Delay between renders is based on gFrameDuration
 void RunOnce(Lgroup& objgroup);                // No delays built in

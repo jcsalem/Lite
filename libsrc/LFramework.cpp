@@ -185,8 +185,6 @@ string FadeCallback(csref name, csref val) {
 
 DefOption(fade, FadeCallback, "fadeduration", "sets the fade in and out in time seconds.", FadeDefaultCallback);
 
-
-
 //---------------------------------------------------------------
 // Startup
 //---------------------------------------------------------------
@@ -197,9 +195,9 @@ void ErrorExit(csref msg) {
     exit(EXIT_FAILURE);
     }
 
-void Startup(int *argc, char** argv, int numPositionalArgs) {
+  void Startup(int *argc, char** argv, int minPositionalArgs, int maxPositionalArgs) {
     // Parse the argument list
-    Option::ParseArglist(argc, argv, numPositionalArgs);
+    Option::ParseArglist(argc, argv, minPositionalArgs, maxPositionalArgs);
 
     // Create the OutputBuffer
     if (gOutputDeviceArg.empty()) 

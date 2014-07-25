@@ -218,7 +218,9 @@ string RemoveDir(csref str) {
 }
 
 // Static (aka global) function for parsing arglist
-void Option::ParseArglist(int *argc, char** argv, int numPositionalArgs) {
+void Option::ParseArglist(int *argc, char** argv, int minPositionalArgs, int maxPositionalArgs) {
+    if (maxPositionalArgs < 0) maxPositionalArgs = minPositionalArgs;
+
     if (argc > 0 && argv != NULL && argv[0] != NULL) {
         ProgramHelp(kPHprogram, RemoveDir(argv[0]));
         ++argv;
@@ -255,15 +257,15 @@ void Option::ParseArglist(int *argc, char** argv, int numPositionalArgs) {
     }
 
     // The remaining arguments must be positional
-    if (numPositionalArgs != kVariable
-        && numPositionalArgs + 1 != *argc
-        && !(numPositionalArgs == 0 && *argc == 0) // edge case for services
+    if (minPositionalArgs != kVariable
+        && !(minPositionalArgs == 0 && *argc == 0) // edge case for services
         ) {
-        if (*argc < numPositionalArgs +1 )
-            phErrorExit("Not enough parameters.", false);
-        else
-            phErrorExit("Too many parameters starting with: " + arg);
-        }
+	  // Need to check count of positional arguments
+	  if (minPositionalArgs + 1 < *argc)
+		phErrorExit("Not enough parameters.", false);
+	  else if (maxPositionalArgs + 1 > *argc)
+		phErrorExit("Too many parameters starting with: " + arg);
+	  }
 
     // Everything checks out.  argv points to any remaining positional arguments
    }
