@@ -261,9 +261,9 @@ void Option::ParseArglist(int *argc, char** argv, int minPositionalArgs, int max
         && !(minPositionalArgs == 0 && *argc == 0) // edge case for services
         ) {
 	  // Need to check count of positional arguments
-	  if (minPositionalArgs + 1 < *argc)
+	  if (minPositionalArgs + 1 > *argc)
 		phErrorExit("Not enough parameters.", false);
-	  else if (maxPositionalArgs + 1 > *argc)
+	  else if (maxPositionalArgs + 1 < *argc)
 		phErrorExit("Too many parameters starting with: " + arg);
 	  }
 
