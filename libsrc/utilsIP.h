@@ -26,8 +26,6 @@ class IPAddr
         bool operator==(const IPAddr& ip) const     {return iIP == ip.iIP;}
         bool operator!=(const IPAddr& ip) const     {return !(*this == ip);}
 
-	bool InARPCache(bool defaultValue = false) const; // returns true if the IP is in the arp cache.  Returns defaultValue if it's can't be determined.
-
     private:
         void Init(const char* name);
         uint32 iIP;
@@ -59,5 +57,13 @@ class SockAddr
 		int 				iPort;
 		struct sockaddr_in	iStruct;
     };
+
+#ifdef WIN32
+// Win32
+#define SINADDR_TO_IP(_sa_addr) (_sa_addr.S_un.S_addr)
+#else
+// Mac and Linux
+#define SINADDR_TO_IP(_sa_addr) (_sa_addr.s_addr)
+#endif
 
 #endif // utilsIP_H
