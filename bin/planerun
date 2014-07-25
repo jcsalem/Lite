@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ -z "$LDEV" ]; then
-	export LDEV="flip|strip:A,strip:B"
+	export LDEV="plane[flip|strip:A,strip:B]"
 fi
 
 if [ -e /boot/planerun ]; then
@@ -20,28 +20,24 @@ echo "LDEV=$LDEV"
 set -x
 
 while true; do
-$DIR/Ltool --time 7 --rate 1.0 rotate red
-$DIR/Ltool --time 6 --rate 1.5 rotate white
-$DIR/Ltool --time 5 --rate 2.25 rotate blue
-$DIR/Ltool --time 4 --rate 3.375 rotate white
-$DIR/Ltool --time 3 --rate 5.0625 rotate white
+$DIR/Ltool --time 7 --rate 1.5 bounce red
+$DIR/Ltool --time 6 --rate 2 bounce white
+$DIR/Ltool --time 5 --rate 2.5 bounce blue
 
-$DIR/Ltool --time 5 --fade 2 plane
+$DIR/Ltool --time 7 --fade 2 plane
 
-$DIR/Ltool --time 8 rotwash red red
-$DIR/Ltool --time 8 rotwash "HSV(-.15,1,1)" "HSV(1.15,1,1)"
-
-$DIR/Ltool --time 10 --rate 2 rotwash red red
-$DIR/Ltool --time 10 --rate 3 rotwash red red
-$DIR/Ltool --time  5 --rate 4 rotwash red red
-$DIR/Ltool --time  5 --rate 5 rotwash red red
-
-$DIR/Ltool --time 10 --rate 2 --filter skip2 rotwash red red
-
-$DIR/Lfirefly --time 20 --rate 3 --color bright
+$DIR/Ltool --time 16 rotwash red red
+$DIR/Ltool --time 16 --rate -1 rotwash red red
 
 $DIR/Ltool --time 20 --fade 3 plane
 
-$DIR/Lstarry --time 15 --fade 2 --density .1 --sparklerate 20
+$DIR/Lflash --time 5 --rate 1 
+$DIR/Lflash --time 5 --rate 2 
+$DIR/Lflash --time 5 --rate 1 --duty .1
+$DIR/Lflash --time 2 --rate 2 --duty .1 red
+$DIR/Lflash --time 2 --rate 2 --duty .1 white
+$DIR/Lflash --time 2 --rate 2 --duty .1 blue
+
+$DIR/Lstarry --time 10 --fade 2 --density .1 --sparklerate 20
 
 done

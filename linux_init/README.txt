@@ -1,17 +1,15 @@
 To install this startup script on Debian server:
- update-rc.d literun defaults
-OR 
- update-rc.d liteberryrun defaults
+ sudo cp <script> /etc/init.d
+ sudo chmod +x <script> /etc/init.d/<script>
+ sudo update-rc.d <script> defaults
+Where <script> is literun or liteberryrun
 
 To Test
- literun start
+ /etc/init.d literun start
 OR
  sudo liteberryrun start
 OR 
  same but stop or restart
 
-Does this work??
- update-rc.d literun multiuser
-
 To remove
- update-rc.d literun remote
+ sudo update-rc.d <sudo> remote

@@ -30,7 +30,7 @@ return $RETVAL
 
 stop() {
 echo -n ""Stopping Lightberryrun $SCRIPTNAME: ""
-pkill -f dandrun
+pkill -f planerun
 RETVAL=$?
 echo
 [ $RETVAL -eq 0 ] && echo -n ""done""
