@@ -45,7 +45,8 @@ DefProgramHelp(kPHhelp, "command is one of:\n"
                "    set idx color\n"
                "    wash color1 color2\n"
 	       "    plane\n"
-               "  color is \"r,g,b\" or \"HSV(h,s,v)\" or a named color, etc.  All components are scaled from 0.0 to 1.0"
+               "  color is \"r,g,b\" or \"HSV(h,s,v)\" or a named color, etc.  All components are scaled from 0.0 to 1.0\n"
+	       "  color arguments are optional and default to white for single color commands and red-to-red for wash commands"
               );
 
 typedef enum {kStatic, kRotate, kBounce} Mode_t;

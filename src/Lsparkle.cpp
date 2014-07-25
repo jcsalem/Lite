@@ -58,7 +58,7 @@ void SparkleGlobalCallback(Lgroup* objgroup)
 // Main loop
 //----------------------------------------------------------------
 
-DefProgramHelp(kPHprogram, "cksparkle");
+DefProgramHelp(kPHprogram, "Lsparkle");
 DefProgramHelp(kPHusage, "Displays a sparkly effect.");
 
 int main(int argc, char** argv)

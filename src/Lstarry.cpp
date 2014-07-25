@@ -10,7 +10,7 @@
 #include <iostream>
 #include <stdio.h>
 
-DefProgramHelp(kPHprogram, "ckstarry");
+DefProgramHelp(kPHprogram, "Lstarry");
 DefProgramHelp(kPHusage, "Displays a starry night effect.");
 
 //----------------------------------------------------------------

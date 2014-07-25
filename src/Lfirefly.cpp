@@ -203,7 +203,7 @@ void FireflyLoop()
     }
 }
 
-DefProgramHelp(kPHprogram, "ckfirefly");
+DefProgramHelp(kPHprogram, "Lfirefly");
 DefProgramHelp(kPHusage, "Display a firefly effect");
 
 int main(int argc, char** argv)
