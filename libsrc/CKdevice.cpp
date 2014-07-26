@@ -189,19 +189,24 @@ string CKdevice::GetDescriptor() const
     return r;
 }
 
+bool CKdevice::MaybeOpenSocket()
+{
+  if (iSocket.IsOpen())
+    return true;
+  
+  SockAddr sa(iIP, KiNETudpPort);
+  iSocket.SetSockAddr(sa);
+  if (! iSocket.HasError() && iSocket.IsOpen())
+    return true;
+
+  iLastError = "Error opening socket for " + GetDescriptor() + ": " + iSocket.GetLastError();
+  cerr << iLastError << endl;
+  return false;
+}
+
 bool CKdevice::Write(const unsigned char* buffer, int len)
 {
-    if (! iSocket.IsOpen())
-    {
-        SockAddr sa(iIP, KiNETudpPort);
-        iSocket.SetSockAddr(sa);
-        if (iSocket.HasError() || !iSocket.IsOpen())
-        {
-            iLastError = "Error opening socket for " + GetDescriptor() + ": " + iSocket.GetLastError();
-            cerr << iLastError << endl;
-            return false;
-        }
-    }
+    if (! MaybeOpenSocket()) return false;
 
     iSocket.Write((const char*) buffer, len);
     //cout << "Wrote " << len << " bytes" << endl;
@@ -215,6 +220,47 @@ bool CKdevice::Write(const unsigned char* buffer, int len)
 
     return !HasError();
 }
+
+const int gTimeBetweenPings = 30;  // In MS.  My PDS responds after 21-23ms typically
+
+// This is returns true if we're able to ping the CKdevice. 
+// Unfortunately, if there is more than one CKdevice, all the responses go to the first one's socket!  
+// So this isn't terribly useful for the general case
+bool CKdevice::Ping(int timeout, int numPings) 
+{
+  if (! MaybeOpenSocket()) return false;
+
+  KiNETdiscover pollPacket;
+  const int buflen = 1000;
+  char buffer[buflen];
+  int bytesRead = 0;
+  
+  int lastTimeout = (timeout == Socket::kInfinite) ? Socket::kInfinite : timeout - (numPings-1) * gTimeBetweenPings;
+  if (lastTimeout <= 0) lastTimeout = 2;
+  
+  bool success = false;
+  //Milli_t startTime = Milliseconds();
+  while (numPings--) 
+    {
+      if (! Write((unsigned char*) &pollPacket, pollPacket.GetSize())) {
+	cerr << "Write error: " << iLastError << endl;
+	break;
+      }
+      if (iSocket.HasData(17)) //numPings ? gTimeBetweenPings : lastTimeout)) {
+      {
+	iSocket.Read(buffer, buflen, &bytesRead);
+	success = true;
+	break;
+      }
+    }
+  //  Milli_t timeDiff = MilliDiff(Milliseconds(), startTime);
+  //if (success)
+  //  cout << "Ping ACK after " << timeDiff << " ms" << endl;
+  //else
+  //  cerr << "Ping Fail" << endl;
+  return success;
+}
+
 
 //---------------------------------------------------------------------
 // Polling the CK devices on the network

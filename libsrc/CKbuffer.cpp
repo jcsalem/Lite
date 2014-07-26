@@ -158,6 +158,7 @@ LBuffer* CKbufferCreate(csref devstr, string* errmsg)
         if (errmsg) *errmsg = "Couldn't create CKbuffer: zero lights";
         return NULL;
     }
+
     return new CKbuffer(dev);
 }
 

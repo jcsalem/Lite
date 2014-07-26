@@ -54,6 +54,9 @@ public:
     void        SetKiNetVersion(int version)    {iKiNetVersion = version;}
     bool        UpdateKiNetVersion(string* errmsg = NULL);           // Ask the light what version it is
 
+    // Attempts to contact the CK device. Returns true if it succeeds. See comments in source why this isn't very useful.
+    bool        Ping(int timeout = 50, int numPings = 2);  
+
     // Writes a KiNET UDP packet to this device
     bool        Write(const unsigned char* buffer, int len);
 
@@ -70,6 +73,7 @@ private:
     // Used to manage communication
     SocketUDPClient iSocket;
     string          iLastError;
+    bool            MaybeOpenSocket();
 };
 
 // Getting information about the connected CK devices

@@ -252,9 +252,9 @@ void Run(Lgroup& objGroup, L::ObjCallback_t objfcn, L::GroupCallback_t groupfcn)
 
     // Handle fade effect (this should really be automated from a list of filters added during arg parsing
     if (gFade > 0) {
-        gProcs.AddProc(LprocFadeIn(false,gStartTime, gStartTime + gFade * 1000));
+        gProcs.AddProc(LprocFadeIn(true,gStartTime, gStartTime + gFade * 1000));
         if (gEndTime)
-            gProcs.AddProc(LprocFadeOut(false,gEndTime - gFade * 1000, gEndTime));
+            gProcs.AddProc(LprocFadeOut(true,gEndTime - gFade * 1000, gEndTime - 1));
     }
 
     // If callback, install it
