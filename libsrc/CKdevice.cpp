@@ -221,6 +221,32 @@ bool CKdevice::Write(const unsigned char* buffer, int len)
     return !HasError();
 }
 
+//---------------------------------------------------------------------
+// Prime the UDP connection
+//---------------------------------------------------------------------
+// Early UDP packets may be dropped if the connection is not in the ARP tables.  [Or even if it is in some cases.]
+// This happened on both Windows and Linux.
+// This can cause some single frame displays to fail. This code "primes" the ARP tables etc.
+
+#include <set>
+set<IPAddr> gInitializedIPs;
+const int gUDPInitDelay = 10;  // Smount of time to wait for the UDP connection to be initialized
+void CKdevice::InitializeUDPConnection()
+{
+  if (gInitializedIPs.find(iIP) != gInitializedIPs.end()) return;
+  cout << "Once" << endl;
+  // Sends a single Poll packet and sleeps.  Uses a separate socket to not interfere with other sockets?
+  SocketUDPClient socket(iIP, KiNETudpPort);
+  KiNETdiscover pollPacket;
+  Write((unsigned char*) &pollPacket, pollPacket.GetSize());
+  SleepMilli(gUDPInitDelay);
+  gInitializedIPs.insert(iIP);
+}
+  
+//---------------------------------------------------------------------
+// Pinging (not used)
+//---------------------------------------------------------------------
+
 const int gTimeBetweenPings = 30;  // In MS.  My PDS responds after 21-23ms typically
 
 // This is returns true if we're able to ping the CKdevice. 

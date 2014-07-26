@@ -25,7 +25,7 @@ class IPAddr
 
         bool operator==(const IPAddr& ip) const     {return iIP == ip.iIP;}
         bool operator!=(const IPAddr& ip) const     {return !(*this == ip);}
-
+	bool operator< (const IPAddr& ip) const	    {return iIP < ip.iIP;} // for set/map usage
     private:
         void Init(const char* name);
         uint32 iIP;

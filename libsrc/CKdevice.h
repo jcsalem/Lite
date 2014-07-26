@@ -56,6 +56,7 @@ public:
 
     // Attempts to contact the CK device. Returns true if it succeeds. See comments in source why this isn't very useful.
     bool        Ping(int timeout = 50, int numPings = 2);  
+    void        InitializeUDPConnection();
 
     // Writes a KiNET UDP packet to this device
     bool        Write(const unsigned char* buffer, int len);

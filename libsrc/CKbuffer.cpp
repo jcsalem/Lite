@@ -121,9 +121,6 @@ void UpdateOneCKv2(CKdevice& device, LBuffer::const_iterator bufIter)
       }
     }
 
-// IMPORTANT: Early UDP packets may be dropped if the connection is not in the ARP tables.
-// This can cause some single frame displays to fail.
-
 bool CKbuffer::Update()
     {
     const_iterator bufIter = const_cast<const CKbuffer*>(this)->begin();
@@ -158,6 +155,9 @@ LBuffer* CKbufferCreate(csref devstr, string* errmsg)
         if (errmsg) *errmsg = "Couldn't create CKbuffer: zero lights";
         return NULL;
     }
+
+    // Prime the UDP connection
+    dev.InitializeUDPConnection();
 
     return new CKbuffer(dev);
 }
