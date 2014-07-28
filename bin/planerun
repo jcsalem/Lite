@@ -5,7 +5,6 @@ if [ -z "$LDEV" ]; then
 fi
 
 THISDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-echo $THISDIR
 if [ $THISDIR == "/boot" ]; then
   DIR="/home/pi/lite/build/bin"
 else
