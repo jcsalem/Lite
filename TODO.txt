@@ -1,7 +1,7 @@
 ** Bugs **
 --rate broken/confusing on Lsparkle (Lstarry doc is wrong)
-Faster sparkler
 
 ** New **
-Lflash executable (optional args for --color=white --duty=50% --period=1sec).  Do sparkles with this code?
 --FadeIn and --FadeOut std args
+Options to Sparkle filter
+Lchase (like rotate but any number of items)

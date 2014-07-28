@@ -4,39 +4,48 @@ if [ -z "$LDEV" ]; then
 	export LDEV="plane|[flip|strip:A,strip:B]"
 fi
 
-if [ -e /boot/planerun ]; then
-    echo "Sourcing /boot/planerun"
-    source /boot/planerun
-    exit 1
+THISDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+echo $THISDIR
+if [ $THISDIR == "/boot" ]; then
+  DIR="/home/pi/lite/build/bin"
+else
+    if [ -e /boot/planerun ]; then
+	echo "Sourcing /boot/planerun"
+	source /boot/planerun
+	exit 1
+    fi
+    DIR=`dirname $THISDIR`
+    DIR="$DIR/build/bin"
 fi
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-DIR=`dirname $DIR`
-DIR="$DIR/build/bin"
-#DIR="/home/pi/lite/build/bin"
-
 echo "LDEV=$LDEV"
+echo "DIR=$DIR"
 
 set -x
 
 while true; do
-$DIR/Ltool --time 7 --rate 1.5 bounce red
-$DIR/Ltool --time 6 --rate 2 bounce white
-$DIR/Ltool --time 5 --rate 2.5 bounce blue
+$DIR/Ltool --time 7 --rate 1.5 rotate red
+$DIR/Ltool --time 6 --rate 2   rotate white
+$DIR/Ltool --time 5 --rate 2.5 rotate blue
 
 $DIR/Ltool --time 7 --fade 2 plane
 
 $DIR/Ltool --time 16 rotwash red red
-$DIR/Ltool --time 16 --rate -1 rotwash red red
+$DIR/Ltool --time 16 --rate -1 rotwash blue blue
+
+$DIR/Ltool --time 15 --filter sparkle clear
 
 $DIR/Ltool --time 20 --fade 3 plane
 
 $DIR/Lflash --time 5 --rate 1 
 $DIR/Lflash --time 5 --rate 2 
-$DIR/Lflash --time 5 --rate 1 --duty .1
-$DIR/Lflash --time 2 --rate 2 --duty .1 red
-$DIR/Lflash --time 2 --rate 2 --duty .1 white
-$DIR/Lflash --time 2 --rate 2 --duty .1 blue
+$DIR/Lflash --time 5 --rate .5 --density .1
+$DIR/Lflash --time 5 --rate 1 --density .1
+$DIR/Lflash --time 2 --rate 2 --density .1 red
+$DIR/Lflash --time 2 --rate 2 --density .1 white
+$DIR/Lflash --time 2 --rate 2 --density .1 blue
+
+$DIR/Ltool --time 15 --fade 1 plane
 
 $DIR/Lstarry --time 10 --fade 2 --density .1 --sparklerate 20
 
