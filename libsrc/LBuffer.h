@@ -13,8 +13,8 @@ class LBuffer
     friend class LBufferConstIter;
     friend class ComboBuffer;
     friend class ReverseBuffer;
-    friend class LBufferMap;
-    friend class PlaneNavigationBuffer;
+    friend class LFilter;
+    friend class LMapFilter;
   public:
     // Creating new LBuffers
     // The descriptor is of the format:  <type>:<details> where type defines the type of the LBuffer. Colon is optional if there are reasonable defaults
