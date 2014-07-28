@@ -234,7 +234,6 @@ const int gUDPInitDelay = 10;  // Smount of time to wait for the UDP connection 
 void CKdevice::InitializeUDPConnection()
 {
   if (gInitializedIPs.find(iIP) != gInitializedIPs.end()) return;
-  cout << "Once" << endl;
   // Sends a single Poll packet and sleeps.  Uses a separate socket to not interfere with other sockets?
   SocketUDPClient socket(iIP, KiNETudpPort);
   KiNETdiscover pollPacket;

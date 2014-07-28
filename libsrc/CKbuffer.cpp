@@ -170,7 +170,7 @@ LBuffer* CKbufferAutoCreate(csref descriptorArg, string* errmsg) {
 
     vector<CKdevice> devices = CKdiscoverDevices(errmsg);
     if (devices.empty()) {
-        if (errmsg) *errmsg = "Didn't detect any ColorKinetics devices.";
+        if (errmsg) *errmsg = "Didn't detect any ColorKinetics devices: " + *errmsg;
         return NULL;
     }
 

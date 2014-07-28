@@ -67,7 +67,7 @@ class SocketIP : public Socket
 	    SocketIP(const SockAddr& sa) : Socket() {SetSockAddr(sa);}
 	    SocketIP(const IPAddr& ip, int port) : Socket() {SetSockAddr(ip, port);}
 		
-		bool            SetSockAddr	(const IPAddr& ip, int port) {return SetSockAddr(SockAddr(ip, port));}
+	    virtual bool    SetSockAddr	(const IPAddr& ip, int port) {return SetSockAddr(SockAddr(ip, port));}
 		virtual bool    SetSockAddr (const SockAddr& sa);
 		
 		bool	Write       (const char* source, int len);
@@ -108,8 +108,8 @@ class SocketICMP : public SocketIP
      	SocketICMP() : SocketIP() {}
 		virtual ~SocketICMP() {}
 
-		SocketICMP (const SockAddr& sa) : SocketIP(sa) {}
-		SocketICMP (const IPAddr& ip, int port) : SocketIP(ip, port) {}
+		SocketICMP (const SockAddr& sa) : SocketIP() {SetSockAddr(sa);}
+		SocketICMP (const IPAddr& ip, int port) : SocketIP() {SetSockAddr(ip,port);}
 
 	protected:
 		virtual int     GetIPtype() const {return SOCK_DGRAM;}
@@ -130,8 +130,8 @@ class SocketUDP : public SocketIP
 	public:
 		virtual ~SocketUDP() {}
      	SocketUDP() : SocketIP() {}
-		SocketUDP(const SockAddr& sa) : SocketIP(sa) {}
-		SocketUDP(const IPAddr& ip, int port) : SocketIP(ip, port) {}
+	    SocketUDP(const SockAddr& sa) : SocketIP() {SetSockAddr(sa);}
+	    SocketUDP(const IPAddr& ip, int port) : SocketIP() {SetSockAddr(ip, port);}
 
 	protected:
 		virtual int     GetIPtype() const {return SOCK_DGRAM;}
@@ -171,13 +171,13 @@ class SocketUDPServer : public SocketUDP
 	public:
 		virtual ~SocketUDPServer() {}
 		SocketUDPServer() : SocketUDP() {}
-		SocketUDPServer(const SockAddr& sa) : SocketUDP(sa) {}
-		SocketUDPServer(const IPAddr& ip, int port) : SocketUDP(ip, port) {}
-	    SocketUDPServer(int port) : SocketUDP(IPAddr((uint32)INADDR_ANY), port) {}
+	    SocketUDPServer(const SockAddr& sa) : SocketUDP() {SetSockAddr(sa);}
+	    SocketUDPServer(const IPAddr& ip, int port) : SocketUDP() {SetSockAddr(ip, port);}
+	    //SocketUDPServer(int port) : SocketUDP() {SetSockAddrIPAddr((uint32)INADDR_ANY), port);}
 
         // Need to override this because we bind the socket rather than simply open it
 		virtual bool SetSockAddr(const SockAddr& sa);
-
+		virtual bool SetSockAddr(const IPAddr& ip, int port) {SetSockAddr(SockAddr(ip, port));}
 	private:
 		// Disallow copying
 		SocketUDPServer(const SocketUDPServer&);
