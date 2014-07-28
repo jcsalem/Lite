@@ -19,8 +19,8 @@ Milli_t     gStartTime;              // Loop start time
 Milli_t     gEndTime;                // Ending time (set to gTime to end prematurely)
 bool        gTerminateNow;           // Set to exit asap
 
-// Not externally accessible
-Milli_t     gFrameDuration  = 40;    // duration of each frame of animation (in MS)
+// Not externally setable
+Milli_t     gFrameDuration  = 20;    // duration of each frame of animation (in MS)
 LprocList   gProcs;
 
 
@@ -196,6 +196,9 @@ void ErrorExit(csref msg) {
     }
 
   void Startup(int *argc, char** argv, int minPositionalArgs, int maxPositionalArgs) {
+    // Set up time variables
+    gStartTime  = gTime = Milliseconds();
+
     // Parse the argument list
     Option::ParseArglist(argc, argv, minPositionalArgs, maxPositionalArgs);
 
@@ -220,9 +223,6 @@ void ErrorExit(csref msg) {
 
     if (gVerbose)
         cout << gOutputBuffer->GetDescription() << endl;
-
-    // Set up time variables
-    gStartTime  = gTime = Milliseconds();
 }
 
 void Cleanup(bool eraseAtEnd)
@@ -236,11 +236,13 @@ void Cleanup(bool eraseAtEnd)
     }
 }
 
-void RunOnce(Lgroup& objGroup) {
-    gTime = Milliseconds();
-    gOutputBuffer->Clear();
-    objGroup.RenderAll(gTime, gProcs, gOutputBuffer);
-    gOutputBuffer->Update();
+void RunOnce(Lgroup& objGroup, GroupCallback_t groupfcn)
+{
+  gTime = Milliseconds();
+  if (groupfcn) groupfcn(&objGroup);
+  gOutputBuffer->Clear();
+  objGroup.RenderAll(gTime, gProcs, gOutputBuffer);
+  gOutputBuffer->Update();
 }
 
 void Run(Lgroup& objGroup, L::ObjCallback_t objfcn, L::GroupCallback_t groupfcn)
@@ -265,17 +267,16 @@ void Run(Lgroup& objGroup, L::ObjCallback_t objfcn, L::GroupCallback_t groupfcn)
 
     // Main loop
     while (true) {
-        RunOnce(objGroup);
-        if (groupfcn) groupfcn(&objGroup);
+	  RunOnce(objGroup, groupfcn);
 
-        // Exit if out of time, else delay until next frame
-        if (gTerminateNow) break;
-        Milli_t currentTime = Milliseconds();
-        if (gEndTime != 0 && MilliLE(gEndTime, currentTime)) break;
-
-        Milli_t elapsedSinceFrameStart = MilliDiff(currentTime, gTime);
-        if (gFrameDuration > elapsedSinceFrameStart)
-            SleepMilli(gFrameDuration - elapsedSinceFrameStart);
+	  // Exit if out of time, else delay until next frame
+	  if (gTerminateNow) break;
+	  Milli_t currentTime = Milliseconds();
+	  if (gEndTime != 0 && MilliLE(gEndTime, currentTime)) break;
+	  
+	  Milli_t elapsedSinceFrameStart = MilliDiff(currentTime, gTime);
+	  if (gFrameDuration > elapsedSinceFrameStart)
+		SleepMilli(gFrameDuration - elapsedSinceFrameStart);
     }
 }
 

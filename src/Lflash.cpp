@@ -5,6 +5,7 @@
 #include "Color.h"
 #include "Lobj.h"
 #include "LFramework.h"
+#include <iostream>
 
 DefProgramHelp(kPHprogram, "Lflash");
 DefProgramHelp(kPHusage, "Flashs all the lights");
@@ -17,21 +18,21 @@ float gFlashSpeedFactor = .25;  // Default is 4 times per second
 // Option definitions
 //----------------------------------------------------------------
 
-float       gDuty        = 0.5;  // Average duty cycle of lights
+float       gDensity        = 0.25;  // Average duty cycle of lights
 
-string DutyCallback(csref name, csref val) {
-    if (! StrToFlt(val, &gDuty))
+string DensityCallback(csref name, csref val) {
+    if (! StrToFlt(val, &gDensity))
         return "--duty wasn't a number: " + val;
-    if (gDuty <= 0 || gDuty > 1)
+    if (gDensity <= 0 || gDensity > 1)
         return "--duty argument must be between 0 and 1. Was " + val;
     return "";
 }
 
-string DutyDefaultCallback(csref name) {
-    return FltToStr(gDuty);
+string DensityDefaultCallback(csref name) {
+    return FltToStr(gDensity);
 }
 
-DefOption(duty, DutyCallback, "duty", "The fraction of time the lights are on from 0 to 1. Default is 0.5.", DutyDefaultCallback);
+DefOption(density, DensityCallback, "density", "The fraction of time the lights are on from 0 to 1. Default is 0.25.", DensityDefaultCallback);
 
 //enum {kFlash, kAccelerate, kSinusoidal} gFlashMode; 
 
@@ -42,13 +43,30 @@ DefOption(duty, DutyCallback, "duty", "The fraction of time the lights are on fr
 Color* gColor = new WHITE;      // Always set
 Color* gBlack = new BLACK;
 
-Milli_t gStartTime;
 Milli_t gPeriod;
+Milli_t gLastPeriodStart;
+bool gFlashOn = true;
+
+void FlashGroupCallback(Lgroup* ignore)
+{
+  Milli_t timediff = MilliDiff(L::gTime, gLastPeriodStart);
+  if (L::gEndTime != 0 && MilliGE(L::gTime + L::gFrameDuration, L::gEndTime))
+    // Off if this is the last frame
+    gFlashOn = false;
+  else if (timediff > gPeriod)
+    {
+      // On if we're starting a new cycle
+      gFlashOn = true;
+      gLastPeriodStart = L::gTime;
+    }
+  else if (timediff > gPeriod * gDensity)
+    // Off if it's too late in the current cycle
+    gFlashOn = false;
+}
 
 void FlashCallback(Lobj* obj)
 {
-  Milli_t elapsed = MilliDiff(obj->nextTime, gStartTime);
-  if (elapsed % gPeriod < gPeriod * gDuty)
+  if (gFlashOn)
     obj->color = *gColor;
   else
     obj->color = *gBlack;
@@ -56,11 +74,12 @@ void FlashCallback(Lobj* obj)
 
 Lobj* FlashAlloc(int idx, const void* ignore) 
 {
-    Lobj* obj = new Lobj(L::gTime);
+  Lobj* obj = new Lobj();
     obj->pos.x = idx;
     obj->color = *gColor;
     return obj;
 }
+
 
 //----------------------------------------------------------------
 // Main functions
@@ -79,15 +98,14 @@ int main(int argc, char** argv)
 	if (! gColor) L::ErrorExit(errmsg);
       }
 
-    gStartTime = L::gTime;
-    gPeriod = (gFlashSpeedFactor / L::gRate) * 1000;
+    gPeriod = gFlashSpeedFactor / L::gRate * 1000.0;
 
     // Allocate objects
     Lgroup objects;
     objects.Add(L::gOutputBuffer->GetCount(), FlashAlloc, NULL);
 
     // Perform
-    L::Run(objects, FlashCallback);
+    L::Run(objects, FlashCallback, FlashGroupCallback);
     L::Cleanup();
     exit(EXIT_SUCCESS);
 }

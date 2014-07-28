@@ -37,6 +37,7 @@ extern LprocList    gProcList;
 extern Milli_t      gTime;                  // Current time
 extern Milli_t      gStartTime;
 extern Milli_t      gEndTime;
+extern Milli_t      gFrameDuration;	    // Length of a single frame
 
 // These are requests from anywhere in the stack
 extern bool         gTerminateNow;
@@ -50,7 +51,7 @@ typedef void (*GroupCallback_t) (Lgroup* obj);  // Called once for the group at 
 void Startup(int *argc, char** argv, int minPositionalArgs = 0, int maxPositionalArgs = -1);
 //void Startup(); // Must have already initialized gOutputBuffer to call this one
 void Run(Lgroup& objgroup, ObjCallback_t fcn = NULL, GroupCallback_t gfcn = NULL); // Delay between renders is based on gFrameDuration
-void RunOnce(Lgroup& objgroup);                // No delays built in
+void RunOnce(Lgroup& objgroup, GroupCallback_t gfcn = NULL);                // No delays built in
 void Cleanup(bool eraseAtEnd = false);
 
 void ErrorExit(csref message);
