@@ -83,11 +83,21 @@ LBuffer* LBuffer::Create(csref descArg, string* errmsg) {
 
     // If we get here it is a single buffer or a pipeline of filters plus a buffer
     size_t pipepos  = desc.find('|');
-    bool isFilter = (pipepos != string::npos);
-    string nextdev  = isFilter ? desc.substr(pipepos + 1) : "";
+    size_t bracketpos = desc.find('[');
+    size_t nextpos = string::npos;
 
-    // Now parse the current filter or device
+    if (pipepos != string::npos)
+      nextpos = pipepos + 1;
+    
+    if (bracketpos != string::npos && (pipepos == string::npos || pipepos > bracketpos)) {
+      pipepos = bracketpos;
+      nextpos = bracketpos;
+    } 
+
+    bool isFilter = (nextpos != string::npos);
+    string nextdev  = nextpos != string::npos ? desc.substr(nextpos) : "";
     desc = desc.substr(0, pipepos);
+    // Now parse the current filter or device
     size_t colonpos = desc.find(':');
     string name = desc.substr(0,colonpos);
     if (name.empty()) return CreateError(errmsg, "Missing " + string(isFilter ? "filter" : "device") + " name: " + descArg);
@@ -97,14 +107,14 @@ LBuffer* LBuffer::Create(csref descArg, string* errmsg) {
 
     string args = (colonpos == string::npos) ? "" : TrimWhitespace(desc.substr(colonpos+1));
     if (isFilter) {
-        if (! type->iIsFilter) return CreateError(errmsg, "Device type found when filter name expected: " + descArg);
+        if (! type->iIsFilter) return CreateError(errmsg, "Device type \"" + desc + "\" found when filter name expected: " + descArg);
         if (nextdev.empty()) return CreateError(errmsg, "Missing device after pipe: " + descArg);
         LBuffer* buffer = LBuffer::Create(nextdev,errmsg);
         if (! buffer) return NULL;
         return type->iFilterCreateFcn(args, buffer, errmsg);
     } else {
         // Output device}
-        if (type->iIsFilter) return CreateError(errmsg, "Filter name found when device type expected: " + descArg);
+        if (type->iIsFilter) return CreateError(errmsg, "Filter name \"" + desc + "\" found when device type expected: " + descArg);
         return type->iDeviceCreateFcn(args, errmsg);
     }
 }
