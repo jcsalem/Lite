@@ -1,5 +1,4 @@
 add_library(lite STATIC
-StripBuffer.cpp
 CKbuffer.cpp
 CKdevice.cpp
 Color.cpp
@@ -11,6 +10,7 @@ LFramework.cpp
 Lobj.cpp
 Lproc.cpp
 LSparkle.cpp
+StripBuffer.cpp
 utils.cpp
 utilsFile.cpp
 utilsGPIO.cpp
@@ -18,6 +18,7 @@ utilsIP.cpp
 utilsOptions.cpp
 utilsRandom.cpp
 utilsSocket.cpp
+utilsStats.cpp
 utilsTime.cpp
 WinBuffer.cpp)
 
