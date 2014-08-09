@@ -177,7 +177,7 @@ class SocketUDPServer : public SocketUDP
 
         // Need to override this because we bind the socket rather than simply open it
 		virtual bool SetSockAddr(const SockAddr& sa);
-		virtual bool SetSockAddr(const IPAddr& ip, int port) {SetSockAddr(SockAddr(ip, port));}
+		virtual bool SetSockAddr(const IPAddr& ip, int port) {return SetSockAddr(SockAddr(ip, port));}
 	private:
 		// Disallow copying
 		SocketUDPServer(const SocketUDPServer&);
