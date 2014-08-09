@@ -23,29 +23,20 @@ echo "DIR=$DIR"
 set -x
 
 while true; do
-$DIR/Ltool --time 7 --rate 1.5 rotate red
-$DIR/Ltool --time 6 --rate 2   rotate white
-$DIR/Ltool --time 5 --rate 2.5 rotate blue
+$DIR/Ltool --time 10 --rate 3 bounce white
+$DIR/Ltool --time 15 --filter sparkle clear
 
-$DIR/Ltool --time 7 --fade 2 plane
+$DIR/Ltool --time 5 --fade 1 plane
+$DIR/Ltool --time 7 --fade 1 --filter sparkle plane
+
+$DIR/Ltool --time 10 rotwash --filter sparkle red red
+
+$DIR/Lflash --time 5 --rate 1 
+$DIR/Lflash --time 10 --rate 2 
+$DIR/Lflash --time 5 --rate 2 --density .1 purple
+$DIR/Lflash --time 10 --rate 2 --density .1 --filter sparkle yellow
 
 $DIR/Ltool --time 16 rotwash red red
 $DIR/Ltool --time 16 --rate -1 rotwash blue blue
-
-$DIR/Ltool --time 15 --filter sparkle clear
-
-$DIR/Ltool --time 20 --fade 3 plane
-
-$DIR/Lflash --time 5 --rate 1 
-$DIR/Lflash --time 5 --rate 2 
-$DIR/Lflash --time 5 --rate .5 --density .1
-$DIR/Lflash --time 5 --rate 1 --density .1
-$DIR/Lflash --time 2 --rate 2 --density .1 red
-$DIR/Lflash --time 2 --rate 2 --density .1 white
-$DIR/Lflash --time 2 --rate 2 --density .1 blue
-
-$DIR/Ltool --time 15 --fade 1 plane
-
-$DIR/Lstarry --time 10 --fade 2 --density .1 --sparklerate 20
 
 done
