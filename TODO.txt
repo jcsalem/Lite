@@ -5,3 +5,11 @@
 --FadeIn and --FadeOut std args
 Options to Sparkle filter
 Lchase (like rotate but any number of items)
+Clean up Sparkle filter timing (either time-based anti-aliasing or sync)
+
+** Running multiple groups in parallel **
+Allow each group to have it's own output buffer
+Run() can run multiple groups
+New Lbuffer that gathers updates from multiple sources and forwards to an output buffer
+
+

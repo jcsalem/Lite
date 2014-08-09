@@ -1,0 +1,48 @@
+*** Wifi Setup for Raspberry Pi ***
+
+** Recommend Adapter **
+This was all tested with the Edimax EW-7811Un dongle which is recommended and uses the
+Realtek RTL8188CUS chip.  They will probably work with any RTL8188 related chip.
+
+** Driver **
+With recent versions of Raspian (late 2013 onwards), no separate driver install is needed.
+However, these drivers don't support the nl80211 API which is needed for recent versions
+of hostapd to work. See notes on host access point configuration.
+
+** Power Management **  
+IMPORTANT: Disable power management so it doesn't shutdown after non-use.
+Details: http://www.raspberrypi.org/forums/viewtopic.php?f=28&t=61665
+Basically: Create /etc/modprobe.d/8192cu.conf with the line:
+  options 8192cu rtw_power_mgnt=0 rtw_enusbss=0
+
+** Client Setup **
+Options:
+A) Single access point (either open or WEP)
+Replace all the stuff after allow-hotplug wlan0 in /etc/network/interfaces with
+  allow-hotplug wlan0
+  auto wlan0
+  iface wlan0 inet dhcp
+  wireless-essid WIFI-SSID
+  wireless-key 01234567890ABCDEF0123456789
+The last line is only needed for WEP. Remove it if it's an open connection.
+
+B) Single access point WPA or WPA2
+Replace all the stuff after allow hotplug wlan0 in /etc/network/interfaces with
+  allow-hotplug wlan0
+  auto wlan0
+  iface wlan0 inet dhcp
+  wpa-ssid "WIFI-SSID"
+  wpa-psk "WPA2PSK-PASSWORD"
+Ref: http://raspberrypihq.com/how-to-add-wifi-to-the-raspberry-pi/
+
+C) Multiple access points
+Use wpa_supplicant
+Ref: http://www.geeked.info/raspberry-pi-add-multiple-wifi-access-points/
+Poor ref: http://raspberrypi.stackexchange.com/questions/11631/wifi-setup-for-multiple-networks
+
+
+** Host Access Point Setup **
+http://www.daveconroy.com/turn-your-raspberry-pi-into-a-wifi-hotspot-with-edimax-nano-usb-ew-7811un-rtl8188cus-chipset/
+http://elinux.org/RPI-Wireless-Hotspot
+https://learn.adafruit.com/setting-up-a-raspberry-pi-as-a-wifi-access-point/install-software
+

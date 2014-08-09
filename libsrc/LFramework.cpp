@@ -5,6 +5,8 @@
 #include "Lproc.h"
 #include "utilsOptions.h"
 #include "Lobj.h"
+#include "utilsStats.h"
+#include "FilterBuffers.h"
 #include <iostream>
 
 namespace L {
@@ -23,7 +25,6 @@ bool        gTerminateNow;           // Set to exit asap
 Milli_t     gFrameDuration  = 20;    // duration of each frame of animation (in MS)
 LprocList   gProcs;
 
-
 // Force gOutputBuffer to be deleted at exit
 struct UninitAtExit {
     UninitAtExit() {}
@@ -31,6 +32,38 @@ struct UninitAtExit {
 };
 
 UninitAtExit _gUninitAtExit;
+
+//---------------------------------------------------------------
+// Stats Buffer (for reporting framerate stats in verbose mode)
+//---------------------------------------------------------------
+
+class StatsBuffer : public LFilter
+{
+public:
+  StatsBuffer(LBuffer* buffer) : 
+    LFilter(buffer), iCollector(StatsCollector(5)),iIsFirstTime(true),iLastFrameTime(0) {}
+  string GetDescriptor() const {return "StatsInternal";}
+  virtual bool Update();
+  void Report() const {iCollector.Output();}
+private:
+  StatsCollector  iCollector;
+  bool iIsFirstTime;
+  Milli_t iLastFrameTime;
+};
+
+bool  StatsBuffer::Update()
+{
+  static bool iIsFirstTime = true;
+  static Milli_t lastFrameTime = Milliseconds();
+  if (iIsFirstTime) 
+    iIsFirstTime = false;
+  else {
+    Milli_t newTime = Milliseconds();
+    iCollector.Record(newTime - lastFrameTime);
+    lastFrameTime = newTime;
+  }
+  return iBuffer->Update();
+}
 
 //---------------------------------------------------------------
 // Output Device Parsing
@@ -188,6 +221,7 @@ DefOption(fade, FadeCallback, "fadeduration", "sets the fade in and out in time 
 //---------------------------------------------------------------
 // Startup
 //---------------------------------------------------------------
+StatsBuffer* gStatsBuffer = NULL;
 
 void ErrorExit(csref msg) {
     cerr << ProgramHelp::GetString(kPHprogram) << ": " << msg << endl;
@@ -222,18 +256,27 @@ void ErrorExit(csref msg) {
         ErrorExit("Empty output device.");
 
     if (gVerbose)
-        cout << gOutputBuffer->GetDescription() << endl;
+      {
+	cout << gOutputBuffer->GetDescription() << endl;
+	gOutputBuffer = gStatsBuffer = new StatsBuffer(gOutputBuffer);
+      }	
 }
 
 void Cleanup(bool eraseAtEnd)
 {
     if (eraseAtEnd)
-    {
+      {
         // Clear the lights
-        // Note!  This doesn't work reliably
         gOutputBuffer->Clear();
         gOutputBuffer->Update();
-    }
+      }
+    if (gVerbose)
+      {
+	cout << "Framerate Statistics:" << endl;
+	cout << "Target time between frames: " << gFrameDuration << "ms" << endl;
+	cout << "Actual ";
+	gStatsBuffer->Report();      
+      }
 }
 
 void RunOnce(Lgroup& objGroup, GroupCallback_t groupfcn)
