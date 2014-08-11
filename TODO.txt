@@ -1,5 +1,6 @@
 ** Bugs **
 --rate broken/confusing on Lsparkle (Lstarry doc is wrong)
+Post install script on RPi to make on binaries suid
 
 ** New **
 --FadeIn and --FadeOut std args
