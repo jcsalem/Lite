@@ -7,7 +7,14 @@ Post install script on RPi to make on binaries suid
 Options to Sparkle filter
 Lchase (like rotate but any number of items)
 Clean up Sparkle filter timing (either time-based anti-aliasing or sync)
-rotwashbounce
+Extend Ltool for rotwashbounce
+Lpv - persistence of vision display.  
+
+** Image Reading Notes **
+For image reading and resize: consider Cimg, Imagemagick
+  Cimg: insert #define cimg_display_type 0 before #include "Cimg.h"
+  Imagemagick: Better since standalone package   http://blog.sunekaae.com/2013/04/imagemagick-resize-speed-on-raspberry-pi.html
+  http://unix.stackexchange.com/questions/58774/raspberry-pi-keeps-killing-imagemagicks-convert
 
 ** Running multiple groups in parallel **
 Allow each group to have it's own output buffer
