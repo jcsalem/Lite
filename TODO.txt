@@ -7,6 +7,7 @@ Post install script on RPi to make on binaries suid
 Options to Sparkle filter
 Lchase (like rotate but any number of items)
 Clean up Sparkle filter timing (either time-based anti-aliasing or sync)
+rotwashbounce
 
 ** Running multiple groups in parallel **
 Allow each group to have it's own output buffer

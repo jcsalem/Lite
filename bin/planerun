@@ -1,9 +1,17 @@
 #!/bin/bash
 
+# Usage message
+if [ "$1" == "--help" ] || [ "$1" == "-?" ]; then
+	echo "Usage: $0 [effect_id] | [effectname [params]]"
+	exit 0
+fi
+
+# Default LDEV for plane
 if [ -z "$LDEV" ]; then
 	export LDEV="plane|[flip|strip:A,strip:B]"
 fi
 
+# Default directory
 THISDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 if [ $THISDIR == "/boot" ]; then
   DIR="/home/pi/lite/build/bin"
@@ -17,26 +25,123 @@ else
     DIR="$DIR/build/bin"
 fi
 
+# Parse arguments
+if [[ "$1" =~ ^[0-9]+$ ]]; then
+	EFFECT_ID=$1
+	echo "Running effect #$EFFECT_ID"
+elif [ "$1" != "" ]; then
+	EFFECT_STRING=$*
+	echo "Running effect: $*"
+else
+	echo "Running random effects"
+fi
+
 echo "LDEV=$LDEV"
 echo "DIR=$DIR"
 
-set -x
+# Shared functions
+function float_eval
+{
+  echo "scale=2;$*" | bc -q 2>/dev/null
+}
+
+function run
+{
+	set -x
+	$*
+	{ set +x; } 2>/dev/null
+}
+
+# Saved effects
+function patriot_bounce {
+	echo "++ patriot_bounce $1"
+    if [ -z "$1" ]; then TIME=3.25; else TIME=$(float_eval "$1 / 3"); fi
+	$DIR/Ltool --time $TIME --rate 4 bounce red
+    $DIR/Ltool --time $TIME --rate 4 bounce white
+    $DIR/Ltool --time $TIME --rate 4 bounce blue
+}
+
+function rainbow1 {
+	echo "++rainbow1"
+	for i in {1..2}; do
+		$DIR/Ltool --time 5 --rate  3 rotwash red red
+		$DIR/Ltool --time 5 --rate -3 rotwash red red
+	done
+}
+
+MIXED_COLORS=(red orange yellow green blue purple)
+
+function mixed_flash {
+	echo "++ mixed_flash $1"
+	if [ -z "$1" ]; then COUNT=30; else COUNT=$(expr $1 * 2); fi
+	LASTC=99
+	C=$LASTC
+	for i in {1..$COUNT}; do
+		while [ $C == $LASTC ]; do
+			C=$(expr $RANDOM % ${#MIXED_COLORS[@]})
+		done
+		LASTC=$C
+		$DIR/Lflash --time .5 --rate 2 --density .04 ${MIXED_COLORS[$C]}
+	done
+}
+
+
+# Initial check out
+patriot_bounce 5
+run $DIR/Ltool --time 4 --fade 1 plane
+
+EID=9999
+LAST_EID=$EID
 
 while true; do
-$DIR/Ltool --time 10 --rate 3 bounce white
-$DIR/Ltool --time 15 --filter sparkle clear
+	if [ -n "$EFFECT_STRING" ]; then
+		echo "Running $EFFECT_STRING"
+		$EFFECT_STRING
+		continue
+	fi
 
-$DIR/Ltool --time 5 --fade 1 plane
-$DIR/Ltool --time 7 --fade 1 --filter sparkle plane
+	if [ -n "$EFFECT_ID" ]; then 
+		EID=$EFFECT_ID
+	else
+		while [ $LAST_EID == $EID ]; do
+			EID=$(expr $RANDOM % 10)
+		done
+		LAST_EID=$EID
+		echo "Effect #$EID"
+	fi
 
-$DIR/Ltool --time 10 rotwash --filter sparkle red red
-
-$DIR/Lflash --time 5 --rate 1 
-$DIR/Lflash --time 10 --rate 2 
-$DIR/Lflash --time 5 --rate 2 --density .1 purple
-$DIR/Lflash --time 10 --rate 2 --density .1 --filter sparkle yellow
-
-$DIR/Ltool --time 16 rotwash red red
-$DIR/Ltool --time 16 --rate -1 rotwash blue blue
-
+	case $EID in
+		0)
+		patriot_bounce
+		;;
+		1)
+		run $DIR/Ltool --time 2 --fade 1 plane
+		run $DIR/Ltool --time 2 --fade 1 plane
+		run $DIR/Ltool --time 2 --fade 1 plane
+		;;
+		2)
+		run $DIR/Lflash --time 10 --rate .05 --density .01 white
+		;;
+		3)
+		run $DIR/Ltool --time 15 --filter sparkle all 'RGB(0.01,0,.01)'
+		;;
+		4) 
+		rainbow1
+		;;
+		5) 
+		mixed_flash
+		;;
+		6)
+		run $DIR/Lfirefly --time 10 --rate 3 --color bright
+		;;
+		7)
+		run $DIR/Ltool --time 20 --rate 2.5 bounce white 
+		;;
+		8) 
+		run $DIR/Lflash --rate .15 --density .01 --filter sparkle magenta
+		;;
+		9)
+		echo "no effect"
+		;;
+	esac
 done
