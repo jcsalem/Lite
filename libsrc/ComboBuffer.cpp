@@ -78,35 +78,49 @@ vector<string> ParseDeviceList(csref descStr, string* errmsg) {
     vector<string> descStrings;
     int startPos = 0;
     int bracketDepth = 0;
+    int parenDepth = 0;
     bool lookingForComma = false;
-
+ 
     for (size_t i = 0; i < descStr.size(); ++i) {
+        bool checkLookingForComma = true;
         switch (descStr[i])
         {
         case '[':
             ++bracketDepth;
-            if (lookingForComma) return ComboError(errmsg, "Missing comma after ']'");
+            if (parenDepth > 0) return ComboError(errmsg, "Brackets cannot appear within parentheses");
             break;
         case ']':
             if (bracketDepth == 0) return ComboError(errmsg, "Mismatched square brackets: Too many right brackets.");
-            if (lookingForComma)   return ComboError(errmsg, "Misplaced ']', expected a comma");
+            if (parenDepth > 0)    return ComboError(errmsg, "Brackets cannot appear within parentheses");
             --bracketDepth;
-            if (bracketDepth == 0) lookingForComma = true;
+            if (bracketDepth == 0) {
+                checkLookingForComma = lookingForComma;
+                lookingForComma = true;
+            }
+            break;
+        case '(':
+            ++parenDepth;
+            break;
+        case ')':
+            if (parenDepth == 0) return ComboError(errmsg, "Mismatched parentheses: Too many right parentheses");
+            --parenDepth;
             break;
         case ',':
-            if (bracketDepth == 0) {
+            if (bracketDepth == 0 && parenDepth == 0) {
                 descStrings.push_back(TrimWhitespace(descStr.substr(startPos, i - startPos)));
                 startPos = i+1;
                 lookingForComma = false;
             }
+            break;
         case ' ':
         case '\t':
+            checkLookingForComma = false;
             break;
-        default:
-            if (lookingForComma) return ComboError(errmsg, "Expected a comma after the right bracket.");
         }
+        if (checkLookingForComma && lookingForComma) return ComboError(errmsg, "Expected a comma after ']'");
     }
     if (bracketDepth != 0) return ComboError(errmsg, "Mismatched square brackets: Too many left brackets.");
+    if (parenDepth != 0) return ComboError(errmsg, "Mismatched parentheses: Too many left parentheses.");
     descStrings.push_back(TrimWhitespace(descStr.substr(startPos, descStr.size() - startPos)));
     return descStrings;
 }

@@ -7,6 +7,11 @@
 #include <vector>
 #include "utilsTime.h"
 
+// Format of the buffer description strings
+//   buffer ::= <filter1>|<filter2|...|<filterN>|device_or_combo
+//   device_or_combo ::= Either <device> or [<buffer1>,<buffer2>,..<bufferN>]
+//   filter/device ::= <name> or <name>:<arg1> or <name>(<arg1>,<arg2>,..,argN)
+
 class LBuffer
     {
     friend class LBufferIter;

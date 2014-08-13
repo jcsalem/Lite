@@ -346,10 +346,10 @@ LBuffer* SparkleBufferCreate(csref descStr, LBuffer* buffer, string* errmsg)
   float fraction = ParseNextFloatParam(&desc, "sparkle fraction", kDefaultSparkleFraction, 0, 1, errmsg);
   if (fraction == kBadFloat) return NULL;  
   // Now get the parameters
-  float duration = ParseNextFloatParam(&desc, "sparkle duration", kDefaultSparkleDuration, 0, 1, errmsg);
+  float duration = ParseNextFloatParam(&desc, "sparkle duration", kDefaultSparkleDuration, 0, 30, errmsg);
   if (duration == kBadFloat) return NULL;  
   // Now get the parameters
-  float sigma = ParseNextFloatParam(&desc, "sparkle sigma", kDefaultSparkleSigma, 0, 1, errmsg);
+  float sigma = ParseNextFloatParam(&desc, "sparkle sigma", kDefaultSparkleSigma, 0, 10, errmsg);
   if (sigma == kBadFloat) return NULL;  
 
   if (!desc.empty()) {

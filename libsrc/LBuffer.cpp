@@ -96,16 +96,25 @@ LBuffer* LBuffer::Create(csref descArg, string* errmsg) {
 
     bool isFilter = (nextpos != string::npos);
     string nextdev  = nextpos != string::npos ? desc.substr(nextpos) : "";
-    desc = desc.substr(0, pipepos);
+    desc = TrimWhitespace(desc.substr(0, pipepos));
     // Now parse the current filter or device
-    size_t colonpos = desc.find(':');
-    string name = desc.substr(0,colonpos);
+    size_t argpos = desc.find_first_of(":(");
+    string name = desc.substr(0,argpos);
     if (name.empty()) return CreateError(errmsg, "Missing " + string(isFilter ? "filter" : "device") + " name: " + descArg);
 
     const LBufferType* type = LBufferType::Find(name);
     if (! type) return CreateError(errmsg, "No " + string(isFilter ? "filter" : "device type") + " named: " + name);
 
-    string args = (colonpos == string::npos) ? "" : TrimWhitespace(desc.substr(colonpos+1));
+    string args; 
+    if (argpos != string::npos) {
+        args = desc.substr(argpos+1);
+        if (desc[argpos] == '(') {
+            if (desc[desc.length()-1] != ')') return CreateError(errmsg, "Missing right parenthesis in arguments to " + name);
+            args = args.substr(0, args.length() - 1); // remove trailing parenthesis
+        }
+        args = TrimWhitespace(args);
+    }
+    
     if (isFilter) {
         if (! type->iIsFilter) return CreateError(errmsg, "Device type \"" + desc + "\" found when filter name expected: " + descArg);
         if (nextdev.empty()) return CreateError(errmsg, "Missing device after pipe: " + descArg);

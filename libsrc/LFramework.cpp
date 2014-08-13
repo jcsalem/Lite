@@ -247,7 +247,7 @@ void ErrorExit(csref msg) {
     if (!gGlobalFilters.empty())
         devstr = gGlobalFilters + "[" + gOutputDeviceArg + "]";
     gOutputBuffer = CreateOutputBuffer(devstr, &errmsg);
-    if (!gOutputBuffer) ErrorExit("Error creating output buffer: " + errmsg);
+    if (!gOutputBuffer) ErrorExit("Error creating output pipeline: " + errmsg);
 
     if (gOutputBuffer->HasError())
         ErrorExit(gOutputBuffer->GetLastError());
