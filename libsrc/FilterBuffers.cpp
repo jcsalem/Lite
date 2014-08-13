@@ -7,7 +7,7 @@
 #include "utilsRandom.h"
 #include <algorithm>
 #include <cfloat>
-//#include <iostream> // for debugging
+#include <iostream> // for debugging
 
 // Dummy function to force this file to be linked in.
 void ForceLinkFilters() {}
@@ -187,15 +187,17 @@ DEFINE_LBUFFER_FILTER_TYPE(plane, PlaneNavigationBufferCreate, "plane:N",
 //-----------------------------------------------------------------------------
 // Makes one end red and the other end green. Hides those portions of iBuffer
 
-// These are all in milliseconds
-const float gTimeBetweenSparkles = 1000;
-const float gTimeBetweenSparklesSigma = 300;
-const float gSparkleFraction = .05;
+// The fraction of pixels that are typically on
+const float kDefaultSparkleFraction = 0.05;
+// This is std dev of a Sparkle's on/off time (this is normalized to a duration of 1)
+const float kDefaultSparkleSigma = 0.3; 
+// The duration that a sparkle is on in seconds
+const float kDefaultSparkleDuration = 0.02; // Sparkles generally turn on for just a single frame
 
 class SparkleBuffer : public LFilter
 {
 public:
-  SparkleBuffer(LBuffer* buffer, const RGBColor& color = WHITE);
+  SparkleBuffer(LBuffer* buffer, csref params);
   virtual ~SparkleBuffer() {
      if (iState) delete[] iState; iState = NULL; 
      if (iTimeToChange) delete[] iTimeToChange; iTimeToChange = NULL;
@@ -203,51 +205,81 @@ public:
 
   virtual string  GetDescriptor() const;
   virtual bool    Update();
+  void SetColor(Color* color) {color->ToRGBColor(&iColor);}
+  void SetParameters(float fraction, float onDuration, float sigma);
 
 private:
-  RGBColor   iColor;
+  string     iParamString;
+  RGBColor   iColor;          // Should eventually be a ColorMode
+  float      iOnDuration;     // Fraction of pixels that are sparkling at any one time
+  float      iOffDuration;    // Time between a single pixel's sparkle
+  float      iSigma;          // Std. deviation of the on/off time (scale by duration)
+  bool       iPixelsNeedInit; // true when iState needs initialization
   bool*      iState;
   Milli_t*   iTimeToChange;
+  Milli_t    GetSparkleDuration(bool newState);
+  void       InitializePixels();
 };
 
 string SparkleBuffer::GetDescriptor() const
 {
   string desc = "sparkle";
-  //  if (iNumPixels != gDefaultSparkleWidth) desc += ":" + IntToStr(iNumPixels);
-  desc += "|" + iBuffer->GetDescriptor();
+  if (! iParamString.empty()) desc += "(" + iParamString + ")";
+  desc += ":" + iBuffer->GetDescriptor();
   return desc;
 }
 
-Milli_t GetSparkleDuration(bool newState)
+void SparkleBuffer::SetParameters(float onFraction, float onDuration, float sigma)
 {
-  float mult = newState ? gSparkleFraction : 1.0 - gSparkleFraction;
-  float duration = RandomNormalBounded(gTimeBetweenSparkles * mult, gTimeBetweenSparklesSigma * mult * 2, 0.0, 1000000.0);
+  iOnDuration = onDuration;
+  if (onFraction < .001) onFraction = .001;
+  iOffDuration = onDuration / onFraction - onDuration;
+  iSigma = sigma;
+  iPixelsNeedInit = true;
+}
+
+Milli_t SparkleBuffer::GetSparkleDuration(bool newState)
+{
+
+  float avDur = newState ? iOnDuration : iOffDuration;
+  float sigma = avDur * iSigma * 2;
+  float duration = RandomNormalBounded(avDur, sigma, 0.0, avDur * 100);
+  duration = duration * 1000; // convert to milliseconds
   return (Milli_t) duration;
 }
 
-SparkleBuffer::SparkleBuffer(LBuffer* buffer, const RGBColor& color)
-  : LFilter(buffer), iColor(color)
+SparkleBuffer::SparkleBuffer(LBuffer* buffer, csref paramString)
+  : LFilter(buffer), iColor(WHITE), iParamString(paramString), iPixelsNeedInit(true)
 {
   int     count = GetCount();
   iState 	= new bool[count];
   iTimeToChange = new Milli_t[count];
+  SetParameters(kDefaultSparkleFraction, kDefaultSparkleDuration, kDefaultSparkleSigma);
+}
 
+void SparkleBuffer::InitializePixels()
+{
+  int     count = GetCount();
+  float   totalDuration = iOnDuration + iOffDuration;
   for (int i = 0; i < count; ++i) {
-    bool state = RandomFloat() < gSparkleFraction;
+    bool state = RandomFloat(totalDuration) < iOnDuration;
     iState[i] = state;
     iTimeToChange[i] = L::gStartTime + GetSparkleDuration(state)/2;
   }
+  iPixelsNeedInit = false;
 }
 
 bool SparkleBuffer::Update()
 {
+  if (iPixelsNeedInit) InitializePixels();
+
   int     count = GetCount();
   for (int i = 0; i < count; ++i) {
     // Update the states as necessary
     if (L::gTime > iTimeToChange[i])
       {
-	iState[i] = !iState[i];
-	iTimeToChange[i] = L::gTime + GetSparkleDuration(iState[i]);
+    	 iState[i] = !iState[i];
+	     iTimeToChange[i] = L::gTime + GetSparkleDuration(iState[i]);
       }
     // If the light is sparkled, set it to the sparkle color
     if (iState[i])
@@ -256,20 +288,82 @@ bool SparkleBuffer::Update()
   return iBuffer->Update();
 }
 
-LBuffer* SparkleBufferCreate(csref descStr, LBuffer* buffer, string* errmsg)
+
+string ParseNextErrorPrefix(csref name, csref valString)
 {
-  if (descStr.empty())
-    return new SparkleBuffer(buffer);
-#if 0
-  if (!StrToUnsigned(descStr, &numPixels))
-    {
-      if (errmsg) *errmsg = "The argument to \"sparkle\" must be a non-negative number.";
-      return NULL;
-    }
-#endif
-  return new SparkleBuffer(buffer);
+    return "Error parsing " + name + ": " + valString + ". ";
 }
 
-DEFINE_LBUFFER_FILTER_TYPE(sparkle, SparkleBufferCreate, "sparkle:[frac],[color]",
-        "Sparkles the output. When implemented, frac is the fraction of time that should be spent sparkling");
+const float kBadFloat = FLT_MIN;
+
+float ParseNextFloatParam(string* paramString, csref name, float defaultValue, float lowBound, float highBound, string* errmsg)
+{
+  // Parse the rest of the arguments
+  size_t cpos = paramString->find(',');
+  string cstr = TrimWhitespace(paramString->substr(0,cpos));
+  if (cpos != string::npos) 
+    *paramString = paramString->substr(cpos+1);
+  else 
+    *paramString = "";
+
+  float value = defaultValue;
+  if (cstr.empty()) return value;
+  if (! StrToFlt(cstr, &value))
+      {
+        if (errmsg) *errmsg = ParseNextErrorPrefix(name, cstr) + "Expected a number";
+        return kBadFloat;
+      }
+  if (value < lowBound) 
+      {
+        if (errmsg) *errmsg = ParseNextErrorPrefix(name, cstr) + "Must be greater than or equal to " + FltToStr(lowBound);
+        return kBadFloat;
+      }
+  if (value >= highBound) 
+      {
+        if (errmsg) *errmsg = ParseNextErrorPrefix(name, cstr) + "Must be less than " + FltToStr(highBound);
+        return kBadFloat;
+      }
+  return value;
+}
+
+LBuffer* SparkleBufferCreate(csref descStr, LBuffer* buffer, string* errmsg)
+{
+  string desc = descStr;  // so we can modify it
+
+  // Parse the color
+  size_t cpos = desc.find(',');
+  string cstr = TrimWhitespace(desc.substr(0,cpos));
+  if (cpos == string::npos) desc = "";
+  else desc = desc.substr(cpos+1);
+  Color* color = NULL;
+  if (! cstr.empty())
+    {
+    color = Color::AllocFromString(cstr, errmsg);
+    if (! color) return NULL;
+    }
+
+  // Now get the parameters
+  float fraction = ParseNextFloatParam(&desc, "sparkle fraction", kDefaultSparkleFraction, 0, 1, errmsg);
+  if (fraction == kBadFloat) return NULL;  
+  // Now get the parameters
+  float duration = ParseNextFloatParam(&desc, "sparkle duration", kDefaultSparkleDuration, 0, 1, errmsg);
+  if (duration == kBadFloat) return NULL;  
+  // Now get the parameters
+  float sigma = ParseNextFloatParam(&desc, "sparkle sigma", kDefaultSparkleSigma, 0, 1, errmsg);
+  if (sigma == kBadFloat) return NULL;  
+
+  if (!desc.empty()) {
+    if (errmsg) *errmsg = "Too many sparkle parameters: " + desc;
+    return NULL;
+  }
+
+  // Create the buffer
+  SparkleBuffer* newbuf =  new SparkleBuffer(buffer, descStr);
+  if (color) newbuf->SetColor(color);
+  newbuf->SetParameters(fraction, duration, sigma);
+  return newbuf;
+}
+
+DEFINE_LBUFFER_FILTER_TYPE(sparkle, SparkleBufferCreate, "sparkle:[color],[frac],[ontime],[sigma]",
+        "Sparkles the output. Frac is the fraction of time that should be spent sparkling");
 
