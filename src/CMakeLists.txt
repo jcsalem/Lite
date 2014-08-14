@@ -13,24 +13,26 @@ ENDIF(UNIX AND NOT APPLE)
 # Add SFML support
 SET(MY_LIBS ${MY_LIBS} ${SFML_LIBRARIES})
 
-add_executable(Ltool Ltool.cpp)
-target_link_libraries(Ltool lite ${MY_LIBS})
+# Raspberry Pi flag
+IF(EXISTS "/etc/init.d/lightberryrun")
+  SET(RASPBERRY_PI 1)
+ENDIF()
 
-add_executable(ckinfo ckinfo.cpp)
-target_link_libraries(ckinfo lite ${MY_LIBS})
+# Excutables 
+set(PROGRAMS Ltool ckinfo Lfirefly Lflash Lstarry Lsparkle testmix)
 
-add_executable(Lfirefly Lfirefly.cpp)
-target_link_libraries(Lfirefly lite ${MY_LIBS})
-
-add_executable(Lflash Lflash.cpp)
-target_link_libraries(Lflash lite ${MY_LIBS})
-
-add_executable(Lstarry Lstarry.cpp)
-target_link_libraries(Lstarry lite ${MY_LIBS})
-
-add_executable(Lsparkle Lsparkle.cpp)
-target_link_libraries(Lsparkle lite ${MY_LIBS})
-
-add_executable(testmix testmix.cpp)
-target_link_libraries(testmix lite ${MY_LIBS})
+foreach (PROG ${PROGRAMS})
+  add_executable(${PROG} ${PROG}.cpp)
+  target_link_libraries(${PROG} lite ${MY_LIBS})
+  
+  # To enable GPIO access, make binaries on the Raspberry PI setuid root 
+  if(RASPBERRY_PI)
+  	add_custom_command(TARGET ${PROG}
+  						POST_BUILD VERBATIM
+  						COMMAND sudo chown root $<TARGET_FILE:${PROG}>
+  						COMMAND sudo chmod 04755 $<TARGET_FILE:${PROG}>
+  						COMMENT "Making ${PROG} setuid root"
+  						)
+  endif(RASPBERRY_PI)
+endforeach(PROG) 
 

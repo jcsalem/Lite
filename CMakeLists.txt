@@ -23,7 +23,7 @@ ELSE(NO_SFML)
       SET(SFML_ROOT "${PROJECT_SOURCE_DIR}/../SFML-2.1")
    ENDIF(WIN32)
 
-   if (NOT MSVC)
+   IF(NOT MSVC)
       # SFML too complicated to support for MSVS
       find_package(SFML 2 COMPONENTS graphics window system)
       if (SFML_FOUND)
