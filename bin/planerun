@@ -2,7 +2,7 @@
 
 # Usage message
 if [ "$1" == "--help" ] || [ "$1" == "-?" ]; then
-	echo "Usage: $0 [effect_id] | [effectname [params]]"
+	echo "Usage: $0 [effect_id] | effectname [params] | [--inorder]"
 	exit 0
 fi
 
@@ -29,6 +29,9 @@ fi
 if [[ "$1" =~ ^[0-9]+$ ]]; then
 	EFFECT_ID=$1
 	echo "Running effect #$EFFECT_ID"
+elif [ "$1" != "--inorder" ]; then
+	EFFECTS_IN_ORDER = 1
+	echo "Running the effects in order"
 elif [ "$1" != "" ]; then
 	EFFECT_STRING=$*
 	echo "Running effect: $*"
@@ -92,6 +95,9 @@ run $DIR/Ltool --time 4 --fade 1 plane
 
 EID=9999
 LAST_EID=$EID
+if [ -n "$EFFECTS_IN_ORDER" ]; then
+	EID=0
+fi
 
 while true; do
 	if [ -n "$EFFECT_STRING" ]; then
@@ -132,16 +138,19 @@ while true; do
 		mixed_flash
 		;;
 		6)
-		run $DIR/Lfirefly --time 10 --rate 3 --color bright
+		run $DIR/Lfirefly --time 15 --rate 3 --color bright
 		;;
 		7)
 		run $DIR/Ltool --time 20 --rate 2.5 bounce white 
 		;;
 		8) 
-		run $DIR/Lflash --rate .15 --density .01 --filter sparkle magenta
+		run $DIR/Lflash --time 15 --rate .15 --density .01 --filter sparkle magenta
 		;;
 		9)
-		echo "no effect"
+		run $DIR/Lstarry --time 15 --sparklerate 50 --color bright 
+		;;
+		10)
+		run $DIR/Ltool --time 15 --filter sparkle(orange,.25) clear
 		;;
 	esac
 done

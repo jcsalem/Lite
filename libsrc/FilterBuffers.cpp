@@ -179,7 +179,7 @@ LBuffer* PlaneNavigationBufferCreate(csref descStr, LBuffer* buffer, string* err
   return new PlaneNavigationBuffer(buffer, numPixels);
 }
 
-DEFINE_LBUFFER_FILTER_TYPE(plane, PlaneNavigationBufferCreate, "plane:N",
+DEFINE_LBUFFER_FILTER_TYPE(plane, PlaneNavigationBufferCreate, "plane(N)",
         "Adds green and red navigation lites for the last N pixels (default 10)");
 
 //-----------------------------------------------------------------------------
@@ -364,6 +364,6 @@ LBuffer* SparkleBufferCreate(csref descStr, LBuffer* buffer, string* errmsg)
   return newbuf;
 }
 
-DEFINE_LBUFFER_FILTER_TYPE(sparkle, SparkleBufferCreate, "sparkle:[color],[frac],[ontime],[sigma]",
+DEFINE_LBUFFER_FILTER_TYPE(sparkle, SparkleBufferCreate, "sparkle([color],[frac],[ontime],[sigma])",
         "Sparkles the output. Frac is the fraction of time that should be spent sparkling");
 
