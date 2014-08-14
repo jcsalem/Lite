@@ -1,10 +1,13 @@
 #!/bin/bash
 
 # Usage message
-if [ "$1" == "--help" ] || [ "$1" == "-?" ]; then
+function usage
+{
 	echo "Usage: $0 [effect_id] | effectname [params] | [--inorder]"
+	echo "With no argument, runs random effects forever"
 	exit 0
-fi
+}
+if [ "$1" == "--help" ] || [ "$1" == "-?" ]; then usage; fi
 
 # Default LDEV for plane
 if [ -z "$LDEV" ]; then
@@ -25,47 +28,39 @@ else
     DIR="$DIR/build/bin"
 fi
 
-# Parse arguments
-if [[ "$1" =~ ^[0-9]+$ ]]; then
-	EFFECT_ID=$1
-	echo "Running effect #$EFFECT_ID"
-elif [ "$1" != "--inorder" ]; then
-	EFFECTS_IN_ORDER = 1
-	echo "Running the effects in order"
-elif [ "$1" != "" ]; then
-	EFFECT_STRING=$*
-	echo "Running effect: $*"
-else
-	echo "Running random effects"
-fi
-
 echo "LDEV=$LDEV"
 echo "DIR=$DIR"
 
 # Shared functions
-function float_eval
+
+# This is a fixed point divide routine with one digit of precision.
+# A simpler option is: echo "scale=2;$*" | bc -q 2>/dev/null
+# but bc isn't installed everywhere like expr is
+# Divide $1/$2 with two digits to the right of the decimal. Only works with positive numbers
+function fpdiv
 {
-  echo "scale=2;$*" | bc -q 2>/dev/null
+  WHOLE=$(expr $1 / $2)
+  FRAC1=$(expr \( \( $1 \* 10 \) / $2 \) % 10)
+  FRAC2=$(expr \( \( $1 \* 100 \) / $2 \) % 10)
+  echo $WHOLE.$FRAC1$FRAC2
 }
 
+# This echos the command, then runs it
 function run
 {
-	set -x
+	echo "+ $*"
 	$*
-	{ set +x; } 2>/dev/null
 }
 
 # Saved effects
 function patriot_bounce {
-	echo "++ patriot_bounce $1"
-    if [ -z "$1" ]; then TIME=3.25; else TIME=$(float_eval "$1 / 3"); fi
-	$DIR/Ltool --time $TIME --rate 4 bounce red
+    if [ -z "$1" ]; then TIME=3.25; else TIME=$(fpdiv $1 3); fi
+    $DIR/Ltool --time $TIME --rate 4 bounce red
     $DIR/Ltool --time $TIME --rate 4 bounce white
     $DIR/Ltool --time $TIME --rate 4 bounce blue
 }
 
 function rainbow1 {
-	echo "++rainbow1"
 	for i in {1..2}; do
 		$DIR/Ltool --time 5 --rate  3 rotwash red red
 		$DIR/Ltool --time 5 --rate -3 rotwash red red
@@ -75,82 +70,106 @@ function rainbow1 {
 MIXED_COLORS=(red orange yellow green blue purple)
 
 function mixed_flash {
-	echo "++ mixed_flash $1"
-	if [ -z "$1" ]; then COUNT=30; else COUNT=$(expr $1 * 2); fi
+	if [ -z "$1" ]; then COUNT=30; else COUNT=$(expr $1 \* 2); fi
 	LASTC=99
 	C=$LASTC
-	for i in {1..$COUNT}; do
-		while [ $C == $LASTC ]; do
-			C=$(expr $RANDOM % ${#MIXED_COLORS[@]})
-		done
-		LASTC=$C
-		$DIR/Lflash --time .5 --rate 2 --density .04 ${MIXED_COLORS[$C]}
+	for i in `seq 1 $COUNT`; do
+      	  while [ $C == $LASTC ]; do
+	    C=$(expr $RANDOM % ${#MIXED_COLORS[@]})
+	  done
+	  LASTC=$C
+	  $DIR/Lflash --time .5 --rate 2 --density .04 ${MIXED_COLORS[$C]}
 	done
 }
 
+#----------------------------------------------
+# Effects function
+#----------------------------------------------
 
-# Initial check out
-patriot_bounce 5
-run $DIR/Ltool --time 4 --fade 1 plane
+# Only argument is the effect #
 
-EID=9999
-LAST_EID=$EID
-if [ -n "$EFFECTS_IN_ORDER" ]; then
-	EID=0
+function run_effect {
+  echo "Effect #$1"
+  case $1 in
+       0)
+       run patriot_bounce
+       ;;
+       1)
+       run $DIR/Ltool --time 2 --fade 1 plane
+       run $DIR/Ltool --time 2 --fade 1 plane
+       run $DIR/Ltool --time 2 --fade 1 plane
+       ;;
+       2)
+       run $DIR/Lflash --time 10 --rate .5 --density .01 white
+       ;;
+       3)
+       run $DIR/Ltool --time 15 --filter sparkle all 'RGB(0.01,0,.01)'
+       ;;
+       4) 
+       run rainbow1
+       ;;
+       5) 
+       run mixed_flash
+       ;;
+       6)
+       run $DIR/Lfirefly --time 15 --rate 3 --color bright
+       ;;
+       7)
+       run $DIR/Ltool --time 20 --rate 2.5 bounce white 
+       ;;
+       8) 
+       run $DIR/Lflash --time 15 --rate .15 --density .01 --filter sparkle magenta
+       ;;
+       9)
+       run $DIR/Lstarry --time 15 --sparklerate 50 --density .1 --color bright 
+       ;;
+       10)
+       run $DIR/Ltool --time 15 --filter 'sparkle(orange,.1)' all 'RGB(.1,.1,0)'
+       ;;
+       11)
+       # POV test
+       run $DIR/Lflash --time 15 --rate 2 --density .05 white
+       ;;
+       *)
+       echo "No such effect: #$EID"
+       ;;
+  esac
+}
+
+#----------------------------------------------
+# Main loop
+#----------------------------------------------
+
+# Parse arguments
+if [[ "$1" =~ ^[0-9]+$ ]]; then
+   while true; do
+     run_effect $1
+   done
+elif [ "$1" == "--inorder" ]; then
+   echo "Running the effects in order"
+elif [ "$1" != "" ]; then
+   while true; do
+     run $*
+   done
+else
+   LAST_EID=0
+   echo "After testing all lights, running effects in random order"
 fi
 
+NUM_EFFECTS=12
+# Always run the first effect first to make sure the lights work
+EID=0
+
 while true; do
-	if [ -n "$EFFECT_STRING" ]; then
-		echo "Running $EFFECT_STRING"
-		$EFFECT_STRING
-		continue
-	fi
-
-	if [ -n "$EFFECT_ID" ]; then 
-		EID=$EFFECT_ID
-	else
-		while [ $LAST_EID == $EID ]; do
-			EID=$(expr $RANDOM % 10)
-		done
-		LAST_EID=$EID
-		echo "Effect #$EID"
-	fi
-
-	case $EID in
-		0)
-		patriot_bounce
-		;;
-		1)
-		run $DIR/Ltool --time 2 --fade 1 plane
-		run $DIR/Ltool --time 2 --fade 1 plane
-		run $DIR/Ltool --time 2 --fade 1 plane
-		;;
-		2)
-		run $DIR/Lflash --time 10 --rate .05 --density .01 white
-		;;
-		3)
-		run $DIR/Ltool --time 15 --filter sparkle all 'RGB(0.01,0,.01)'
-		;;
-		4) 
-		rainbow1
-		;;
-		5) 
-		mixed_flash
-		;;
-		6)
-		run $DIR/Lfirefly --time 15 --rate 3 --color bright
-		;;
-		7)
-		run $DIR/Ltool --time 20 --rate 2.5 bounce white 
-		;;
-		8) 
-		run $DIR/Lflash --time 15 --rate .15 --density .01 --filter sparkle magenta
-		;;
-		9)
-		run $DIR/Lstarry --time 15 --sparklerate 50 --color bright 
-		;;
-		10)
-		run $DIR/Ltool --time 15 --filter sparkle(orange,.25) clear
-		;;
-	esac
+   run_effect $EID
+   if [ -z "$LAST_EID" ]; then 
+     # In order
+     EID=$(expr \( $EID + 1 \) % $NUM_EFFECTS )
+   else
+     # Random order
+     while [ $LAST_EID == $EID ]; do
+       EID=$(expr $RANDOM % $NUM_EFFECTS )
+     done
+     LAST_EID=$EID
+   fi
 done
