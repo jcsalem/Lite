@@ -176,13 +176,13 @@ string phGetHelp(bool verbose) {
     }
 
 void phHelpExit(bool verbose) {
-    cerr << phGetHelp(verbose);
+    cerr << phGetHelp(verbose) << endl;
     exit(EXIT_SUCCESS);
 }
 
 void phErrorExit(csref errmsg, bool showOptions = false) {
     cerr << errmsg << endl;
-    cerr << ProgramHelp::GetUsage(showOptions);
+    cerr << ProgramHelp::GetUsage(showOptions) << endl;
     exit (EXIT_FAILURE);
 }
 //---------------------------------------------------------------------

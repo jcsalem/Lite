@@ -282,8 +282,8 @@ void Cleanup(bool eraseAtEnd)
 void RunOnce(Lgroup& objGroup, GroupCallback_t groupfcn)
 {
   gTime = Milliseconds();
-  if (groupfcn) groupfcn(&objGroup);
   gOutputBuffer->Clear();
+  if (groupfcn) groupfcn(&objGroup);
   objGroup.RenderAll(gTime, gProcs, gOutputBuffer);
   gOutputBuffer->Update();
 }

@@ -19,7 +19,7 @@ IF(EXISTS "/etc/init.d/lightberryrun")
 ENDIF()
 
 # Excutables 
-set(PROGRAMS Ltool ckinfo Lfirefly Lflash Lstarry Lsparkle testmix)
+set(PROGRAMS Ltool ckinfo Lfirefly Lflash Lstarry Lsparkle Lpov testmix)
 
 foreach (PROG ${PROGRAMS})
   add_executable(${PROG} ${PROG}.cpp)

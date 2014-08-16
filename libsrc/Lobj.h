@@ -85,7 +85,7 @@ class Lobj {
 class Lgroup {
 public:
     Lgroup() {}
-    ~Lgroup() {FreeAll();}
+    virtual ~Lgroup() {FreeAll();}
     // Access
     Lobj*   Get(int idx) const {if (idx < 0 || (size_t) idx >= iObjs.size()) return NULL; else return iObjs[idx];}
     int         GetCount() const {return iObjs.size();}
@@ -106,7 +106,7 @@ public:
 //    void WrapAll    (const Lxy& MinBound, const Lxy& maxBound) const;
 //    void BounceAll  (const Lxy& MinBound, const Lxy& maxBound) const;
 
-    string GetDescription(bool verbose = false) const;
+    virtual string GetDescription(bool verbose = false) const;
 
     // Mapping
     void Map(Lobj::MapFcn_t mapfcn, const void* info = NULL);

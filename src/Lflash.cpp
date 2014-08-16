@@ -22,9 +22,9 @@ float       gDensity        = 0.25;  // Average duty cycle of lights
 
 string DensityCallback(csref name, csref val) {
     if (! StrToFlt(val, &gDensity))
-        return "--duty wasn't a number: " + val;
+        return "--density wasn't a number: " + val;
     if (gDensity <= 0 || gDensity > 1)
-        return "--duty argument must be between 0 and 1. Was " + val;
+        return "--density argument must be between 0 and 1. Was " + val;
     return "";
 }
 
@@ -32,7 +32,7 @@ string DensityDefaultCallback(csref name) {
     return FltToStr(gDensity);
 }
 
-DefOption(density, DensityCallback, "density", "The fraction of time the lights are on from 0 to 1. Default is 0.25.", DensityDefaultCallback);
+DefOption(density, DensityCallback, "density", "The fraction of time the lights are on from 0 to 1.", DensityDefaultCallback);
 
 //enum {kFlash, kAccelerate, kSinusoidal} gFlashMode; 
 
