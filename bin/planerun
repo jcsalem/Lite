@@ -18,6 +18,7 @@ fi
 THISDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 if [ $THISDIR == "/boot" ]; then
   DIR="/home/pi/lite/build/bin"
+  IMGDIR="/home/pi/lite/img"
 else
     if [ -e /boot/planerun ]; then
 	echo "Sourcing /boot/planerun"
@@ -25,6 +26,7 @@ else
 	exit 1
     fi
     DIR=`dirname $THISDIR`
+    IMGDIR=$DIR/img
     DIR="$DIR/build/bin"
 fi
 
@@ -127,8 +129,13 @@ function run_effect {
        run $DIR/Ltool --time 15 --filter 'sparkle(orange,.1)' all 'RGB(.1,.1,0)'
        ;;
        11)
-       # POV test
-       run $DIR/Lflash --time 15 --rate 2 --density .05 white
+       run $DIR/Lpov --time 15 $IMGDIR/smiley-44x44x24.rgb 44
+       ;;
+       12)
+       run $DIR/Lpov --time 15 $IMGDIR/rainbowstar-44x44x24.rgb 44
+       ;;
+       13)
+       run $DIR/Lpov --time 15 $IMGDIR/PatsLogo-x44.rgb 44
        ;;
        *)
        echo "No such effect: #$EID"
@@ -156,7 +163,7 @@ else
    echo "After testing all lights, running effects in random order"
 fi
 
-NUM_EFFECTS=12
+NUM_EFFECTS=14
 # Always run the first effect first to make sure the lights work
 EID=0
 
