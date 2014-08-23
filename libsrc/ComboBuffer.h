@@ -13,6 +13,7 @@ class ComboBuffer : public LBuffer
 public:
     // Used by LBuffer::Create
     // It is an error to have a combo with no devices.
+    static LBuffer* Create(const vector<string>& descStrings, string* errmsg = NULL);
     static LBuffer* Create(csref descString, string* errmsg = NULL);
 
     // Constructors/Destructors

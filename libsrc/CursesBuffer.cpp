@@ -7,6 +7,7 @@ void ForceLinkCurses() {}
 
 #ifndef OS_WINDOWS
 #include "utils.h"
+#include "utilsParse.h"
 #include "Color.h"
 #include <curses.h>
 #include <iostream>
@@ -48,32 +49,26 @@ void MaybeInitializeCurses() {
 // Creation function
 //-----------------------------------------------------------------------------
 
-LBuffer* CursesBufferCreate(csref descStr, string* errmsg) {
+LBuffer* CursesBufferCreate(cvsref params, string* errmsg) {
+    if (! ParamListCheck(params, "curses", errmsg, 0, 1)) return NULL;
     int width = 72;
-    if (descStr.empty() || StrEQ(descStr, "auto")) {
+
+    // Auto size
+    if (params.empty() || StrEQ(params[0], "auto")) {
         MaybeInitializeCurses();
         width = getmaxx(stdscr) - getbegx(stdscr);
         if (width < 2) width = 10;
-        }
-    else if (StrToInt(descStr, &width)) {
-        if (width <= 0) {
-            *errmsg = "Console display type must have a positive width. Width was specified as " + descStr;
-            return NULL;
-            }
-        }
-    else {
-        // Unparseable
-        if (errmsg) *errmsg = "Couldn't parse console display's size paramter: " + descStr;
-        return NULL;
-        }
+        return new CursesBuffer(width);
+    }
 
-    // Return the buffer
+    // Specified size
+    if (! ParseParam(&width, params[0], "console display width", errmsg, 5)) return NULL;
     return new CursesBuffer(width);
 }
 
-DEFINE_LBUFFER_DEVICE_TYPE(console, CursesBufferCreate, "console[:size]",
+DEFINE_LBUFFER_DEVICE_TYPE(console, CursesBufferCreate, "console[(size)]",
         "Outputs to the console. No size defaults to screen width.\n"
-        "  Examples: console or console:50");
+        "  Examples: console or console(50)");
 
 //-----------------------------------------------------------------------------
 // Update function

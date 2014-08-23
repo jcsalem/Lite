@@ -16,6 +16,7 @@ utilsFile.cpp
 utilsGPIO.cpp
 utilsIP.cpp
 utilsOptions.cpp
+utilsParse.cpp
 utilsRandom.cpp
 utilsSocket.cpp
 utilsStats.cpp

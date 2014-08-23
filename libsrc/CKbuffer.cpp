@@ -7,6 +7,7 @@
 #include <iostream>
 #include <stdio.h>
 #include "ComboBuffer.h"
+#include "utilsParse.h"
 
 //---------------------------------------------------------------------
 // KiNET utilities
@@ -142,11 +143,12 @@ bool CKbuffer::Update()
 // CKbuffer: Creating
 //---------------------------------------------------------------------
 
-LBuffer* CKbufferCreate(csref devstr, string* errmsg)
+LBuffer* CKbufferCreate(const vector<string>& params, string* errmsg)
 {
-    CKdevice dev(devstr);
+    if (! ParamListCheck(params, "CK display buffer", errmsg, 1, 1)) return NULL;
+    CKdevice dev(params[0]);
     if (dev.HasError()) {
-        if (errmsg) *errmsg = "Invalid device string: '" + devstr + "': " + dev.GetLastError();
+        if (errmsg) *errmsg = "Invalid device string: '" + params[0] + "': " + dev.GetLastError();
         return NULL;
     }
 
@@ -162,11 +164,8 @@ LBuffer* CKbufferCreate(csref devstr, string* errmsg)
     return new CKbuffer(dev);
 }
 
-LBuffer* CKbufferAutoCreate(csref descriptorArg, string* errmsg) {
-    if (! TrimWhitespace(descriptorArg).empty()) {
-        if (errmsg) *errmsg = "The ckauto device type doesn't take any parameters";
-        return NULL;
-    }
+LBuffer* CKbufferAutoCreate(const vector<string>& params, string* errmsg) {
+    if (! ParamListCheck(params, "ckauto display buffer", errmsg, 0, 0)) return NULL;
 
     vector<CKdevice> devices = CKdiscoverDevices(errmsg);
     if (devices.empty()) {

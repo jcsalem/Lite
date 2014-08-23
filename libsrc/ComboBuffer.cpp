@@ -125,13 +125,11 @@ vector<string> ParseDeviceList(csref descStr, string* errmsg) {
     return descStrings;
 }
 
-LBuffer* ComboBuffer::Create(csref descStr, string* errmsg) {
-    vector<string> descStrings = ParseDeviceList(descStr, errmsg);
-    if (descStr.size() == 0) {
-        if (errmsg && errmsg->empty()) *errmsg = "Empty list of devices.";
+LBuffer* ComboBuffer::Create(const vector<string>& descStrings, string* errmsg) {
+    if (descStrings.size() == 0) {
+        if (errmsg) *errmsg = "Empty list of devices.";
         return NULL;
     }
-//    if (descStr.size() == 1 && collapse) return LBuffer::Create(descStrings[0], errmsg);
 
     ComboBuffer* combo = new ComboBuffer();
     for (vector<string>::const_iterator i = descStrings.begin(); i != descStrings.end(); ++i) {
@@ -144,6 +142,15 @@ LBuffer* ComboBuffer::Create(csref descStr, string* errmsg) {
         }
     }
     return combo;
+}
+
+LBuffer* ComboBuffer::Create(csref descStr, string* errmsg) {
+    vector<string> descStrings = ParseDeviceList(descStr, errmsg);
+    if (descStr.size() == 0) {
+        if (errmsg && errmsg->empty()) *errmsg = "Empty list of devices.";
+        return NULL;
+    }
+    return ComboBuffer::Create(descStrings, errmsg);
 }
 
 // Used by CreateOutputBuffer to collapse a ComboBuffer with a single buffer

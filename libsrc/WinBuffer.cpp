@@ -4,6 +4,7 @@
 #include "Config.h"
 #include "WinBuffer.h"
 #include "LFramework.h"
+#include "utilsParse.h"
 
 // Dummy function to force this file to be linked in.
 void ForceLinkWin() {}
@@ -24,28 +25,30 @@ string  WinBuffer::GetDescriptor() const {
 // Creation function
 //-----------------------------------------------------------------------------
 
-LBuffer* WinBufferCreate(csref descStr, string* errmsg) {
-    WinInfo info(500,100);
+LBuffer* WinBufferCreate(cvsref params, string* errmsg) {
+    if (! ParamListCheck(params, "window display", errmsg, 0, 2)) return NULL;
     int count = 40;
-    if (descStr.empty()) {}
-    else if (StrToInt(descStr, &count)) {
-        if (count <= 0) {
-            *errmsg = "WIndows display type must have a positive could. Count was specified as " + descStr;
-            return NULL;
-            }
-        }
-    else {
-        // Unparseable
-        if (errmsg) *errmsg = "Couldn't parse window display's count paramter: " + descStr;
-        return NULL;
-        }
+    bool isVertical = false;
+
+    // Count
+    if (params.size() > 0 && !params[0].empty()) 
+        if (! ParseParam(&count, params[0], "window count", errmsg, 1)) return NULL;
+    // Flags
+    if (params.size() > 1 && !params[1].empty() && !StrEQ(params[1],"h")) {
+        if (! StrEQ(params[1], "v")) return (LBuffer*) ParamErrmsgSet(errmsg, "window flags", "unknown flag argument", params[1]);
+        isVertical = true;
+    }
+
+    WinInfo info;
+    if (isVertical) info = WinInfo(100,500,true);
+    else            info = WinInfo(500,100,false);
 
     // Return the buffer
     return new WinBuffer(count, info, "Lite Viewer");
 }
 
-DEFINE_LBUFFER_DEVICE_TYPE(window, WinBufferCreate, "window[:count]",
-        "Outputs to a window. count is the number of big dots across the screen");
+DEFINE_LBUFFER_DEVICE_TYPE(window, WinBufferCreate, "window(count,flags)",
+        "Outputs to a window. count is the number of dots to display (default 40). flags may be 'v' for vertical");
 
 //-----------------------------------------------------------------------------
 // Update function
@@ -78,15 +81,23 @@ bool    WinBuffer::Update() {
     if (L::gTerminateNow) return true;
 
     // Fiure out the radius and the space between
-    sf::Vector2u size = iWindow.getSize();
-    float width = 1.0 * size.x / GetCount();
+    sf::Vector2u winDims = iWindow.getSize();
+    int totalRoom = IsVertical() ? winDims.y : winDims.x;
+    float width = 1.0 * totalRoom / GetCount();
     float diameter = (width < 17.0) ? width * .9 : 15.3;
-    float space = width - diameter;
-    if (diameter < 1) {diameter = 1; space = 0.0;}
+    float padding = width - diameter;
+    if (diameter < 1) {diameter = 1; padding = 0.0;}
 
-    float x = space * .5;
-    float y = .5 * size.y - diameter * .5;
-    if (y < diameter * .5) y = .5 * size.y;
+    float x, y;
+    if (IsVertical()) {
+        x = .5 * winDims.x - diameter * .5;
+        if (x < diameter * .5) x = .5 * winDims.x;
+        y = padding * .5;
+    } else {
+        x = padding * .5;
+        y = .5 * winDims.y - diameter * .5;
+        if (y < diameter * .5) y = .5 * winDims.y;
+    }
 
     // Clear everything
     iWindow.clear(sf::Color(60,60,60));
@@ -99,7 +110,10 @@ bool    WinBuffer::Update() {
         sf::Color color(rgb.rAsChar(), rgb.gAsChar(), rgb.bAsChar());
         shape.setFillColor(color);
         shape.setPosition(x,y);
-        x += diameter + space;
+        if (IsVertical()) 
+            y += diameter + padding;
+        else
+            x += diameter + padding;
         iWindow.draw(shape);
     }
     iWindow.display();

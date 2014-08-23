@@ -29,7 +29,9 @@ inline bool IsWhitespace(char c) {return c == ' ' || c == '\n' || c == '\r' || c
 string TrimWhitespace(csref s);
 string StrToLower(csref s);
 string StrToUpper(csref s);
-
+// Returns the plural form of a string (unless num=1)
+// Not very clever but it will add "es" for strings ending in "s".
+string PluralStr(csref s, int num = 2); 
 
 bool StrEQ(csref a, csref b); // Caseless string compare
 size_t StrSearch(csref str, csref matchString, int start = 0); // Caseless string search
@@ -48,6 +50,10 @@ unsigned StrToUnsigned(csref str);
 bool    StrToUnsigned(csref str, unsigned* i); // returns false on error
 float   StrToFlt(csref str);
 bool    StrToFlt(csref str, float* i); // returns false on error
+
+//--------------------------------------------------------------------------------
+// System functions
+//--------------------------------------------------------------------------------
 
 // Error related
 string ErrorCodeString          (int err = errno);

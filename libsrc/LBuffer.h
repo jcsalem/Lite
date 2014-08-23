@@ -118,7 +118,6 @@ class LBuffer
     const_iterator   begin() const   {return const_iterator(this, 0);}
     const_iterator   end()   const   {return const_iterator(this, GetCount());}
 
-
 }; // End LBuffer definitions
 
 class LBufferPhys : public LBuffer
@@ -145,13 +144,12 @@ class LBufferPhys : public LBuffer
     LBufferPhys& operator=(const LBuffer&);
     };
 
-
 // Used to define the derived classes that LBuffer::Create knows how to make
 class LBufferType {
     friend class LBuffer;
 public:
-    typedef LBuffer* (*DeviceFcn_t) (csref descriptorArgString, string* errmsg);
-    typedef LBuffer* (*FilterFcn_t) (csref descriptorArgString, LBuffer* destBuffer, string* errmsg);
+    typedef LBuffer* (*DeviceFcn_t) (const vector<string>& params, string* errmsg);
+    typedef LBuffer* (*FilterFcn_t) (const vector<string>& params, LBuffer* destBuffer, string* errmsg);
     LBufferType(csref name, DeviceFcn_t fcn, csref formatString, csref docString);
     LBufferType(csref name, FilterFcn_t fcn, csref formatString, csref docString, bool ignored);
     static string GetDocumentation(bool isFilterType);

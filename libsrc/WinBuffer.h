@@ -10,11 +10,13 @@
 
 struct WinInfo
 {
-    WinInfo(unsigned int w, unsigned int h) : width(w),height(h),depth(32),antialiaslevel(8) {}
+    WinInfo(unsigned int w, unsigned int h, bool isVert = false) : width(w),height(h),depth(32),antialiaslevel(8),isVertical(isVert) {}
+    WinInfo() {*this = WinInfo(0,0);}
     unsigned int        width;
     unsigned int        height;
     unsigned int        depth;
     unsigned int        antialiaslevel;
+    bool                isVertical;
 };
 
 class WinBuffer : public LBufferPhys
@@ -28,12 +30,11 @@ public:
     virtual string  GetDescriptor() const;
     virtual bool    Update();
     void            SetCreateString(csref str)  {iCreateString = str;}
-
-
+    bool            IsVertical() const {return iWinInfo.isVertical;}
 
 private:
     string              iCreateString;
-    WinInfo             iWinInfo;           // Not used after it's created.
+    WinInfo             iWinInfo;  // Initial setup
     sf::RenderWindow    iWindow;
 
     // Don't allow copying

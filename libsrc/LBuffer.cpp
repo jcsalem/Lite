@@ -3,6 +3,7 @@
 #include "Color.h"
 #include "Lproc.h"
 #include "ComboBuffer.h"
+#include "utilsParse.h"
 #include <vector>
 
 RGBColor LBuffer::kNullColor = BLACK; // note that this is used by functions returning references to colors
@@ -105,14 +106,18 @@ LBuffer* LBuffer::Create(csref descArg, string* errmsg) {
     const LBufferType* type = LBufferType::Find(name);
     if (! type) return CreateError(errmsg, "No " + string(isFilter ? "filter" : "device type") + " named: " + name);
 
-    string args; 
+    vector<string> params; 
+    string paramsString;
     if (argpos != string::npos) {
-        args = desc.substr(argpos+1);
+        paramsString = desc.substr(argpos+1);
         if (desc[argpos] == '(') {
             if (desc[desc.length()-1] != ')') return CreateError(errmsg, "Missing right parenthesis in arguments to " + name);
-            args = args.substr(0, args.length() - 1); // remove trailing parenthesis
+            paramsString = paramsString.substr(0, paramsString.length() - 1); // remove trailing parenthesis
         }
-        args = TrimWhitespace(args);
+        // Parse the parameters
+        string errmsg2;
+        params = ParseParamList(paramsString, name, &errmsg2);
+        if (params.empty() && !errmsg2.empty()) return CreateError(errmsg, errmsg2);
     }
     
     if (isFilter) {
@@ -120,11 +125,11 @@ LBuffer* LBuffer::Create(csref descArg, string* errmsg) {
         if (nextdev.empty()) return CreateError(errmsg, "Missing device after pipe: " + descArg);
         LBuffer* buffer = LBuffer::Create(nextdev,errmsg);
         if (! buffer) return NULL;
-        return type->iFilterCreateFcn(args, buffer, errmsg);
+        return type->iFilterCreateFcn(params, buffer, errmsg);
     } else {
         // Output device}
         if (type->iIsFilter) return CreateError(errmsg, "Filter name \"" + desc + "\" found when device type expected: " + descArg);
-        return type->iDeviceCreateFcn(args, errmsg);
+        return type->iDeviceCreateFcn(params, errmsg);
     }
 }
 

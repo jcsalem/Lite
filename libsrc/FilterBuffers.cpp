@@ -5,8 +5,8 @@
 #include "LBuffer.h"
 #include "FilterBuffers.h"
 #include "utilsRandom.h"
+#include "utilsParse.h"
 #include <algorithm>
-#include <cfloat>
 #include <iostream> // for debugging
 
 // Dummy function to force this file to be linked in.
@@ -41,8 +41,9 @@ protected:
   virtual RGBColor&   GetRawRGB(int idx) {idx = iBuffer->GetCount() - idx - 1; return iBuffer->GetRawRGB(idx);}
 };
 
-LBuffer* ReverseBufferCreate(csref descStr, LBuffer* buffer, string* errmsg)
+LBuffer* ReverseBufferCreate(cvsref params, LBuffer* buffer, string* errmsg)
 {
+    if (! ParamListCheck(params, "reverse", errmsg, 0)) return NULL;
     return new ReverseBuffer(buffer);
 }
 
@@ -70,8 +71,9 @@ void RandomizedBuffer::RandomizeMap()
 }
 
 
-LBuffer* RandomizedBufferCreate(csref descStr, LBuffer* buffer, string* errmsg)
+LBuffer* RandomizedBufferCreate(cvsref params, LBuffer* buffer, string* errmsg)
 {
+   if (! ParamListCheck(params, "random", errmsg, 0)) return NULL;
    return new RandomizedBuffer(buffer);
 }
 
@@ -101,8 +103,9 @@ Skip2Buffer::Skip2Buffer(LBuffer* buffer) : LMapFilter(buffer)
 }
 
 
-LBuffer* Skip2BufferCreate(csref descStr, LBuffer* buffer, string* errmsg)
+LBuffer* Skip2BufferCreate(cvsref params, LBuffer* buffer, string* errmsg)
 {
+    if (! ParamListCheck(params, "skip", errmsg, 0)) return NULL;
     return new Skip2Buffer(buffer);
 }
 
@@ -114,7 +117,7 @@ DEFINE_LBUFFER_FILTER_TYPE(skip2, Skip2BufferCreate, "skip2",
 //-----------------------------------------------------------------------------
 // Makes one end red and the other end green. Hides those portions of iBuffer
 
-const int gDefaultPlaneNavigationWidth = 10;
+const int gDefaultPlaneNavigationWidth = 9;
 
 class PlaneNavigationBuffer : public LFilter
 {
@@ -137,7 +140,7 @@ private:
 string PlaneNavigationBuffer::GetDescriptor() const
 {
   string desc = "plane";
-  if (iNumPixels != gDefaultPlaneNavigationWidth) desc += ":" + IntToStr(iNumPixels);
+  if (iNumPixels != gDefaultPlaneNavigationWidth) desc += "(" + IntToStr(iNumPixels) + ")";
   desc += "|" + iBuffer->GetDescriptor();
   return desc;
 }
@@ -165,17 +168,17 @@ RGBColor& PlaneNavigationBuffer::GetRawRGB(int idx)
   else return LFilter::GetRawRGB(idx);
 }
 
-LBuffer* PlaneNavigationBufferCreate(csref descStr, LBuffer* buffer, string* errmsg)
+LBuffer* PlaneNavigationBufferCreate(cvsref params, LBuffer* buffer, string* errmsg)
 {
-  unsigned numPixels;
+  if (! ParamListCheck(params, "plane", errmsg, 0, 1)) return NULL;
 
-  if (descStr.empty())
+  int numPixels;
+
+  if (params.empty()) 
+    // No argument: default
     return new PlaneNavigationBuffer(buffer);
-  if (!StrToUnsigned(descStr, &numPixels))
-    {
-      if (errmsg) *errmsg = "The argument to \"plane\" must be a non-negative number.";
-      return NULL;
-    }
+
+  if (! ParseParam(&numPixels, params[0], "plane", errmsg, 0)) return NULL;
   return new PlaneNavigationBuffer(buffer, numPixels);
 }
 
@@ -288,77 +291,33 @@ bool SparkleBuffer::Update()
   return iBuffer->Update();
 }
 
-
-string ParseNextErrorPrefix(csref name, csref valString)
+LBuffer* SparkleBufferCreate(cvsref params, LBuffer* buffer, string* errmsg)
 {
-    return "Error parsing " + name + ": " + valString + ". ";
-}
-
-const float kBadFloat = FLT_MIN;
-
-float ParseNextFloatParam(string* paramString, csref name, float defaultValue, float lowBound, float highBound, string* errmsg)
-{
-  // Parse the rest of the arguments
-  size_t cpos = paramString->find(',');
-  string cstr = TrimWhitespace(paramString->substr(0,cpos));
-  if (cpos != string::npos) 
-    *paramString = paramString->substr(cpos+1);
-  else 
-    *paramString = "";
-
-  float value = defaultValue;
-  if (cstr.empty()) return value;
-  if (! StrToFlt(cstr, &value))
-      {
-        if (errmsg) *errmsg = ParseNextErrorPrefix(name, cstr) + "Expected a number";
-        return kBadFloat;
-      }
-  if (value < lowBound) 
-      {
-        if (errmsg) *errmsg = ParseNextErrorPrefix(name, cstr) + "Must be greater than or equal to " + FltToStr(lowBound);
-        return kBadFloat;
-      }
-  if (value >= highBound) 
-      {
-        if (errmsg) *errmsg = ParseNextErrorPrefix(name, cstr) + "Must be less than " + FltToStr(highBound);
-        return kBadFloat;
-      }
-  return value;
-}
-
-LBuffer* SparkleBufferCreate(csref descStr, LBuffer* buffer, string* errmsg)
-{
-  string desc = descStr;  // so we can modify it
+  if (! ParamListCheck(params, "sparkle", errmsg, 0, 4)) return NULL;
 
   // Parse the color
-  size_t cpos = desc.find(',');
-  string cstr = TrimWhitespace(desc.substr(0,cpos));
-  if (cpos == string::npos) desc = "";
-  else desc = desc.substr(cpos+1);
   Color* color = NULL;
-  if (! cstr.empty())
-    {
-    color = Color::AllocFromString(cstr, errmsg);
-    if (! color) return NULL;
-    }
-
-  // Now get the parameters
-  float fraction = ParseNextFloatParam(&desc, "sparkle fraction", kDefaultSparkleFraction, 0, 1, errmsg);
-  if (fraction == kBadFloat) return NULL;  
-  // Now get the parameters
-  float duration = ParseNextFloatParam(&desc, "sparkle duration", kDefaultSparkleDuration, 0, 30, errmsg);
-  if (duration == kBadFloat) return NULL;  
-  // Now get the parameters
-  float sigma = ParseNextFloatParam(&desc, "sparkle sigma", kDefaultSparkleSigma, 0, 10, errmsg);
-  if (sigma == kBadFloat) return NULL;  
-
-  if (!desc.empty()) {
-    if (errmsg) *errmsg = "Too many sparkle parameters: " + desc;
-    return NULL;
+  string cstr = params[0];
+  if (! cstr.empty()) {
+      if (! ParseParam(&cstr, cstr, "sparkle color", errmsg)) return NULL;
+      color = Color::AllocFromString(cstr, errmsg);
+      if (! color) {
+        if (errmsg) *errmsg = "While parsing sparkle color, " + *errmsg;
+        return NULL;
+      }
   }
 
+  // Now get other the parameters;
+  float fraction = kDefaultSparkleFraction;
+  float duration = kDefaultSparkleDuration;
+  float sigma    = kDefaultSparkleSigma;
+  
+  if (! params[1].empty() && ! ParseParam(&fraction, params[1], "sparkle fraction", errmsg, 0,  1)) return NULL;
+  if (! params[2].empty() && ! ParseParam(&duration, params[2], "sparkle duration", errmsg, 0, 30)) return NULL;
+  if (! params[3].empty() && ! ParseParam(&sigma,    params[3], "sparkle sigma",    errmsg, 0, 10)) return NULL;
+  
   // Create the buffer
-  SparkleBuffer* newbuf =  new SparkleBuffer(buffer, descStr);
+  SparkleBuffer* newbuf =  new SparkleBuffer(buffer, ParamListToString(params));
   if (color) newbuf->SetColor(color);
   newbuf->SetParameters(fraction, duration, sigma);
   return newbuf;

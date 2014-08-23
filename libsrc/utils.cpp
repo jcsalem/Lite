@@ -42,6 +42,16 @@ string StrToUpper(csref s) {
     return r;
 }
 
+string PluralStr(csref s, int num) 
+{
+    if (s.empty() || num == 1) return s;
+    if (s.back() == 's') 
+        return s + "es"; 
+    else
+        return s + "s";
+}
+
+
 // Define strcasecmp and strncasecmp
 #ifdef _MSC_VER
 #define strcasecmp	_stricmp 
