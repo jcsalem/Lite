@@ -90,6 +90,16 @@ string CharName(char c, int num = 1)
     }
 }
 
+char MatchingChar(char c)
+{
+    switch (c) {
+        case '[': return ']'; case ']': return '[';
+        case '(': return ')'; case ')': return '(';
+        case '{': return '}'; case '}': return '{'; // not yet used
+        default: return '\0'; //not used
+    }
+}
+
 vector<string> ParseParamList(csref paramString, csref context, string* errmsg)
 {
     // Special case zero length strings
@@ -111,8 +121,11 @@ vector<string> ParseParamList(csref paramString, csref context, string* errmsg)
             break;
         case ']':
         case ')':
-            if (groupStack.empty() || groupStack.back() != c)
+            
+            if (groupStack.empty())
                 return PPLerror(errmsg, context, "Too many right " + CharName(c,2));
+            else if (groupStack.back() != MatchingChar(c))
+                return PPLerror(errmsg, context, "Mismatched " + CharName(groupStack.back(),2) + ", got right " + CharName(c) + " instead");
             else
                 groupStack.pop_back();
             break;

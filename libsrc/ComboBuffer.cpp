@@ -1,6 +1,7 @@
 // Implements various virtual buffers
 #include "utils.h"
 #include "ComboBuffer.h"
+#include "utilsParse.h"
 
 // Dummy function to force this file to be linked in.
 void ForceLinkMeta() {}
@@ -67,6 +68,7 @@ void ComboBuffer::AddBuffer(LBuffer* buffer)
     iCount += count;
 }
 
+#if 0
 vector<string> ComboError(string* errmsgptr, csref msg) {
     if (errmsgptr) *errmsgptr = msg;
     vector<string> nullReturn;
@@ -124,6 +126,7 @@ vector<string> ParseDeviceList(csref descStr, string* errmsg) {
     descStrings.push_back(TrimWhitespace(descStr.substr(startPos, descStr.size() - startPos)));
     return descStrings;
 }
+#endif
 
 LBuffer* ComboBuffer::Create(const vector<string>& descStrings, string* errmsg) {
     if (descStrings.size() == 0) {
@@ -145,8 +148,8 @@ LBuffer* ComboBuffer::Create(const vector<string>& descStrings, string* errmsg) 
 }
 
 LBuffer* ComboBuffer::Create(csref descStr, string* errmsg) {
-    vector<string> descStrings = ParseDeviceList(descStr, errmsg);
-    if (descStr.size() == 0) {
+    vector<string> descStrings = ParseParamList(descStr, "devices", errmsg);
+    if (descStrings.size() == 0) {
         if (errmsg && errmsg->empty()) *errmsg = "Empty list of devices.";
         return NULL;
     }
