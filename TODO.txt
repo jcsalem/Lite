@@ -16,6 +16,7 @@ More than one pixel on bounce/rotate for Ltool
 --FadeIn and --FadeOut std args
 Options to Sparkle filter
 Lchase (like rotate but any number of items)
+rotwashbounce
 Clean up Sparkle filter timing (either time-based anti-aliasing or sync)
 Extend Ltool for rotwashbounce
 Lpv - persistence of vision display.  

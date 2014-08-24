@@ -3,7 +3,7 @@
 # Usage message
 function usage
 {
-	echo "Usage: $0 [effect_id] | effectname [params] | [--inorder]"
+	echo "Usage: $0 [effect_id] | effectname [params] | [--inorder] | [--random]"
 	echo "With no argument, runs random effects forever"
 	exit 0
 }
@@ -148,28 +148,37 @@ function run_effect {
 #----------------------------------------------
 
 # Parse arguments
+MODE=inorder
+
 if [[ "$1" =~ ^[0-9]+$ ]]; then
    while true; do
      run_effect $1
    done
+   exit 0
 elif [ "$1" == "--inorder" ]; then
-   echo "Running the effects in order"
+  MODE=inorder
+elif [ "$1" == "--random" ]; then
+  MODE=random  
 elif [ "$1" != "" ]; then
    while true; do
      run $*
+     exit 0
    done
-else
-   LAST_EID=0
-   echo "After testing all lights, running effects in random order"
 fi
+
+if [ "$MODE" == "inorder" ]; then echo "Running the effects in order"; 
+elif [ "$MODE" == "random" ]; then echo "Randomly running the effects";
+else echo "Unknown running mode: $MODE"
+fi 
 
 NUM_EFFECTS=14
 # Always run the first effect first to make sure the lights work
 EID=0
+LAST_EID=0
 
 while true; do
    run_effect $EID
-   if [ -z "$LAST_EID" ]; then 
+   if [ "$MODE" == "inorder" ]; then 
      # In order
      EID=$(expr \( $EID + 1 \) % $NUM_EFFECTS )
    else
