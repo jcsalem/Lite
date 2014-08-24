@@ -21,7 +21,7 @@ vector<string> ParseParamList(csref paramString, csref contextName = "", string*
 
 // Helper functions
 //  Checks the number of parameters. 
-bool ParamListCheck(cvsref params, csref contextName, string* errmsg, int minArgs, int maxArgs = -1); 
+bool ParamListCheck(cvsref paramList, csref contextName, string* errmsg, int minArgs, int maxArgs = -1); 
 //  Creates a string with a comma-separated list of the parameters
 string ParamListToString(cvsref params);
 //  Sets errmsg to the standard error message. Always returns false.
@@ -38,8 +38,13 @@ bool ParamErrmsgSet(string* errmsg, csref contextName, csref msg, csref value);
 // low_bound <= value < high_bound
 
 template<typename T>
-  bool ParseParam(T* out, csref paramString, csref paramName, string* errmsg = NULL);
-template<typename T>  // With bounds checking for numeric types 
-  bool ParseParam(T* out, csref paramString, csref paramName, string* errmsg, double lowBound, double highBound = numeric_limits<T>::max());  // Used doubles rather than T because the implicit conversion for templates sucks
+  bool ParseRequiredParam(T* out, csref paramString, csref paramName, string* errmsg = NULL);
+template<typename T>
+  bool ParseOptionalParam(T* out, csref paramString, csref paramName, string* errmsg = NULL);
+// With bounds checking for numeric types 
+template<typename T>  
+  bool ParseRequiredParam(T* out, csref paramString, csref paramName, string* errmsg, double lowBound, double highBound = numeric_limits<T>::max());  // Used doubles rather than T because the implicit conversion for templates sucks
+template<typename T>  
+  bool ParseOptionalParam(T* out, csref paramString, csref paramName, string* errmsg, double lowBound, double highBound = numeric_limits<T>::max());  // Used doubles rather than T because the implicit conversion for templates sucks
 
 #endif //  __UTILSPARSE_H
