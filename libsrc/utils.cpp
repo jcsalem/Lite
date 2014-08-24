@@ -113,10 +113,20 @@ string StrReplace(csref str, csref match, csref subst) {
 //-------------------------------------------------------------------------
 // String to number conversions
 //-------------------------------------------------------------------------
+
+void CheckForStrtoParseError(csref str, const char* endpos) {
+    int parseLen = endpos - str.c_str();
+    if (parseLen != str.size() &&  // This first test is just a shortcut that doesn't look for trailing whitespace
+        (parseLen > str.size() || ! TrimWhitespace(str.substr(parseLen)).empty()))
+      errno = EDOM;
+}
+
 bool StrToFlt(csref str, float* result) {
     errno = 0;
-    float val = strtof(str.c_str(), NULL);
+    char* endpos;
+    float val = strtof(str.c_str(), &endpos);
     if (result) *result = val;
+    CheckForStrtoParseError(str, endpos);
     return errno == 0;
 }
 
@@ -128,10 +138,13 @@ float StrToFlt(csref str) {
 
 bool StrToInt(csref str, int* result) {
     errno = 0;
-    long val = strtol(str.c_str(), NULL, 0);
+    char* endpos;
+    long val = strtol(str.c_str(), &endpos, 0);
+    if (result) *result = val;
+    CheckForStrtoParseError(str, endpos);
+    // Check for range errors
     if (val < INT_MIN) {val = INT_MIN; errno = ERANGE;}
     if (val > INT_MAX) {val = INT_MAX; errno = ERANGE;}
-    if (result) *result = val;
     return errno == 0;
 }
 
@@ -143,9 +156,11 @@ int StrToInt(csref str) {
 
 bool StrToUnsigned(csref str, unsigned* result) {
     errno = 0;
-    unsigned long val = strtoul(str.c_str(), NULL, 0);
-    if (val > UINT_MAX) {val = UINT_MAX; errno = ERANGE;}
+    char* endpos;
+    unsigned long val = strtoul(str.c_str(), &endpos, 0);
     if (result) *result = val;
+    if (val > UINT_MAX) {val = UINT_MAX; errno = ERANGE;}
+    CheckForStrtoParseError(str, endpos);
     return errno == 0;
 }
 

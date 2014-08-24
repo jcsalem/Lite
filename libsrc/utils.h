@@ -34,7 +34,7 @@ string StrToUpper(csref s);
 string PluralStr(csref s, int num = 2); 
 
 bool StrEQ(csref a, csref b); // Caseless string compare
-size_t StrSearch(csref str, csref matchString, int start = 0); // Caseless string search
+size_t StrSearch(csref str, csref matchString, size_t start = 0); // Caseless string search
 bool StrStartsWith(csref str, csref matchString); // Caseless compare to beginning of string
 // Replace all occurances of the match string with substitute
 string StrReplace(csref str, csref match, csref substitute);
