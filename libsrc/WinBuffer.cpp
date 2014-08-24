@@ -31,12 +31,14 @@ LBuffer* WinBufferCreate(cvsref params, string* errmsg) {
     bool isVertical = false;
 
     // Count
-    if (params.size() > 0 && !params[0].empty()) 
-        if (! ParseParam(&count, params[0], "window count", errmsg, 1)) return NULL;
+    if (! ParseOptionalParam(&count, params, 0, "window light count", errmsg, 1)) return NULL;
     // Flags
-    if (params.size() > 1 && !params[1].empty() && !StrEQ(params[1],"h")) {
-        if (! StrEQ(params[1], "v")) return (LBuffer*) ParamErrmsgSet(errmsg, "window flags", "unknown flag argument", params[1]);
-        isVertical = true;
+    string flags;
+    if (! ParseOptionalParam(&flags, params, 1, "window flags", errmsg)) return NULL;
+    if (flags.size() > 0) {
+        if (flags.size() > 1 || StrSearch("vh", flags) == string::npos)
+            return (LBuffer*) ParamErrmsgSet(errmsg, "window flags", "unknown flag argument", flags);
+        else if (StrEQ(flags,"v")) isVertical = true;
     }
 
     WinInfo info;

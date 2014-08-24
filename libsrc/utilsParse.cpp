@@ -20,6 +20,15 @@ bool ParamListCheck(cvsref params, csref bufferName, string* errmsg, int minArgs
     return true;
 }
 
+bool ParamListHasValue(cvsref paramList, int index, csref paramName, string* errmsg)
+{
+    if (index < 0 || index >= paramList.size() || paramList[index].empty()) {
+        if (errmsg) *errmsg = "Missing required argument: " + paramName;
+        return false;
+    } else
+    return true;
+}
+
 string ParamListToString(cvsref params)
 {
     string out;
@@ -157,7 +166,10 @@ vector<string> ParseParamList(csref paramString, csref context, string* errmsg)
 
 template<>
   bool ParseParam<string>(string* out, csref paramString, csref paramName, string* errmsg) {
-    if (paramString.empty()) return ParamErrmsgSet(errmsg, paramName, "Missing required argument");
+    if (paramString.empty()) {
+        *out = "";
+        return true;
+    }
     char endChar = paramString[0];
 
     if (endChar != '"' && endChar != '\'') {
@@ -196,7 +208,6 @@ template<> bool ParseParam<int>  (int*    out, csref paramString, csref paramNam
 // Float
 template<>
   bool ParseParam<float>(float*  out, csref paramString, csref paramName, string* errmsg, double lowBound, double highBound) {
-    if (paramString.empty()) return ParamErrmsgSet(errmsg, paramName, "Missing required argument");
     if (! StrToFlt(paramString, out)) 
         return ParamErrmsgSet(errmsg, paramName, "Expected a number");
     if (*out < lowBound) 
@@ -209,7 +220,6 @@ template<>
 // Int
 template<>
   bool ParseParam<int>(int*    out, csref paramString, csref paramName, string* errmsg, double lowBound, double highBound) {
-    if (paramString.empty()) return ParamErrmsgSet(errmsg, paramName, "Missing required argument");
     if (! StrToInt(paramString, out)) 
         return ParamErrmsgSet(errmsg, paramName, "Expected a number");
     if (*out < lowBound) 

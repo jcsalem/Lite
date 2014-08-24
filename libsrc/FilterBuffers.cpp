@@ -172,13 +172,8 @@ LBuffer* PlaneNavigationBufferCreate(cvsref params, LBuffer* buffer, string* err
 {
   if (! ParamListCheck(params, "plane", errmsg, 0, 1)) return NULL;
 
-  int numPixels;
-
-  if (params.empty()) 
-    // No argument: default
-    return new PlaneNavigationBuffer(buffer);
-
-  if (! ParseParam(&numPixels, params[0], "plane", errmsg, 0)) return NULL;
+  int numPixels = gDefaultPlaneNavigationWidth;
+  if (! ParseOptionalParam(&numPixels, params, 0, "plane pixel width", errmsg, 0)) return NULL;
   return new PlaneNavigationBuffer(buffer, numPixels);
 }
 
@@ -297,31 +292,24 @@ LBuffer* SparkleBufferCreate(cvsref params, LBuffer* buffer, string* errmsg)
 
   // Parse the color
   Color* color = NULL;
-  if (params.size() > 0) {
-   string cstr = params[0];
-   if (! cstr.empty()) {
-      if (! ParseParam(&cstr, cstr, "sparkle color", errmsg)) return NULL;
-        color = Color::AllocFromString(cstr, errmsg);
-        if (! color) {
-          if (errmsg) *errmsg = "While parsing sparkle color, " + *errmsg;
-          return NULL;
-        }
-    }
-  }
+  if (! ParseOptionalParam(&color, params, 0, "sparkle color", errmsg)) return NULL;
 
   // Now get other the parameters;
   float fraction = kDefaultSparkleFraction;
   float duration = kDefaultSparkleDuration;
   float sigma    = kDefaultSparkleSigma;
   
-  if (! params[1].empty() && ! ParseParam(&fraction, params[1], "sparkle fraction", errmsg, 0,  1)) return NULL;
-  if (! params[2].empty() && ! ParseParam(&duration, params[2], "sparkle duration", errmsg, 0, 30)) return NULL;
-  if (! params[3].empty() && ! ParseParam(&sigma,    params[3], "sparkle sigma",    errmsg, 0, 10)) return NULL;
+  if (!ParseOptionalParam(&fraction, params, 1, "sparkle fraction", errmsg, 0,  1)) return NULL;
+  if (!ParseOptionalParam(&duration, params, 2, "sparkle duration", errmsg, 0, 30)) return NULL;
+  if (!ParseOptionalParam(&sigma,    params, 3, "sparkle sigma",    errmsg, 0, 10)) return NULL;
   
   // Create the buffer
   SparkleBuffer* newbuf =  new SparkleBuffer(buffer, ParamListToString(params));
-  if (color) newbuf->SetColor(color);
   newbuf->SetParameters(fraction, duration, sigma);
+  if (color) {
+    newbuf->SetColor(color);
+    delete color;
+  }
   return newbuf;
 }
 
