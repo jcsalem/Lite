@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <iostream>
 #include "utilsOptions.h"
+#include "utilsParse.h"
 
 //--------------------------------------------------------------------------
 // Utilities
@@ -188,11 +189,29 @@ Color* Color::AllocFromString(csref strarg, string* errmsg, bool ignoreRangeErro
             return NULL;
     } else if (ParseNamedColor(str, &a, &b, &c)) {
         return new RGBColor(a,b,c);
-    } else if (ParseColorComponents(str, &a, &b, &c, errmsg, ignoreRangeErrors))
-        return new RGBColor(a,b,c);
-    else
+    } 
+    // Doesn't make sense to support this old syntax
+    //else if (ParseColorComponents(str, &a, &b, &c, errmsg, ignoreRangeErrors))
+    //    return new RGBColor(a,b,c);
+    else {
+        if (errmsg) *errmsg = "unknown color: \"" + str + "\"";
         return NULL;
+    }
 }
+
+// IMPORTANT!  This allocats a color object
+template<>
+  bool ParseParam<Color*>(Color** out, csref param, csref paramName, string* errmsg) {
+    Color* color = Color::AllocFromString(param, errmsg);
+    if (color) {
+      *out = color;
+      return true;
+    } else {
+      if (errmsg) *errmsg = "While parsing " + paramName + ", " + *errmsg;
+      return false;
+    } 
+  }
+
 
 //--------------------------------------------------------------------------
 // RGBColor
