@@ -32,7 +32,7 @@ LBuffer* WinBufferCreate(cvsref params, string* errmsg) {
 
     // Count
     if (params.size() > 0 && !params[0].empty()) 
-        if (! ParseRequiredParam(&count, params[0], "window count", errmsg, 1)) return NULL;
+        if (! ParseParam(&count, params[0], "window count", errmsg, 1)) return NULL;
     // Flags
     if (params.size() > 1 && !params[1].empty() && !StrEQ(params[1],"h")) {
         if (! StrEQ(params[1], "v")) return (LBuffer*) ParamErrmsgSet(errmsg, "window flags", "unknown flag argument", params[1]);

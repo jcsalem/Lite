@@ -62,7 +62,7 @@ LBuffer* CursesBufferCreate(cvsref params, string* errmsg) {
     }
 
     // Specified size
-    if (! ParseRequiredParam(&width, params[0], "console display width", errmsg, 5)) return NULL;
+    if (! ParseParam(&width, params[0], "console display width", errmsg, 5)) return NULL;
     return new CursesBuffer(width);
 }
 

@@ -156,7 +156,7 @@ vector<string> ParseParamList(csref paramString, csref context, string* errmsg)
 //----------------------------------------------------------------------------------------------------
 
 template<>
-  bool ParseRequiredParam<string>(string* out, csref paramString, csref paramName, string* errmsg) {
+  bool ParseParam<string>(string* out, csref paramString, csref paramName, string* errmsg) {
     if (paramString.empty()) return ParamErrmsgSet(errmsg, paramName, "Missing required argument");
     char endChar = paramString[0];
 
@@ -187,15 +187,15 @@ template<>
 //----------------------------------------------------------------------------------------------------
 // Generic definition for four argument version
 template<typename T>
-  bool ParseRequiredParam(T*  out, csref paramString, csref paramName, string* errmsg) {
-    return ParseRequiredParam(out, paramString, paramName, errmsg, numeric_limits<T>::min(), numeric_limits<T>::max());
+  bool ParseParam(T*  out, csref paramString, csref paramName, string* errmsg) {
+    return ParseParam(out, paramString, paramName, errmsg, numeric_limits<T>::min(), numeric_limits<T>::max());
 }
-template<> bool ParseRequiredParam<float>(float*  out, csref paramString, csref paramName, string* errmsg);
-template<> bool ParseRequiredParam<int>  (int*    out, csref paramString, csref paramName, string* errmsg);
+template<> bool ParseParam<float>(float*  out, csref paramString, csref paramName, string* errmsg);
+template<> bool ParseParam<int>  (int*    out, csref paramString, csref paramName, string* errmsg);
 
 // Float
 template<>
-  bool ParseRequiredParam<float>(float*  out, csref paramString, csref paramName, string* errmsg, double lowBound, double highBound) {
+  bool ParseParam<float>(float*  out, csref paramString, csref paramName, string* errmsg, double lowBound, double highBound) {
     if (paramString.empty()) return ParamErrmsgSet(errmsg, paramName, "Missing required argument");
     if (! StrToFlt(paramString, out)) 
         return ParamErrmsgSet(errmsg, paramName, "Expected a number");
@@ -208,7 +208,7 @@ template<>
 
 // Int
 template<>
-  bool ParseRequiredParam<int>(int*    out, csref paramString, csref paramName, string* errmsg, double lowBound, double highBound) {
+  bool ParseParam<int>(int*    out, csref paramString, csref paramName, string* errmsg, double lowBound, double highBound) {
     if (paramString.empty()) return ParamErrmsgSet(errmsg, paramName, "Missing required argument");
     if (! StrToInt(paramString, out)) 
         return ParamErrmsgSet(errmsg, paramName, "Expected a number");

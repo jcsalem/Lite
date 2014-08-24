@@ -178,7 +178,7 @@ LBuffer* PlaneNavigationBufferCreate(cvsref params, LBuffer* buffer, string* err
     // No argument: default
     return new PlaneNavigationBuffer(buffer);
 
-  if (! ParseRequiredParam(&numPixels, params[0], "plane", errmsg, 0)) return NULL;
+  if (! ParseParam(&numPixels, params[0], "plane", errmsg, 0)) return NULL;
   return new PlaneNavigationBuffer(buffer, numPixels);
 }
 
@@ -300,7 +300,7 @@ LBuffer* SparkleBufferCreate(cvsref params, LBuffer* buffer, string* errmsg)
   if (params.size() > 0) {
    string cstr = params[0];
    if (! cstr.empty()) {
-      if (! ParseRequiredParam(&cstr, cstr, "sparkle color", errmsg)) return NULL;
+      if (! ParseParam(&cstr, cstr, "sparkle color", errmsg)) return NULL;
         color = Color::AllocFromString(cstr, errmsg);
         if (! color) {
           if (errmsg) *errmsg = "While parsing sparkle color, " + *errmsg;
@@ -314,9 +314,9 @@ LBuffer* SparkleBufferCreate(cvsref params, LBuffer* buffer, string* errmsg)
   float duration = kDefaultSparkleDuration;
   float sigma    = kDefaultSparkleSigma;
   
-  if (! params[1].empty() && ! ParseRequiredParam(&fraction, params[1], "sparkle fraction", errmsg, 0,  1)) return NULL;
-  if (! params[2].empty() && ! ParseRequiredParam(&duration, params[2], "sparkle duration", errmsg, 0, 30)) return NULL;
-  if (! params[3].empty() && ! ParseRequiredParam(&sigma,    params[3], "sparkle sigma",    errmsg, 0, 10)) return NULL;
+  if (! params[1].empty() && ! ParseParam(&fraction, params[1], "sparkle fraction", errmsg, 0,  1)) return NULL;
+  if (! params[2].empty() && ! ParseParam(&duration, params[2], "sparkle duration", errmsg, 0, 30)) return NULL;
+  if (! params[3].empty() && ! ParseParam(&sigma,    params[3], "sparkle sigma",    errmsg, 0, 10)) return NULL;
   
   // Create the buffer
   SparkleBuffer* newbuf =  new SparkleBuffer(buffer, ParamListToString(params));

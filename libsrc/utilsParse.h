@@ -38,12 +38,12 @@ bool ParamErrmsgSet(string* errmsg, csref contextName, csref msg, csref value);
 // low_bound <= value < high_bound
 
 template<typename T>
-  bool ParseRequiredParam(T* out, csref paramString, csref paramName, string* errmsg = NULL);
+  bool ParseParam(T* out, csref paramString, csref paramName, string* errmsg = NULL);
 template<typename T>
   bool ParseOptionalParam(T* out, csref paramString, csref paramName, string* errmsg = NULL);
 // With bounds checking for numeric types 
 template<typename T>  
-  bool ParseRequiredParam(T* out, csref paramString, csref paramName, string* errmsg, double lowBound, double highBound = numeric_limits<T>::max());  // Used doubles rather than T because the implicit conversion for templates sucks
+  bool ParseParam(T* out, csref paramString, csref paramName, string* errmsg, double lowBound, double highBound = numeric_limits<T>::max());  // Used doubles rather than T because the implicit conversion for templates sucks
 template<typename T>  
   bool ParseOptionalParam(T* out, csref paramString, csref paramName, string* errmsg, double lowBound, double highBound = numeric_limits<T>::max());  // Used doubles rather than T because the implicit conversion for templates sucks
 
