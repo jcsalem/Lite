@@ -155,7 +155,8 @@ vector<string> ParseParamList(csref paramString, csref context, string* errmsg)
 // Parsing individual parameters
 //----------------------------------------------------------------------------------------------------
 
-bool ParseParam(string* out, csref paramString, csref paramName, string* errmsg) {
+template<>
+  bool ParseParam<string>(string* out, csref paramString, csref paramName, string* errmsg) {
     if (paramString.empty()) return ParamErrmsgSet(errmsg, paramName, "Missing required argument");
     char endChar = paramString[0];
 
@@ -181,7 +182,19 @@ bool ParseParam(string* out, csref paramString, csref paramName, string* errmsg)
     return true;
 }
 
-bool ParseParam(float*  out, csref paramString, csref paramName, string* errmsg, float lowBound, float highBound) {
+// Generic definitions
+template<typename T>
+  bool ParseParam(T*  out, csref paramString, csref paramName, string* errmsg) {
+    return ParseParam(out, paramString, paramName, errmsg, numeric_limits<T>::min(), numeric_limits<T>::max());
+}
+template<>
+  bool ParseParam<float>(float*  out, csref paramString, csref paramName, string* errmsg);
+
+template<>
+  bool ParseParam<int>(int*  out, csref paramString, csref paramName, string* errmsg);
+ 
+template<>
+  bool ParseParam<float>(float*  out, csref paramString, csref paramName, string* errmsg, double lowBound, double highBound) {
     if (paramString.empty()) return ParamErrmsgSet(errmsg, paramName, "Missing required argument");
     if (! StrToFlt(paramString, out)) 
         return ParamErrmsgSet(errmsg, paramName, "Expected a number");
@@ -192,7 +205,8 @@ bool ParseParam(float*  out, csref paramString, csref paramName, string* errmsg,
     return true;
 }
 
-bool ParseParam(int*    out, csref paramString, csref paramName, string* errmsg, int lowBound, int highBound) {
+template<>
+  bool ParseParam<int>(int*    out, csref paramString, csref paramName, string* errmsg, double lowBound, double highBound) {
     if (paramString.empty()) return ParamErrmsgSet(errmsg, paramName, "Missing required argument");
     if (! StrToInt(paramString, out)) 
         return ParamErrmsgSet(errmsg, paramName, "Expected a number");

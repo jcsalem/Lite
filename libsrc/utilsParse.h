@@ -4,8 +4,7 @@
 #ifndef __UTILSPARSE_H
 #define __UTILSPARSE_H
 #include <utils.h>
-#include <cfloat>
-#include <climits>
+#include <limits>
 #include <vector>
 typedef const vector<string>& cvsref;  // Convenience type for passing around parsed parameter lists
 
@@ -38,10 +37,9 @@ bool ParamErrmsgSet(string* errmsg, csref contextName, csref msg, csref value);
 // errmsg: error message output string (may be NULL)
 // low_bound <= value < high_bound
 
-bool ParseParam(string* out, csref paramString, csref paramName, string* errmsg = NULL);
-bool ParseParam(float*  out, csref paramString, csref paramName, string* errmsg = NULL, float lowBound = FLT_MIN, float highBound = FLT_MAX);
-bool ParseParam(int*    out, csref paramString, csref paramName, string* errmsg = NULL, int lowBound = INT_MIN, int highBound = INT_MAX);
-class Color;
-bool ParseParam(Color*  out, csref paramString, csref paramName, string* errmsg = NULL);
+template<typename T>
+  bool ParseParam(T* out, csref paramString, csref paramName, string* errmsg = NULL);
+template<typename T>  // With bounds checking for numeric types 
+  bool ParseParam(T* out, csref paramString, csref paramName, string* errmsg, double lowBound, double highBound = numeric_limits<T>::max());  // Used doubles rather than T because the implicit conversion for templates sucks
 
 #endif //  __UTILSPARSE_H
