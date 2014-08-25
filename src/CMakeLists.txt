@@ -18,20 +18,34 @@ IF(EXISTS "/etc/init.d/lightberryrun")
   SET(RASPBERRY_PI 1)
 ENDIF()
 
+# Mac Code Signing
+if(APPLE)
+   find_program(MAC_CODESIGN codesign)
+endif(APPLE)
+
 # Excutables 
 set(PROGRAMS Ltool ckinfo Lfirefly Lflash Lstarry Lsparkle Lpov testmix)
 
 foreach (PROG ${PROGRAMS})
   add_executable(${PROG} ${PROG}.cpp)
   target_link_libraries(${PROG} lite ${MY_LIBS})
+
+  # Code signing on Mac
+  if(MAC_CODESIGN)
+	add_custom_command(TARGET ${PROG}
+						POST_BUILD VERBATIM
+						COMMENT "Code signing ${PROG}"
+						COMMAND ${MAC_CODESIGN} -f -s - $<TARGET_FILE:${PROG}>
+						)
+  endif(MAC_CODESIGN)
   
   # To enable GPIO access, make binaries on the Raspberry PI setuid root 
   if(RASPBERRY_PI)
   	add_custom_command(TARGET ${PROG}
   						POST_BUILD VERBATIM
+						COMMENT "Making ${PROG} setuid root"
   						COMMAND sudo chown root $<TARGET_FILE:${PROG}>
   						COMMAND sudo chmod 04755 $<TARGET_FILE:${PROG}>
-  						COMMENT "Making ${PROG} setuid root"
   						)
   endif(RASPBERRY_PI)
 endforeach(PROG) 
