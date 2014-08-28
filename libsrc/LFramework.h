@@ -26,6 +26,7 @@ extern float        gRunTime;
 extern float        gRate;
 typedef enum {kRatePositive = 0, kRateNonZero = 1, kRateAny = 2} RateMode_t;    // Default is kRatePositive
 void SetRateMode(RateMode_t mode); //Call this to allow different types of values for --rate
+void SetRateDoc(csref docString);  // Used to customize the rate help string
 // --fade
 extern float        gFade;  // Fade in/out time in seconds
 // --filter   Output filters (used in creating the output buffer)

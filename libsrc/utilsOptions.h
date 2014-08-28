@@ -22,7 +22,9 @@ public:
     csref               GetDoc      () const {return iDoc;}
     OptionParserFcn_t   GetParser   () const {return iParser;}
     OptionDefaultFcn_t  GetDefaulter() const {return iDefaulter;}
-
+    
+    void                SetDoc      (csref docString) {iDoc = docString;}
+ 
     static const int kVariable = -1;
     // Returns false if an error occurred and a help message was printed.
     // minPositionArgs is the minimum number of positional arguments after the options. Use kVariable if it can be any number of arguments..
@@ -31,6 +33,7 @@ public:
     static void AddOption(const Option& option);
     static bool ReplaceOption(const Option& option);  // Returns true if the option was new. False if it was replaced.
     static bool DeleteOption(csref name);
+    static bool GetOption(Option* out, csref name);
     static bool Exists(csref name);
 private:
     string              iName; // Fully decorated name in lower case

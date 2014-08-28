@@ -198,6 +198,14 @@ void SetRateMode(RateMode_t mode) {
     gRateMode = mode;
 }
 
+void SetRateDoc(csref docString) {
+    Option opt;
+    if (Option::GetOption(&opt, "rate")) {
+        opt.SetDoc(docString);
+        Option::ReplaceOption(opt);
+    }
+}
+
 DefOption(rate, RateCallback, "rateval", "specifies the relative speed of the effect.", RateDefaultCallback);
 
 //------------

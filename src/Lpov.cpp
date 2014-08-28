@@ -13,7 +13,7 @@ DefProgramHelp(kPHusage, "Displays an image via \"persistance of vision\"");
 DefProgramHelp(kPHadditionalArgs, "rgbfilename width");
 DefProgramHelp(kPHhelp, "file must be in a raw RGB format.");
 
-float gPovDefaultFrameDurationMS = 100;  // duration of each output line (milliseconds)
+float gPovDefaultSliceDurationMS = 100;  // duration of each output line (milliseconds)
 float gPovDefaultOnFraction = .1; // Fraction of time the pixel is on during each cycle.
 
 //----------------------------------------------------------------
@@ -36,23 +36,13 @@ string DensityDefaultCallback(csref name) {
 
 DefOption(density, DensityCallback, "density", "The fraction of time the lights are on from 0 to 1.", DensityDefaultCallback);
 
-// FrameDuration
-float gPovFrameDurationMS = gPovDefaultFrameDurationMS;  // Average duty cycle of lights
-string RateCallback(csref name, csref val) {
-    float rate;
-    if (! StrToFlt(val, &rate))
-        return "--rate wasn't a number: " + val;
-    if (rate  <= 0)
-        return "--rate argument must be positive. Was " + val;
-    gPovFrameDurationMS = rate * gPovDefaultFrameDurationMS;
-    return "";
+// Show image
+bool gShowImage = false;
+string ShowImageCallback(csref name, csref val) {
+  gShowImage = true;
+  return "";
 }
-
-string RateDefaultCallback(csref name) {
-    return "1";
-}
-
-DefOption(rate , RateCallback, "rate", "Relative frame rate (a multiple of " + FltToStr(gPovDefaultFrameDurationMS) + "ms", RateDefaultCallback);
+DefOptionBool(showimage, ShowImageCallback, "If set, print an ASCII version of the image.");
 
 //----------------------------------------------------------------
 // Image Code
@@ -212,13 +202,8 @@ void LpovGroup::Callback(Lgroup* group)
 int main(int argc, char** argv)
 {
     Option::DeleteOption("color");
-
-    // Compute number of frames to flash
-    int totalFrames = gPovFrameDurationMS / L::gFrameDuration + .5;
-    if (totalFrames < 2) totalFrames = 2;
-    int onFrames = totalFrames * gPovOnFraction + .5;
-    if (onFrames < 1) onFrames = 1;
-    else if (onFrames >= totalFrames) onFrames = totalFrames;
+    L::gRate = gPovDefaultSliceDurationMS;
+    L::SetRateDoc("How often to change the slice of the image display. In ms");
 
     // Parse arguments
     L::Startup(&argc, argv, 2, 2);
@@ -227,6 +212,13 @@ int main(int argc, char** argv)
     int width;
     if (! StrToInt(widthStr, &width) && width > 0)
         L::ErrorExit("width must be a positive number");
+
+    // Compute number of frames to flash
+    int totalFrames = L::gRate / L::gFrameDuration + .5;
+    if (totalFrames < 2) totalFrames = 2;
+    int onFrames = totalFrames * gPovOnFraction + .5;
+    if (onFrames < 1) onFrames = 1;
+    else if (onFrames >= totalFrames) onFrames = totalFrames;
 
     // Initialize the group
     LpovGroup group;
@@ -237,13 +229,15 @@ int main(int argc, char** argv)
     string errmsg;
     if (! group.Image.ReadFromFileRGB(filename, width, &errmsg))
         L::ErrorExit("While reading image, " + errmsg);
+    if (gShowImage)
+        cout << group.Image.ToString() << endl;
 
     if (L::gVerbose)
         {
-        cout << "Frames per Cycle= " << group.FramesPerCycle 
+        cout << "Image Slice Duration (--rate) = " << L::gRate << "   L:gFrameDuration = " << L::gFrameDuration << endl;
+        cout << "Frames per Slice= " << group.FramesPerCycle 
              << " of which pixels are lit for " << group.NumOnFrames << " frames." << endl;
         cout << "Image: " << filename <<  " Size: " << group.Image.GetWidth() << "x" << group.Image.GetHeight() << endl;
-        cout << group.Image.ToString() << endl;
       }
 
     // Perform

@@ -101,6 +101,10 @@ bool Option::Exists(csref name) {
     return OptionList::Exists(name);
 }
 
+bool Option::GetOption(Option* output, csref name) {
+    return OptionList::GetOption(output, name);
+}
+
 //---------------------------------------------------------------------
 // Program Help support
 //---------------------------------------------------------------------
