@@ -41,7 +41,7 @@ class StatsBuffer : public LFilter
 {
 public:
   StatsBuffer(LBuffer* buffer) : 
-    LFilter(buffer), iCollector(StatsCollector(5)),iIsFirstTime(true),iLastFrameTime(0) {}
+    LFilter(buffer), iCollector(StatsCollector()),iIsFirstTime(true),iLastFrameTime(0) {}
   string GetDescriptor() const {return "StatsInternal";}
   virtual bool Update();
   void Report() const {iCollector.Output();}
@@ -265,8 +265,8 @@ void ErrorExit(csref msg) {
 
     if (gVerbose)
       {
-	cout << gOutputBuffer->GetDescription() << endl;
-	gOutputBuffer = gStatsBuffer = new StatsBuffer(gOutputBuffer);
+	   cout << gOutputBuffer->GetDescription() << endl;
+	   gOutputBuffer = gStatsBuffer = new StatsBuffer(gOutputBuffer);
       }	
 }
 

@@ -9,7 +9,7 @@
 class StatsCollector
 {
  public:
-  StatsCollector (int numToRetain = 5);
+  StatsCollector (int numToRetain = 15);
   ~StatsCollector();
   void Record(long value);
   void Output(ostream& stream = cout) const;

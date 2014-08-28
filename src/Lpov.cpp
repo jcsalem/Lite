@@ -13,8 +13,8 @@ DefProgramHelp(kPHusage, "Displays an image via \"persistance of vision\"");
 DefProgramHelp(kPHadditionalArgs, "rgbfilename width");
 DefProgramHelp(kPHhelp, "file must be in a raw RGB format.");
 
-float gPovDefaultSliceDurationMS = 100;  // duration of each output line (milliseconds)
-float gPovDefaultOnFraction = .1; // Fraction of time the pixel is on during each cycle.
+float gPovDefaultSliceDurationMS = 20;  // duration of each output line (milliseconds)
+float gPovDefaultOnFraction = .5; // Fraction of time the pixel is on during each cycle.
 
 //----------------------------------------------------------------
 // Option definitions
@@ -25,7 +25,7 @@ float gPovOnFraction      = gPovDefaultOnFraction;
 string DensityCallback(csref name, csref val) {
      if (! StrToFlt(val, &gPovOnFraction))
         return "--density wasn't a number: " + val;
-    if (gPovOnFraction <= 0 || gPovOnFraction >= 1)
+    if (gPovOnFraction <= 0 || gPovOnFraction > 1)
         return "--density argument must be between 0 and 1. Was " + val;
     return "";
 }
@@ -214,8 +214,11 @@ int main(int argc, char** argv)
         L::ErrorExit("width must be a positive number");
 
     // Compute number of frames to flash
+    if (L::gRate < L::gFrameDuration) 
+      L::gFrameDuration = L::gRate + .5;
+    if (L::gFrameDuration == 0) L::gFrameDuration = 1;
     int totalFrames = L::gRate / L::gFrameDuration + .5;
-    if (totalFrames < 2) totalFrames = 2;
+    //if (totalFrames < 2) totalFrames = 2;
     int onFrames = totalFrames * gPovOnFraction + .5;
     if (onFrames < 1) onFrames = 1;
     else if (onFrames >= totalFrames) onFrames = totalFrames;
