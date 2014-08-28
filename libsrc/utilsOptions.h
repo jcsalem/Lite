@@ -14,6 +14,7 @@ public:
     typedef string (*OptionDefaultFcn_t) (csref name);
 
     Option(csref name, OptionParserFcn_t parserFcn, csref paramName, csref docstring, OptionDefaultFcn_t defaultFcn);
+    Option() : iParser(NULL), iDefaulter(NULL) {}
 
     csref               GetName     () const {return iName;}
     csref               GetParam    () const {return iParam;}
@@ -27,6 +28,8 @@ public:
     // minPositionArgs is the minimum number of positional arguments after the options. Use kVariable if it can be any number of arguments..
     // maxPositionArgs is the maximum number of positional arguments after the options. Defaults to minPositionalArgs
     static void ParseArglist(int *argc, char** argv, int minPositionArgs = 0, int maxPositionalArgs = -1);
+    static void AddOption(const Option& option);
+    static bool ReplaceOption(const Option& option);  // Returns true if the option was new. False if it was replaced.
     static bool DeleteOption(csref name);
     static bool Exists(csref name);
 private:

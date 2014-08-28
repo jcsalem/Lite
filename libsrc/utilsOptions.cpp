@@ -13,8 +13,10 @@
 class OptionList { // local to this file
 public:
     OptionList() {}
-    static void AddOption(const Option& option) {GetOptions().push_back(option);}
+    static void AddOption(const Option& option);
+    static bool ReplaceOption(const Option& option); // returns true if new definitions, otherwise false if replaced
     static bool DeleteOption(csref name);
+    static bool GetOption(Option* retOption, csref name);
     static bool Exists(csref name);
 
     typedef vector<Option>::const_iterator const_iterator;
@@ -32,6 +34,18 @@ vector<Option>& OptionList::GetOptions() {
     return allOptions;
     }
 
+void OptionList::AddOption(const Option& option) {
+    if (Exists(option.GetName()))
+        cerr << "Internal Error: Multiple definitions for option --" << option.GetName() << endl;
+    GetOptions().push_back(option);
+}
+
+bool OptionList::ReplaceOption(const Option& option) {
+    bool retval = ! DeleteOption(option.GetName());
+    AddOption(option);
+    return retval;
+}
+
 bool OptionList::DeleteOption(csref namearg) {
     string name = StrToLower(namearg);
     for (vector<Option>::iterator i = GetOptions().begin(); i != GetOptions().end(); ++i) {
@@ -43,11 +57,18 @@ bool OptionList::DeleteOption(csref namearg) {
     return false;
 }
 
-bool OptionList::Exists(csref namearg) {
+bool OptionList::Exists(csref name) {
+    return GetOption(NULL, name);
+}
+
+bool OptionList::GetOption(Option* output, csref namearg) {
     string name = StrToLower(namearg);
     for (vector<Option>::iterator i = GetOptions().begin(); i != GetOptions().end(); ++i) {
-        if (i->GetName() == name) return true;
+        if (i->GetName() == name) {
+            if (output) *output = *i;
+            return true;
         }
+    }
     return false;
 }
 
@@ -62,6 +83,14 @@ Option::Option(csref name, OptionParserFcn_t parserCallback, csref paramName, cs
     iParser     = parserCallback;
     iDefaulter  = defaultCallback;
     OptionList::AddOption(*this);
+}
+
+void Option::AddOption(const Option& option) {
+    OptionList::AddOption(option);
+}
+
+bool Option::ReplaceOption(const Option& option) {
+    return OptionList::ReplaceOption(option);
 }
 
 bool Option::DeleteOption(csref name) {
