@@ -22,7 +22,7 @@ Milli_t     gEndTime;                // Ending time (set to gTime to end prematu
 bool        gTerminateNow;           // Set to exit asap
 
 // Not externally setable
-Milli_t     gFrameDuration  = 20;    // duration of each frame of animation (in MS)
+Milli_t     gFrameDuration  = 40;    // duration of each frame of animation (in MS)
 LprocList   gProcs;
 
 // Force gOutputBuffer to be deleted at exit
