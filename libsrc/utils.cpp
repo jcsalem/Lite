@@ -45,7 +45,7 @@ string StrToUpper(csref s) {
 string PluralStr(csref s, int num) 
 {
     if (s.empty() || num == 1) return s;
-    if (s.back() == 's') 
+    if (s[s.length()-1] == 's') 
         return s + "es"; 
     else
         return s + "s";
