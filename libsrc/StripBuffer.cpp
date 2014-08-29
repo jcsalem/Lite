@@ -34,13 +34,16 @@ void ForceLinkStrip() {}
 #include "utils.h"
 #include "Color.h"
 #include "utilsGPIO.h"
+#include "utilsParse.h"
 
 //-----------------------------------------------------------------------------
 // Creation function
 //-----------------------------------------------------------------------------
 
-LBuffer* StripBufferCreate(csref descStrArg, string* errmsg) {
-    string descStr = descStrArg;
+LBuffer* StripBufferCreate(cvsref params, string* errmsg) {
+    if (! ParamListCheck(params, "LED strip", errmsg, 0, 1)) return NULL;
+    string descStr;
+    if (params.size() > 0) descStr = params[0];
 
     int size = 32;
     size_t leftPos = descStr.find('(');
