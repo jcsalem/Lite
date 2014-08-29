@@ -42,8 +42,8 @@ void ForceLinkStrip() {}
 
 LBuffer* StripBufferCreate(cvsref params, string* errmsg) {
     if (! ParamListCheck(params, "LED strip", errmsg, 0, 1)) return NULL;
-    string descStr;
-    if (params.size() > 0) descStr = params[0];
+    string descStrArg, descStr;
+    if (params.size() > 0) descStrArg = descStr = params[0];
 
     int size = 32;
     size_t leftPos = descStr.find('(');
