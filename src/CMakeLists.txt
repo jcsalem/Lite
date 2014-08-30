@@ -14,7 +14,7 @@ ENDIF(UNIX AND NOT APPLE)
 SET(MY_LIBS ${MY_LIBS} ${SFML_LIBRARIES})
 
 # Raspberry Pi flag
-IF(EXISTS "/etc/init.d/lightberryrun")
+IF(EXISTS "/etc/init.d/liteberryrun")
   SET(RASPBERRY_PI 1)
 ENDIF()
 
@@ -44,7 +44,7 @@ foreach (PROG ${PROGRAMS})
   	add_custom_command(TARGET ${PROG}
   						POST_BUILD VERBATIM
 						COMMENT "Making ${PROG} setuid root"
-  						COMMAND sudo chown root $<TARGET_FILE:${PROG}>
+  						COMMAND sudo chown root:root $<TARGET_FILE:${PROG}>
   						COMMAND sudo chmod 04755 $<TARGET_FILE:${PROG}>
   						)
   endif(RASPBERRY_PI)
