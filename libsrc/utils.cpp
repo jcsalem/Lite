@@ -7,6 +7,11 @@
 #include <iomanip>
 #include <limits.h>
 
+// For signal handling stack
+#include <vector>
+#include <map>
+
+
 #ifdef OS_WINDOWS
 #include "Windows.h"
 #endif //OS_WINDOWS
@@ -284,6 +289,89 @@ string GetEnvStr(csref name)
 	return string(buffer);
 #endif
 	}
+
+//-------------------------------------------------------------------------
+// Signal Handling
+//-------------------------------------------------------------------------
+// fwd declarations of OS-specific functions
+bool MaybeInstallCtrlCHandler();
+
+// Generic Handler definition
+typedef vector<CtrlCHandler::HandlerFcn_t> CtrlCHandlers_t;
+CtrlCHandlers_t gCtrlCHandlers;
+bool CtrlCHandler() {
+    if (gCtrlCHandlers.empty()) return false; // Return if no handlers (should never happen)
+    for (CtrlCHandlers_t::const_iterator i = gCtrlCHandlers.begin(); i != gCtrlCHandlers.end(); ++i) {
+        if ((*i)()) return true; // Signal handled
+    }
+    return false;
+}
+
+// Generic add and delete functions
+void CtrlCHandler::Add(CtrlCHandler::HandlerFcn_t handlerFcn) 
+{   
+    gCtrlCHandlers.push_back(handlerFcn);
+    MaybeInstallCtrlCHandler();
+}
+
+void CtrlCHandler::Delete(CtrlCHandler::HandlerFcn_t handlerFcn) 
+{    
+    CtrlCHandlers_t::iterator ccIter = find(gCtrlCHandlers.begin(), gCtrlCHandlers.end(), handlerFcn);
+    if (ccIter == gCtrlCHandlers.end()) return; // Return if unknown handler
+    gCtrlCHandlers.erase(ccIter);
+}
+
+#ifdef OS_WINDOWS
+BOOL WINAPI WindowsCtrlCHandler(DWORD)
+{
+    return CtrlCHandler();
+}
+bool gCtrlCHandlerInstalled = false;
+
+bool MaybeInstallCtrlCHandler()
+{
+    if (gCtrlCHandlerInstalled) return true;
+    return SetConsoleCtrlHandler(WindowsCtrlCHandler, TRUE);
+}
+
+// TBD
+#else // Posix style
+#include <signal.h>
+bool gCtrlCHandlerInstalled = false;
+
+struct sigaction* GetOldCtrlCAction()
+{ // We do this as a static to deal with load order issues if DefCtrlCHandler is used
+    static struct sigaction oldCtrlCAction;
+    return &oldCtrlCAction;
+}
+
+void PosixCtrlCHandler(int)
+{
+    if (CtrlCHandler()) return;
+    // If not handled, call the previous CtrlC handler
+    // Install old handler, re-raise the signal, and then reestablish the handler after it returns
+    sigaction(SIGINT, GetOldCtrlCAction(), NULL);
+    gCtrlCHandlerInstalled = false;
+    raise(SIGINT);
+    MaybeInstallCtrlCHandler();    
+}
+
+bool MaybeInstallCtrlCHandler()
+{
+    if (gCtrlCHandlerInstalled) return true;
+    struct sigaction action;
+    action.sa_handler = PosixCtrlCHandler;
+    sigemptyset(&(action.sa_mask));
+    action.sa_flags = 0;    
+    if (sigaction(SIGINT, &action, GetOldCtrlCAction()) != 0)
+        // Error
+        return false;
+    // Success
+    gCtrlCHandlerInstalled = true;
+    return true;
+}
+
+#endif // OS_WINDOWS
 
 //-------------------------------------------------------------------------
 // Windows specific stuff

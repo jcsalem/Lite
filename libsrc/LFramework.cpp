@@ -34,6 +34,18 @@ struct UninitAtExit {
 UninitAtExit _gUninitAtExit;
 
 //---------------------------------------------------------------
+// Trap Ctrl-C to set terminate flag
+//---------------------------------------------------------------
+bool CtrlCHandler()
+{
+    if (gTerminateNow)
+        // If Ctrl-C recieved while trying to terminate, let it propogate up the state
+        return false;
+    gTerminateNow = true;
+    return true;
+}
+
+//---------------------------------------------------------------
 // Stats Buffer (for reporting framerate stats in verbose mode)
 //---------------------------------------------------------------
 
@@ -268,10 +280,13 @@ void ErrorExit(csref msg) {
 	   cout << gOutputBuffer->GetDescription() << endl;
 	   gOutputBuffer = gStatsBuffer = new StatsBuffer(gOutputBuffer);
       }	
+
+    CtrlCHandler::Add(CtrlCHandler);
 }
 
 void Cleanup(bool eraseAtEnd)
 {
+    CtrlCHandler::Delete(CtrlCHandler);
     if (eraseAtEnd)
       {
         // Clear the lights
@@ -280,10 +295,10 @@ void Cleanup(bool eraseAtEnd)
       }
     if (gVerbose)
       {
-	cout << "Framerate Statistics:" << endl;
-	cout << "Target time between frames: " << gFrameDuration << "ms" << endl;
-	cout << "Actual ";
-	gStatsBuffer->Report();      
+	   cout << "Framerate Statistics" << endl;
+	   cout << "  Target time between frames: " << gFrameDuration << "ms" << endl;
+	   cout << "  Actual ";
+	   gStatsBuffer->Report();      
       }
 }
 
@@ -318,10 +333,10 @@ void Run(Lgroup& objGroup, L::ObjCallback_t objfcn, L::GroupCallback_t groupfcn)
 
     // Main loop
     while (true) {
+      if (gTerminateNow) break;  // Exit if we're done
+
 	  RunOnce(objGroup, groupfcn);
 
-	  // Exit if out of time, else delay until next frame
-	  if (gTerminateNow) break;
 	  Milli_t currentTime = Milliseconds();
 	  if (gEndTime != 0 && MilliLE(gEndTime, currentTime)) break;
 	  

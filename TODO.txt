@@ -1,7 +1,5 @@
 ** Bugs **
-?? --rate broken/confusing on Lsparkle (Lstarry doc is wrong)
 rate for bounce appears to be in terms of frames not time
-images don't work
 
 ** planerun **
 bounce rate seemed too fast
@@ -10,13 +8,13 @@ Lfirefly might be better if single pixels, denser and faster
 Durations overall should be longer
 
 ** New **
+rotwashbounce
 Allow Ltool stuff to be aggregated (e.g., bounce a black pixel on rainbow)
 More than one pixel on bounce/rotate for Ltool
 
 --FadeIn and --FadeOut std args
 Options to Sparkle filter
 Lchase (like rotate but any number of items)
-rotwashbounce
 Clean up Sparkle filter timing (either time-based anti-aliasing or sync)
 Extend Ltool for rotwashbounce
 Lpv - persistence of vision display.  

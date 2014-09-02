@@ -62,6 +62,26 @@ string ErrorCodeString          (int err = errno);
 string GetEnvStr(csref name);
 
 //--------------------------------------------------------------------------------
+// Signal handling
+//--------------------------------------------------------------------------------
+class CtrlCHandler {
+public:
+	// The handler must return true if it handles the signal.  Or else return false, to try the next signal handler.
+	typedef bool (*HandlerFcn_t) (); 
+
+	CtrlCHandler(HandlerFcn_t handler) : iHandler(handler) {Add(handler);}
+	~CtrlCHandler() {Delete(iHandler);}
+
+	static void Add(HandlerFcn_t handler);
+	static void Delete(HandlerFcn_t handler);
+private:
+	HandlerFcn_t 	iHandler;
+};
+
+#define DefCtrlCHandler(name, handler) \
+	SignalHandler gSignalHandler_ ## name(handler)
+
+//--------------------------------------------------------------------------------
 // Windows specific function definitions
 //--------------------------------------------------------------------------------
 #ifdef OS_WINDOWS
