@@ -94,7 +94,8 @@ function run_effect {
   echo "Effect #$1"
   case $1 in
        0)
-       run patriot_bounce
+       run patriot_bounce 20
+       
        ;;
        1)
        run $DIR/Ltool --time 2 --fade 1 plane
@@ -104,38 +105,32 @@ function run_effect {
        2)
        run $DIR/Lflash --time 10 --rate .5 --density .01 white
        ;;
+       ;;
        3)
-       run $DIR/Ltool --time 15 --filter sparkle all 'RGB(0.01,0,.01)'
+       run $DIR/Ltool --time 30 --filter sparkle all 'RGB(0.01,0,.01)'
        ;;
        4) 
        run rainbow1
+       run rainbow1
+       run rainbow1
        ;;
        5) 
-       run mixed_flash
+       run mixed_flash 20
        ;;
        6)
-       run $DIR/Lfirefly --time 15 --rate 3 --color bright
+       run $DIR/Ltool --time 40 --rate 2.1 bounce white 
        ;;
-       7)
-       run $DIR/Ltool --time 20 --rate 2.5 bounce white 
+       7) 
+       run $DIR/Lflash --time 30 --rate .15 --density .01 --filter sparkle magenta
        ;;
-       8) 
-       run $DIR/Lflash --time 15 --rate .15 --density .01 --filter sparkle magenta
+       8)
+       run $DIR/Ltool --time 40 --filter 'sparkle(orange,.1)' all 'RGB(.1,.1,0)'
        ;;
        9)
-       run $DIR/Lstarry --time 15 --sparklerate 50 --density .1 --color bright 
+       run $DIR/Lpov --time 40 --verbose --rate 2 $IMGDIR/smiley-44x44x24.rgb 44
        ;;
        10)
-       run $DIR/Ltool --time 15 --filter 'sparkle(orange,.1)' all 'RGB(.1,.1,0)'
-       ;;
-       11)
-       run $DIR/Lpov --time 15 $IMGDIR/smiley-44x44x24.rgb 44
-       ;;
-       12)
-       run $DIR/Lpov --time 15 $IMGDIR/rainbowstar-44x44x24.rgb 44
-       ;;
-       13)
-       run $DIR/Lpov --time 15 $IMGDIR/PatsLogo-x44.rgb 44
+       run $DIR/Lpov --time 40 --verbose --rate 3 $IMGDIR/rainbowstar-44x44x24.rgb 44
        ;;
        *)
        echo "No such effect: #$EID"
@@ -148,7 +143,7 @@ function run_effect {
 #----------------------------------------------
 
 # Parse arguments
-MODE=inorder
+MODE=random
 
 if [[ "$1" =~ ^[0-9]+$ ]]; then
    while true; do
@@ -171,7 +166,7 @@ elif [ "$MODE" == "random" ]; then echo "Randomly running the effects";
 else echo "Unknown running mode: $MODE"
 fi 
 
-NUM_EFFECTS=14
+NUM_EFFECTS=11
 # Always run the first effect first to make sure the lights work
 EID=0
 LAST_EID=0
