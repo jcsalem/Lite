@@ -95,7 +95,6 @@ function run_effect {
   case $1 in
        0)
        run patriot_bounce 20
-       
        ;;
        1)
        run $DIR/Ltool --time 2 --fade 1 plane
@@ -105,16 +104,15 @@ function run_effect {
        2)
        run $DIR/Lflash --time 10 --rate .5 --density .01 white
        ;;
-       ;;
        3)
        run $DIR/Ltool --time 30 --filter sparkle all 'RGB(0.01,0,.01)'
        ;;
-       4) 
+       4)
        run rainbow1
        run rainbow1
        run rainbow1
        ;;
-       5) 
+       5)
        run mixed_flash 20
        ;;
        6)
