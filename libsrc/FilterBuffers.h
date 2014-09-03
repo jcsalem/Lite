@@ -47,14 +47,13 @@ protected:
 };
 
 //-----------------------------------------------------------------------------
-// A Filter that rotates the output
+// Filters that rotate the output
 //-----------------------------------------------------------------------------
-// Building block class.  Remaps locations in the buffer using a map.
-class LRotateFilter : public LMapFilter
+class LShiftFilter : public LMapFilter
 {
 public:
-    LRotateFilter(LBuffer* buffer, int offset = 0) : LMapFilter(buffer) {SetOffset(offset);}
-    virtual ~LRotateFilter() {}
+    LShiftFilter(LBuffer* buffer, int offset = 0) : LMapFilter(buffer) {SetOffset(offset);}
+    virtual ~LShiftFilter() {}
     virtual string GetDescriptor() const;
     void SetOffset(int offset);
     int GetOffset() const {return iOffset;}
@@ -63,6 +62,22 @@ private:
     int iOffset;
 };
 
+class LRotateFilter : public LShiftFilter
+{
+public:
+    LRotateFilter(LBuffer* buffer, float speed = 1.0, float bounceAfter = 0.0) : LShiftFilter(buffer,0), iSpeed(speed), iBounceAfter(bounceAfter) {}
+    virtual ~LRotateFilter() {}
+    virtual string GetDescriptor() const;
+    virtual bool Update();
+    void  SetSpeed(float speed) {iSpeed = speed;}
+    float GetSpeed() const {return iSpeed;}
+    void  EnableBounce() {iBounceAfter = 1;}
+    void  SetBounceAfter(float bounceAfter) {iBounceAfter = bounceAfter;}
+
+private:
+    float iSpeed;    // Speed of rotation in full buffer lengths per second
+    float iBounceAfter; // Number of rotations after which we should rotate back the other way.  Set to 0 for no bound or 1 for bouncing after one full rotation
+};
 
 // This function is defined only so LFramework can reference it and force the FilterBuffers.cpp to be linked in.
 void ForceLinkFilters();

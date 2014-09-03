@@ -6,6 +6,7 @@
 #include "FilterBuffers.h"
 #include "utilsRandom.h"
 #include "utilsParse.h"
+#include <math.h>
 #include <algorithm>
 #include <iostream> // for debugging
 
@@ -26,15 +27,15 @@ LMapFilter::LMapFilter(LBuffer* buffer) : LFilter(buffer)
 }
 
 //-----------------------------------------------------------------------------
-// LRotateFilter -- Rotates the output
+// LShiftFilter -- Rotates the output a fixed amount
 //-----------------------------------------------------------------------------
 
-string LRotateFilter::GetDescriptor() const {
-  if (iOffset == 0) return "rotate"; 
-  else return "rotate:" + IntToStr(iOffset);
+string LShiftFilter::GetDescriptor() const {
+  if (iOffset == 0) return "shift"; 
+  else return "shift:" + IntToStr(iOffset);
 }
 
-void LRotateFilter::SetOffset(int offset) {
+void LShiftFilter::SetOffset(int offset) {
   iOffset = offset;
   int len = iBuffer->GetCount();
   for (int i = 0; i < len; ++i) {
@@ -42,17 +43,68 @@ void LRotateFilter::SetOffset(int offset) {
     }
 }
 
-LBuffer* LRotateFilterCreate(cvsref params, LBuffer* buffer, string* errmsg)
+LBuffer* LShiftFilterCreate(cvsref params, LBuffer* buffer, string* errmsg)
 {
     
     int offset = 0;
-    if (! ParamListCheck(params, "rotate", errmsg, 0, 1)) return NULL;
-    if (! ParseOptionalParam(&offset, params, 0, "rotate offset", errmsg)) return NULL;
+    if (! ParamListCheck(params, "shift", errmsg, 0, 1)) return NULL;
+    if (! ParseOptionalParam(&offset, params, 0, "shift offset", errmsg)) return NULL;
     return new LRotateFilter(buffer, offset);
 }
 
-DEFINE_LBUFFER_FILTER_TYPE(rotate, LRotateFilterCreate, "rotate[:amount]",
+DEFINE_LBUFFER_FILTER_TYPE(shift, LShiftFilterCreate, "shift[:amount]",
         "Rotates the order of the pixels by the specified amount (which should be an integer)");
+
+//-----------------------------------------------------------------------------
+// LRotateFilter -- Rotates the output an amount that changes over time
+//-----------------------------------------------------------------------------
+
+string LRotateFilter::GetDescriptor() const {
+  if (iSpeed == 0) return "rotate"; 
+  else return "rotate:" + FltToStr(iSpeed);
+}
+
+bool LRotateFilter::Update() {
+  // This effectively updates the offset AFTER the update has been done
+  double timeDiff = MilliDiff(L::gTime, L::gStartTime);
+  double len = iBuffer->GetCount();
+  double doffset = (timeDiff / 1000.0) * len * iSpeed; 
+  int offset;
+  if (iBounceAfter == 0.0) 
+    offset = fmod((doffset + .5), (double) len);
+  else {
+    double bounceLen = len * iBounceAfter * 2 - 1;
+    int midPoint = (bounceLen + 1.0) / 2.0;
+    offset = fmod((doffset + .5), bounceLen);
+    if (offset >= midPoint) offset = bounceLen - offset;
+  }
+  SetOffset(offset);
+  return iBuffer->Update();
+}
+
+LBuffer* LRotateFilterCreate(cvsref params, LBuffer* buffer, string* errmsg)
+{
+    float speed = 1;
+    if (! ParamListCheck(params, "rotate", errmsg, 0, 1)) return NULL;
+    if (! ParseOptionalParam(&speed, params, 0, "rotate speed", errmsg)) return NULL;
+    return new LRotateFilter(buffer, speed);
+}
+
+DEFINE_LBUFFER_FILTER_TYPE(rotate, LRotateFilterCreate, "rotate[:speed]",
+        "Rotates the display over time. Speed is the number of full rotations per second (default is 1)");
+
+LBuffer* LBounceFilterCreate(cvsref params, LBuffer* buffer, string* errmsg)
+{
+    float speed = 1;
+    float bounceAfter = 1;
+    if (! ParamListCheck(params, "bounce", errmsg, 0, 2)) return NULL;
+    if (! ParseOptionalParam(&speed, params, 0, "bounce speed", errmsg)) return NULL;
+    if (! ParseOptionalParam(&bounceAfter, params, 1, "bounce after", errmsg)) return NULL;
+    return new LRotateFilter(buffer, speed, bounceAfter);
+}
+
+DEFINE_LBUFFER_FILTER_TYPE(bounce, LBounceFilterCreate, "bounce[:speed[,after]]",
+        "Bounces the display back-and-forth over time. Speed is the number of bounces per second (default is 1). After is when to bounce.");
 
 //-----------------------------------------------------------------------------
 // ReverseBuffer
