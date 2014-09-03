@@ -197,14 +197,6 @@ template<>
 //----------------------------------------------------------------------------------------------------
 // Parsing Numeric parameters
 //----------------------------------------------------------------------------------------------------
-// Generic definition for four argument version
-template<typename T>
-  bool ParseParam(T*  out, csref paramString, csref paramName, string* errmsg) {
-    return ParseParam(out, paramString, paramName, errmsg, numeric_limits<T>::min(), numeric_limits<T>::max());
-}
-template<> bool ParseParam<float>(float*  out, csref paramString, csref paramName, string* errmsg);
-template<> bool ParseParam<int>  (int*    out, csref paramString, csref paramName, string* errmsg);
-
 // Float
 template<>
   bool ParseParam<float>(float*  out, csref paramString, csref paramName, string* errmsg, double lowBound, double highBound) {
@@ -227,4 +219,13 @@ template<>
     if (*out >= highBound) 
         return ParamErrmsgSet(errmsg, paramName, "Must be less than " + IntToStr(highBound));
     return true;
+}
+
+// Definitions for four argument versions
+template<> bool ParseParam<float>(float*  out, csref paramString, csref paramName, string* errmsg) {
+    return ParseParam(out, paramString, paramName, errmsg, numeric_limits<float>::min(), numeric_limits<float>::max());
+}
+
+template<> bool ParseParam<int>  (int*    out, csref paramString, csref paramName, string* errmsg) {
+    return ParseParam(out, paramString, paramName, errmsg, numeric_limits<int>::min(), numeric_limits<int>::max());
 }

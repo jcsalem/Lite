@@ -26,6 +26,35 @@ LMapFilter::LMapFilter(LBuffer* buffer) : LFilter(buffer)
 }
 
 //-----------------------------------------------------------------------------
+// LRotateFilter -- Rotates the output
+//-----------------------------------------------------------------------------
+
+string LRotateFilter::GetDescriptor() const {
+  if (iOffset == 0) return "rotate"; 
+  else return "rotate:" + IntToStr(iOffset);
+}
+
+void LRotateFilter::SetOffset(int offset) {
+  iOffset = offset;
+  int len = iBuffer->GetCount();
+  for (int i = 0; i < len; ++i) {
+    iMap[i] = (i + offset) % len;
+    }
+}
+
+LBuffer* LRotateFilterCreate(cvsref params, LBuffer* buffer, string* errmsg)
+{
+    
+    int offset = 0;
+    if (! ParamListCheck(params, "rotate", errmsg, 0, 1)) return NULL;
+    if (! ParseOptionalParam(&offset, params, 0, "rotate offset", errmsg)) return NULL;
+    return new LRotateFilter(buffer, offset);
+}
+
+DEFINE_LBUFFER_FILTER_TYPE(rotate, LRotateFilterCreate, "rotate[:amount]",
+        "Rotates the order of the pixels by the specified amount (which should be an integer)");
+
+//-----------------------------------------------------------------------------
 // ReverseBuffer
 //-----------------------------------------------------------------------------
 // Flips the order of lights in the buffer

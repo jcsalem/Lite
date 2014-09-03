@@ -34,19 +34,20 @@ void ValidateZeroOrTwoArgs(csref command, int argc, int argp)
 }
 
 DefProgramHelp(kPHprogram, "Ltool");
-DefProgramHelp(kPHusage, "Performs various lighting commands: clear, all, set, wash, rotate, rotwash, bounce, plane");
+DefProgramHelp(kPHusage, "Performs various lighting commands: clear, all, set, rotate, bounce, wash, rotwash, bouncewash, plane");
 DefProgramHelp(kPHadditionalArgs, "command [colorargs...]");
 DefProgramHelp(kPHhelp, "command is one of:\n"
                "    clear \n"
                "    all color\n"
-               "    rotate color\n"
-               "    rotwash color1 color2\n"
-               "    bounce color\n"
                "    set idx color\n"
+               "    rotate color\n"
+               "    bounce color\n"
                "    wash color1 color2\n"
-	       "    plane\n"
+               "    rotwash color1 color2\n"
+               "    bouncewash color1 color2\n"
+  	           "    plane\n"
                "  color is \"r,g,b\" or \"HSV(h,s,v)\" or a named color, etc.  All components are scaled from 0.0 to 1.0\n"
-	       "  color arguments are optional and default to white for single color commands and red-to-red for wash commands"
+	             "  color arguments are optional and default to white for single color commands and red-to-red for wash commands"
               );
 
 typedef enum {kStatic, kRotate, kBounce} Mode_t;
@@ -111,9 +112,9 @@ int main(int argc, char** argv)
     {
       ValidateNumArgs(command, 0, 1, argc, argp);
       if (argp >= argc)
-	gColor = new WHITE;
+        gColor = new WHITE;
       else
-	gColor = Color::AllocFromString(argv[argp++], &errmsg);
+	      gColor = Color::AllocFromString(argv[argp++], &errmsg);
       if (L::gRunTime < 0) L::gRunTime = 0;  // If no run time specified, return immediately
     }
     else if (command == "rotate" || command == "bounce")
@@ -130,30 +131,28 @@ int main(int argc, char** argv)
       speed = 20 * L::gRate;
       gMode = (command == "bounce") ? kBounce : kRotate;
     }
-    else if (command == "wash" || command == "rotwash")
+    else if (command == "wash" || command == "rotwash" || command == "bouncewash")
     {
       ValidateZeroOrTwoArgs(command, argc, argp);
       if (argp >=  argc)
-	{
-	  gColor  = new RED;
-	  gColor2 = new RED;
-	}
-      else
-	{
-	  gColor  = Color::AllocFromString(argv[argp++], &errmsg);
-	  gColor2 = Color::AllocFromString(argv[argp++], &errmsg);
-	  if (!gColor)  gColor2 = NULL;
-	  if (!gColor2) gColor  = NULL;
-	}
-      if (command == "wash")
-	{
-	  if (L::gRunTime < 0) L::gRunTime = 0;  // If no run time specified, return immediately
-	}
-      else
-	{ // Rotwash
-	  speed = 40 * L::gRate;
-	  gMode = kRotate;
-	}
+        {
+	       gColor  = new RED;
+	       gColor2 = new RED;
+	      }
+        else
+	      {
+	       gColor  = Color::AllocFromString(argv[argp++], &errmsg);
+	       gColor2 = Color::AllocFromString(argv[argp++], &errmsg);
+	       if (!gColor)  gColor2 = NULL;
+	       if (!gColor2) gColor  = NULL;
+	      }
+      if (command == "wash") {
+	     if (L::gRunTime < 0) L::gRunTime = 0;  // If no run time specified, return immediately
+	     } else { 
+        // Rotwash or bouncewash
+    	  speed = 40 * L::gRate;
+    	  gMode = (command == "bouncewash") ? kBounce : kRotate;
+    	}
     }
     else if (command == "plane")
     {

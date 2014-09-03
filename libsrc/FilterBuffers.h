@@ -46,6 +46,24 @@ protected:
     vector<int> iMap;
 };
 
+//-----------------------------------------------------------------------------
+// A Filter that rotates the output
+//-----------------------------------------------------------------------------
+// Building block class.  Remaps locations in the buffer using a map.
+class LRotateFilter : public LMapFilter
+{
+public:
+    LRotateFilter(LBuffer* buffer, int offset = 0) : LMapFilter(buffer) {SetOffset(offset);}
+    virtual ~LRotateFilter() {}
+    virtual string GetDescriptor() const;
+    void SetOffset(int offset);
+    int GetOffset() const {return iOffset;}
+
+private:
+    int iOffset;
+};
+
+
 // This function is defined only so LFramework can reference it and force the FilterBuffers.cpp to be linked in.
 void ForceLinkFilters();
 

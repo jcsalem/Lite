@@ -1,5 +1,6 @@
 ** Bugs **
 rate for bounce appears to be in terms of frames not time
+See if we can improve StripBuffer performance by lowering delays
 
 ** planerun **
 bounce rate seemed too fast
