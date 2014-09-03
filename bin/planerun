@@ -64,8 +64,8 @@ function patriot_bounce {
 
 function rainbow1 {
 	for i in {1..2}; do
-		$DIR/Ltool --time 5 --rate  3 rotwash red red
-		$DIR/Ltool --time 5 --rate -3 rotwash red red
+		$DIR/Ltool --time 5 --rate  6 rotwash red red
+		$DIR/Ltool --time 5 --rate -6 rotwash red red
 	done
 }
 

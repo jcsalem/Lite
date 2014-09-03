@@ -51,9 +51,12 @@ DefProgramHelp(kPHhelp, "command is one of:\n"
               );
 
 typedef enum {kStatic, kRotate, kBounce} Mode_t;
-Mode_t gMode;
+Mode_t gMode = kStatic;
 Color* gColor;      // Always set
 Color* gColor2;     // Only set if we're doing a color wash
+int    gIndex = -1; // Index of the light to set. -1 if all lights are set.
+
+const float kSpeedFactor = 20;  // Amount to multiply rate by
 
 void LtoolCallback(Lobj* obj)
 {
@@ -74,6 +77,92 @@ void LtoolCallback(Lobj* obj)
     }
 }
 
+string ParseCommand(int argc, char** argv)
+{
+    if (argc <= 1) L::ErrorExit("Missing command");
+
+    int argp = 1;
+
+    string command = StrToLower(argv[argp++]);
+    string errmsg;
+
+    if (command == "clear") {
+      ValidateNumArgs(command, 0, 0, argc, argp);
+      gColor = new BLACK;
+    } 
+    else if (command == "set") {
+      ValidateNumArgs(command, 1, 2, argc, argp);
+      gIndex   = atoi(argv[argp++]);
+      if (argp > argc)
+        gColor = new WHITE;
+      else
+        gColor = Color::AllocFromString(argv[argp++], &errmsg);
+    }
+    else if (command == "all") {
+      ValidateNumArgs(command, 0, 1, argc, argp);
+      if (argp >= argc)
+        gColor = new WHITE;
+      else
+        gColor = Color::AllocFromString(argv[argp++], &errmsg);
+    }
+    else if (command == "rotate" || command == "bounce") {
+      ValidateNumArgs(command, 0, 1, argc, argp);
+      if (argp >= argc)
+        gColor = new WHITE;
+      else
+        gColor = Color::AllocFromString(argv[argp++], &errmsg);
+      if (L::gRate >= 0)
+        gIndex = 0;
+      else // start at right side if negative rate
+        gIndex = L::gOutputBuffer->GetCount() - 1;
+      gMode = (command == "bounce") ? kBounce : kRotate;
+    }
+    else if (command == "wash" || command == "rotwash" || command == "bouncewash") {
+      ValidateZeroOrTwoArgs(command, argc, argp);
+      if (argp >=  argc) {
+         gColor  = new RED;
+         gColor2 = new RED;
+        } else {
+         gColor  = Color::AllocFromString(argv[argp++], &errmsg);
+         gColor2 = Color::AllocFromString(argv[argp++], &errmsg);
+         if (!gColor)  gColor2 = NULL;
+         if (!gColor2) gColor  = NULL;
+        }
+      if (command != "wash") 
+        gMode = (command == "bouncewash") ? kBounce : kRotate;
+    }
+    else if (command == "plane") {
+      ValidateNumArgs(command, 0, 0, argc, argp);
+      gColor  = new RED;
+      gColor2 = new GREEN;
+    }
+    else {
+      L::ErrorExit("Unknown command \"" + command + "\"");
+    }
+
+    // Validate the colors
+    if (! gColor) L::ErrorExit(errmsg);
+
+    // If static and no time specified, make sure we return immediately
+    if (gMode == kStatic && L::gRunTime < 0) L::gRunTime = 0;  
+
+    // Print summary
+    if (L::gVerbose) {
+        cout << "Cmd: " << command << "   Color: " << gColor->ToString();
+        if (gColor2)
+            cout << " Color2: " << gColor2->ToString();
+        if (gIndex != -1)
+            cout << "  Index: " << gIndex;
+        if (L::gRunTime >= 0)
+            cout << "  Time: " << L::gRunTime << " seconds";
+        if (gMode != kStatic && L::gRate != 1)
+            cout << "  Rate: " << L::gRate;
+        cout << endl;
+    }
+
+    return command;
+}
+
 
 int main(int argc, char** argv)
 {
@@ -82,140 +171,39 @@ int main(int argc, char** argv)
     Option::DeleteOption("color");
     L::Startup(&argc, argv, Option::kVariable);
 
-    if (argc <= 1) L::ErrorExit("Missing command");
-
-    int argp = 1;
-
-    string command = argv[argp++];
-    string errmsg;
-    int idx = -1;  // if -1 all colors should be set
-
+    // Parse Command
+    string command = ParseCommand(argc, argv);
     float speed = 0;
+    if (gMode != kStatic) speed = L::gRate * kSpeedFactor;
 
-    if (command == "clear")
-    {
-      ValidateNumArgs(command, 0, 0, argc, argp);
-      gColor = new BLACK;
-      if (L::gRunTime < 0) L::gRunTime = 0;  // If no run time specified, return immediately
-    }
-    else if (command == "set")
-    {
-      ValidateNumArgs(command, 1, 2, argc, argp);
-      idx   = atoi(argv[argp++]);
-      if (argp > argc)
-	gColor = new WHITE;
-      else
-	gColor = Color::AllocFromString(argv[argp++], &errmsg);
-      if (L::gRunTime < 0) L::gRunTime = 0;  // If no run time specified, return immediately
-    }
-    else if (command == "all")
-    {
-      ValidateNumArgs(command, 0, 1, argc, argp);
-      if (argp >= argc)
-        gColor = new WHITE;
-      else
-	      gColor = Color::AllocFromString(argv[argp++], &errmsg);
-      if (L::gRunTime < 0) L::gRunTime = 0;  // If no run time specified, return immediately
-    }
-    else if (command == "rotate" || command == "bounce")
-    {
-      ValidateNumArgs(command, 0, 1, argc, argp);
-      if (argp >= argc)
-	gColor = new WHITE;
-      else
-        gColor = Color::AllocFromString(argv[argp++], &errmsg);
-      if (L::gRate >= 0)
-	idx = 0;
-      else // start at right side if negative rate
-	idx = L::gOutputBuffer->GetCount() - 1;
-      speed = 20 * L::gRate;
-      gMode = (command == "bounce") ? kBounce : kRotate;
-    }
-    else if (command == "wash" || command == "rotwash" || command == "bouncewash")
-    {
-      ValidateZeroOrTwoArgs(command, argc, argp);
-      if (argp >=  argc)
-        {
-	       gColor  = new RED;
-	       gColor2 = new RED;
-	      }
-        else
-	      {
-	       gColor  = Color::AllocFromString(argv[argp++], &errmsg);
-	       gColor2 = Color::AllocFromString(argv[argp++], &errmsg);
-	       if (!gColor)  gColor2 = NULL;
-	       if (!gColor2) gColor  = NULL;
-	      }
-      if (command == "wash") {
-	     if (L::gRunTime < 0) L::gRunTime = 0;  // If no run time specified, return immediately
-	     } else { 
-        // Rotwash or bouncewash
-    	  speed = 40 * L::gRate;
-    	  gMode = (command == "bouncewash") ? kBounce : kRotate;
-    	}
-    }
-    else if (command == "plane")
-    {
-      ValidateNumArgs(command, 0, 0, argc, argp);
-      gColor  = new RED;
-      gColor2 = new GREEN;
-      if (L::gRunTime < 0) L::gRunTime = 0;  // If no run time specified, return immediately
-    }
-    else
-    {
-        L::ErrorExit("Unknown command \"" + command + "\"");
-    }
-
-    // Validate the colors
-    if (! gColor) L::ErrorExit(errmsg);
-
-    // Print summary
-    if (L::gVerbose)
-    {
-        cout << "Cmd: " << command << "   Color: " << gColor->ToString();
-        if (gColor2)
-            cout << " Color2: " << gColor2->ToString();
-        if (idx != -1)
-            cout << "  Index: " << idx;
-        if (L::gRunTime >= 0)
-            cout << "  Time: " << L::gRunTime << " seconds";
-        if (gMode != kStatic && L::gRate != 1)
-            cout << "  Rate: " << L::gRate;
-        cout << endl;
-    }
-
-    // Allocate objects and set colors
+    // Allocate objects and set colors    
     Lgroup objs;
-    if (idx != -1)
+    if (gIndex != -1)
     {
         // Just one light
         Lobj* obj = new Lobj();
-        obj->pos.x = idx;
+        obj->pos.x = gIndex;
         obj->color = *gColor;
         obj->speed.x = speed;
         objs.Add(obj);
     }
-    else if (command == "plane")
-    {
+    else if (command == "plane") {
         // Plane colors (Left side red, Right side green)
         int numLights = L::gOutputBuffer->GetCount();;
-        for (int i = 0; i < numLights; ++i)
-        {
-            Lobj* obj = new Lobj();
-            obj->pos.x = i;
-	    obj->color = i < numLights/2 ? *gColor : *gColor2;
-            objs.Add(obj);
-	}
+        for (int i = 0; i < numLights; ++i) {
+          Lobj* obj = new Lobj();
+          obj->pos.x = i;
+          obj->color = i < numLights/2 ? *gColor : *gColor2;
+          objs.Add(obj);
+        }
     }        
-    else
-    {
+    else {
         // One light for each pixel
         HSVColorRange range;
         if (gColor2) range = HSVColorRange(*gColor, *gColor2);
 
         int numLights = L::gOutputBuffer->GetCount();;
-        for (int i = 0; i < numLights; ++i)
-        {
+        for (int i = 0; i < numLights; ++i) {
             Lobj* obj = new Lobj();
             obj->pos.x = i;
             if (gColor2)
