@@ -10,6 +10,7 @@
 // For signal handling stack
 #include <vector>
 #include <map>
+#include <algorithm>
 
 
 #ifdef OS_WINDOWS
@@ -299,6 +300,7 @@ bool MaybeInstallCtrlCHandler();
 // Generic Handler definition
 typedef vector<CtrlCHandler::HandlerFcn_t> CtrlCHandlers_t;
 CtrlCHandlers_t gCtrlCHandlers;
+
 bool CtrlCHandler() {
     if (gCtrlCHandlers.empty()) return false; // Return if no handlers (should never happen)
     for (CtrlCHandlers_t::const_iterator i = gCtrlCHandlers.begin(); i != gCtrlCHandlers.end(); ++i) {
