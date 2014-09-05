@@ -128,9 +128,17 @@ int PackRGB(const RGBColor& color, bool flip) {
         return r + g * 0x100 + b * 0x10000;
 }
 
+Micro_t kMinTimeBetweenUpdates = 500; // In Microseconds. This is a requirement of the WS2801 chip
+
 bool StripBufferWS2801::Update() {
     const_iterator bufBegin = const_cast<const StripBufferWS2801*>(this)->begin();
     const_iterator bufEnd   = const_cast<const StripBufferWS2801*>(this)->end();
+
+    // Check if we need to sleep
+    Micro_t timeSinceLast = MicroDiff(Microseconds(), iLastTime);
+    if (timeSinceLast < kMinTimeBetweenUpdates)
+      // Need to wait more time
+      SleepMicro(kMinTimeBetweenUpdates - timeSinceLast);
 
     for (const_iterator i = bufBegin; i != bufEnd; ++i) {
         int colorword = PackRGB(*i, GetColorFlip());
@@ -142,9 +150,8 @@ bool StripBufferWS2801::Update() {
             GPIO::Write(iCLKgpio, true);
         }
     }
-    // Now wait at least 500us to latch in the data
+    // This marks the end of updates to this strip (note that the 500us delay betwen frames is done above)
     GPIO::Write(iCLKgpio, false);
-    SleepMilli(1);
     return true;
 }
 

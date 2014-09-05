@@ -8,6 +8,7 @@
 
 #if defined(HAS_GPIO) && HAS_GPIO
 #include "LBuffer.h"
+#include "utilsTime.h"
 // // Currently for the Raspberry Pi and the WS2801-based LED strips from SparkFun
 
 // Generic strip type
@@ -34,13 +35,14 @@ private:
 class StripBufferWS2801 : public StripBuffer
 {
 public:
-    StripBufferWS2801(int count, int SDIgpio, int CLKgpio) : StripBuffer(count), iSDIgpio(SDIgpio), iCLKgpio(CLKgpio) {}
+    StripBufferWS2801(int count, int SDIgpio, int CLKgpio) : StripBuffer(count), iSDIgpio(SDIgpio), iCLKgpio(CLKgpio), iLastTime(Microseconds()) {}
     virtual ~StripBufferWS2801() {}
 
     virtual bool    Update();
 private:
     int iSDIgpio;
     int iCLKgpio;
+    Micro_t iLastTime;
     // Don't allow copying
     StripBufferWS2801(const StripBufferWS2801&);
     StripBufferWS2801& operator=(const StripBufferWS2801&);
