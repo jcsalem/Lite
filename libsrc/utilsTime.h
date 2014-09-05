@@ -3,18 +3,20 @@
 #include "utils.h"
 
 typedef uint32 Milli_t;
-const uint32 kMaxMilli_t = 0xFFFFFFFFUL;
-const uint32 kMilliEndOfRangeMask = 0xF000000UL;
-
 Milli_t Milliseconds(); // This is a monotonically increasing millisecond count
 Milli_t MilliDiff(Milli_t newTime, Milli_t oldTime);
 
-inline bool MilliLT(Milli_t a, Milli_t b) {if ((a & kMilliEndOfRangeMask) == kMilliEndOfRangeMask && (b & kMilliEndOfRangeMask) == 0) return true; else return a < b;}
+bool MilliLT(Milli_t a, Milli_t b);
 inline bool MilliLE(Milli_t a, Milli_t b) {return a == b || MilliLT(a, b);}
-inline bool MilliGT(Milli_t a, Milli_t b) {return MilliLT(b, a);}
-inline bool MilliGE(Milli_t a, Milli_t b) {return MilliLE(b, a);}
+inline bool MilliGT(Milli_t a, Milli_t b) {return MilliLE(b, a);}
+inline bool MilliGE(Milli_t a, Milli_t b) {return MilliLT(b, a);}
 
-void SleepMilli(Milli_t milliseconds);
+typedef uint32 Micro_t;
+Micro_t Microseconds(); // This is a monotonically increasing microsecond count
+Micro_t MicroDiff(Micro_t newTime, Micro_t oldTime);
+
 void SleepSec(float seconds);
+void SleepMilli(Milli_t milliseconds);
+void SleepMicro(Micro_t microseconds);
 
 #endif // _UTILSTIME_H

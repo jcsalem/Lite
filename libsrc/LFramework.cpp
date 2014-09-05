@@ -53,12 +53,12 @@ class StatsBuffer : public LFilter
 {
 public:
   StatsBuffer(LBuffer* buffer) : 
-    LFilter(buffer), iCollector(StatsCollector()),iIsFirstTime(true),iLastFrameTime(0) {}
+    LFilter(buffer), iIsFirstTime(true),iLastFrameTime(0) {}
   string GetDescriptor() const {return "StatsInternal";}
   virtual bool Update();
-  void Report() const {iCollector.Output();}
+  const StatsCollector<long>& GetCollector() {return iCollector;}
 private:
-  StatsCollector  iCollector;
+  StatsCollector<long>  iCollector;
   bool iIsFirstTime;
   Milli_t iLastFrameTime;
 };
@@ -297,8 +297,8 @@ void Cleanup(bool eraseAtEnd)
       {
 	   cout << "Framerate Statistics" << endl;
 	   cout << "  Target time between frames: " << gFrameDuration << "ms" << endl;
-	   cout << "  Actual ";
-	   gStatsBuffer->Report();      
+	   cout << "  Actual " << gStatsBuffer->GetCollector().GetSummaryString() << endl;
+       cout << "  Samples: " << gStatsBuffer->GetCollector().GetSamplesString() << endl;
       }
 }
 

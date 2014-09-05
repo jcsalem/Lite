@@ -24,7 +24,7 @@ if(APPLE)
 endif(APPLE)
 
 # Excutables 
-set(PROGRAMS Ltool ckinfo Lfirefly Lflash Lstarry Lsparkle Lpov testmix)
+set(PROGRAMS Ltool ckinfo Lfirefly Lflash Lstarry Lsparkle Lpov testmix testtime)
 
 foreach (PROG ${PROGRAMS})
   add_executable(${PROG} ${PROG}.cpp)
