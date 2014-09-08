@@ -80,7 +80,7 @@ LBuffer* LBuffer::Create(csref descArg, string* errmsg) {
     if (desc.empty()) return CreateError(errmsg, "Missing device descriptor");
     if (desc[0] == '[') {
         if (desc[desc.size() - 1] != ']') return CreateError(errmsg, "Device descriptor started with a bracket but didn't end with one: " + descArg);
-        return ComboBuffer::Create(desc.substr(1, desc.size()-2));
+        return ComboBuffer::Create(desc.substr(1, desc.size()-2), errmsg);
     }
 
     // If we get here it is a single buffer or a pipeline of filters plus a buffer

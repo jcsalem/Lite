@@ -95,9 +95,7 @@ bool  StatsBuffer::Update()
 // Output Device Parsing
 //---------------------------------------------------------------
 
-string gOutputDeviceArg;
-
-LBuffer* CreateOutputBuffer(csref devstr, string* errmsg) {
+static LBuffer* CreateOutputBuffer(csref devstr, string* errmsg) {
     LBuffer* buffer = ComboBuffer::Create(devstr, errmsg);
     if (! buffer) return NULL;
     ComboBuffer* cbuffer = dynamic_cast<ComboBuffer*>(buffer);
@@ -114,6 +112,8 @@ LBuffer* CreateOutputBuffer(csref devstr, string* errmsg) {
     }
     return buffer;
 }
+
+string gOutputDeviceArg;
 
 string DeviceCallback(csref name, csref val) {
     gOutputDeviceArg = TrimWhitespace(val);
@@ -314,7 +314,7 @@ void ErrorExit(csref msg) {
         ErrorExit("No output device was specified via --dev or the LDEV environment variable.");
 
     string errmsg;
-    gOutputBuffer = CreateOutputBuffer("[" + gOutputDeviceArg + "]", &errmsg);
+    gOutputBuffer = CreateOutputBuffer(gOutputDeviceArg, &errmsg);
     if (!gOutputBuffer) ErrorExit("Error initializing output device: " + errmsg);
     if (gOutputBuffer->HasError())
         ErrorExit(gOutputBuffer->GetLastError());
@@ -329,6 +329,7 @@ void ErrorExit(csref msg) {
 
     // Now create the output pipeline (gOutput)
     InitializeOutputPipeline();
+    if (gOutput.GetCount() == 0) ErrorExit("Zero length output pipeline: " + gOutput.GetDescription());
 
     if (gVerbose)
 	    cout << "Output Pipeline: " << gOutput.GetDescription() << endl;
