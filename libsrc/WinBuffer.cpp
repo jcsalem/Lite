@@ -17,8 +17,8 @@ WinBuffer::WinBuffer(int count, const WinInfo& winInfo, csref title) : LBufferPh
 }
 
 string  WinBuffer::GetDescriptor() const {
-    if (iCreateString.empty()) return "window:(" + IntToStr(GetCount()) + ")";
-    else return "window:" + iCreateString;
+    if (iCreateString.empty()) return "window(" + IntToStr(GetCount()) + ")";
+    else return "window(" + iCreateString + ")";
 }
 
 //-----------------------------------------------------------------------------

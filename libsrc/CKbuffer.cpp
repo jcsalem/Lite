@@ -58,7 +58,7 @@ string CKbuffer::GetLastError() const
 
 string CKbuffer::GetDescriptor() const
 {
-    return "ck:" + iDevice.GetDescriptor();
+    return iDevice.GetDescriptor();
 }
 
 bool CKbuffer::PortSync()

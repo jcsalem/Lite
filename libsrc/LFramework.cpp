@@ -171,6 +171,12 @@ void PrependFilter(LFilter* filter) {
 //---------------------------------------------------------------
 // Output pipeline
 //---------------------------------------------------------------
+string Pipeline::GetDescription() const {
+    if (iBuffer)
+        return GetDescriptor() + "(" + IntToStr(GetCount()) + " lights): " + iBuffer->GetDescription();
+    else
+        return GetDescriptor() + "> (no output buffer)";
+}
 
 void InitializeOutputPipeline() { 
     LBuffer* lastBuffer = gOutputBuffer;

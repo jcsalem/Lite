@@ -32,9 +32,9 @@ void LBuffer::SetColor(int idx, const Color& color)
 }
 
 string LBuffer::GetDescription() const {
-    string r = "LBuffer: ";
-    r += IntToStr(GetCount()) + " total lights";
-    r += " [" + GetDescriptor() + "]";
+    string r = "LBuffer(";
+    r += IntToStr(GetCount()) + " lights) ";
+    r += GetDescriptor();
     return r;
 }
 

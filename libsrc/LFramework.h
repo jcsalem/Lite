@@ -22,7 +22,7 @@ class Pipeline : public LFilter
 public:
 	Pipeline(LBuffer* buffer = NULL) : LFilter(buffer) {}
 	virtual ~Pipeline() {}
-	virtual string GetDescrition() const {return GetDescriptor() + "> " + (iBuffer ? iBuffer->GetDescription() : string("(no output buffer)"));}
+	virtual string GetDescription() const;
 	virtual string GetDescriptor() const {return "OutputPipeline";}
 };
 
