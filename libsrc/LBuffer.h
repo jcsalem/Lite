@@ -12,6 +12,8 @@
 //   device_or_combo ::= Either <device> or [<buffer1>,<buffer2>,..<bufferN>]
 //   filter/device ::= <name> or <name>:<arg1> or <name>(<arg1>,<arg2>,..,argN)
 
+class LFilter; //fwd decl
+
 class LBuffer
     {
     friend class LBufferIter;
@@ -147,9 +149,10 @@ class LBufferPhys : public LBuffer
 // Used to define the derived classes that LBuffer::Create knows how to make
 class LBufferType {
     friend class LBuffer;
+    friend class LFilter;
 public:
     typedef LBuffer* (*DeviceFcn_t) (const vector<string>& params, string* errmsg);
-    typedef LBuffer* (*FilterFcn_t) (const vector<string>& params, LBuffer* destBuffer, string* errmsg);
+    typedef LFilter* (*FilterFcn_t) (const vector<string>& params, string* errmsg);
     LBufferType(csref name, DeviceFcn_t fcn, csref formatString, csref docString);
     LBufferType(csref name, FilterFcn_t fcn, csref formatString, csref docString, bool ignored);
     static string GetDocumentation(bool isFilterType);

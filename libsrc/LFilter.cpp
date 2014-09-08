@@ -1,55 +1,92 @@
 // Implements various output filters
 
 #include "utils.h"
-#include "LFramework.h"
 #include "LBuffer.h"
-#include "FilterBuffers.h"
-#include "utilsRandom.h"
+#include "LFilter.h"
+#include "LFramework.h"
 #include "utilsParse.h"
-#include <math.h>
-#include <algorithm>
-#include <iostream> // for debugging
+#include <cmath>
+#include "utilsRandom.h"
+#include <iostream>
 
-// Dummy function to force this file to be linked in.
-void ForceLinkFilters() {}
+//-----------------------------------------------------------------------------
+// Creating a filter
+//-----------------------------------------------------------------------------
+
+static LFilter* CreateError(string* errmsgptr, csref msg) {
+    if (errmsgptr) *errmsgptr = msg;
+    return NULL;
+    }
+
+LFilter* LFilter::Create(csref desc, string* errmsg) {
+    size_t argpos = desc.find_first_of(":(");
+
+    // Look up the filter
+    string name = desc.substr(0,argpos);
+    const LBufferType* type = LBufferType::Find(name);
+    if (!type || !type->iIsFilter) return CreateError(errmsg, "No filter named: " + name);
+
+    // Parse parameters (this should be shared with LBuffer::Create)
+    vector<string> params; 
+    string paramsString;
+    if (argpos != string::npos) {
+        paramsString = desc.substr(argpos+1);
+        if (desc[argpos] == '(') {
+            if (desc[desc.length()-1] != ')') return CreateError(errmsg, "Missing right parenthesis in arguments to " + name);
+            paramsString = paramsString.substr(0, paramsString.length() - 1); // remove trailing parenthesis
+        }
+        // Parse the parameters
+        string errmsg2;
+        params = ParseParamList(paramsString, name, &errmsg2);
+        if (params.empty() && !errmsg2.empty()) return CreateError(errmsg, errmsg2);
+    }
+    return type->iFilterCreateFcn(params, errmsg);
+}
 
 //-----------------------------------------------------------------------------
 // LMapFilter -- Abstract class for any type that uses a map
 //-----------------------------------------------------------------------------
 
-LMapFilter::LMapFilter(LBuffer* buffer) : LFilter(buffer)
-{
-    int len = iBuffer->GetCount();
-    iMap = vector<int>(len);
-    for (int i = 0; i < len; ++i) {
-        iMap[i] = i;
-    }
+// Default 1 to 1 map
+void LMapFilter::InitializeMap() {
+  for (int i = 0; i < iMap.size(); ++i) 
+    iMap[i] = i;
 }
 
 //-----------------------------------------------------------------------------
 // LShiftFilter -- Rotates the output a fixed amount
 //-----------------------------------------------------------------------------
+class LShiftFilter : public LMapFilter
+{
+public:
+    LShiftFilter(int offset = 0) : iOffset(offset), LMapFilter() {} // Note that it's important to set iOffset first, so it will be set for the call to InitializeMap
+    virtual ~LShiftFilter() {}
+    virtual string GetDescriptor() const;
+    void SetOffset(int offset) {iOffset = offset; InitializeMap();}
+    int GetOffset() const {return iOffset;}
+    virtual void InitializeMap();
+
+private:
+    int iOffset;
+};
 
 string LShiftFilter::GetDescriptor() const {
   if (iOffset == 0) return "shift"; 
   else return "shift:" + IntToStr(iOffset);
 }
 
-void LShiftFilter::SetOffset(int offset) {
-  iOffset = offset;
-  int len = iBuffer->GetCount();
+void LShiftFilter::InitializeMap() {
+  int len = iMap.size();
   for (int i = 0; i < len; ++i) {
-    iMap[i] = (i + offset) % len;
+    iMap[i] = (i + iOffset) % len;
     }
 }
 
-LBuffer* LShiftFilterCreate(cvsref params, LBuffer* buffer, string* errmsg)
-{
-    
+LFilter* LShiftFilterCreate(cvsref params, string* errmsg) {
     int offset = 0;
     if (! ParamListCheck(params, "shift", errmsg, 0, 1)) return NULL;
     if (! ParseOptionalParam(&offset, params, 0, "shift offset", errmsg)) return NULL;
-    return new LRotateFilter(buffer, offset);
+    return new LShiftFilter(offset);
 }
 
 DEFINE_LBUFFER_FILTER_TYPE(shift, LShiftFilterCreate, "shift[:amount]",
@@ -59,6 +96,23 @@ DEFINE_LBUFFER_FILTER_TYPE(shift, LShiftFilterCreate, "shift[:amount]",
 // LRotateFilter -- Rotates the output an amount that changes over time
 //-----------------------------------------------------------------------------
 
+class LRotateFilter : public LShiftFilter
+{
+public:
+    LRotateFilter(float speed = 1.0, float bounceAfter = 0.0) : LShiftFilter(0), iSpeed(speed), iBounceAfter(bounceAfter) {}
+    virtual ~LRotateFilter() {}
+    virtual string GetDescriptor() const;
+    virtual bool Update();
+    void  SetSpeed(float speed) {iSpeed = speed;}
+    float GetSpeed() const {return iSpeed;}
+    void  EnableBounce() {iBounceAfter = 1;}
+    void  SetBounceAfter(float bounceAfter) {iBounceAfter = bounceAfter;}
+
+private:
+    float iSpeed;    // Speed of rotation in full buffer lengths per second
+    float iBounceAfter; // Number of rotations after which we should rotate back the other way.  Set to 0 for no bound or 1 for bouncing after one full rotation
+};
+
 string LRotateFilter::GetDescriptor() const {
   if (iSpeed == 0) return "rotate"; 
   else return "rotate:" + FltToStr(iSpeed);
@@ -67,7 +121,7 @@ string LRotateFilter::GetDescriptor() const {
 bool LRotateFilter::Update() {
   // This effectively updates the offset AFTER the update has been done
   double timeDiff = MilliDiff(L::gTime, L::gStartTime);
-  double len = iBuffer->GetCount();
+  double len = GetCount();
   double doffset = (timeDiff / 1000.0) * len * iSpeed; 
   int offset;
   if (iBounceAfter == 0.0) 
@@ -82,25 +136,25 @@ bool LRotateFilter::Update() {
   return iBuffer->Update();
 }
 
-LBuffer* LRotateFilterCreate(cvsref params, LBuffer* buffer, string* errmsg)
+LFilter* LRotateFilterCreate(cvsref params, string* errmsg)
 {
     float speed = 1;
     if (! ParamListCheck(params, "rotate", errmsg, 0, 1)) return NULL;
     if (! ParseOptionalParam(&speed, params, 0, "rotate speed", errmsg)) return NULL;
-    return new LRotateFilter(buffer, speed);
+    return new LRotateFilter(speed);
 }
 
 DEFINE_LBUFFER_FILTER_TYPE(rotate, LRotateFilterCreate, "rotate[:speed]",
         "Rotates the display over time. Speed is the number of full rotations per second (default is 1)");
 
-LBuffer* LBounceFilterCreate(cvsref params, LBuffer* buffer, string* errmsg)
+LFilter* LBounceFilterCreate(cvsref params, string* errmsg)
 {
     float speed = 1;
     float bounceAfter = 1;
     if (! ParamListCheck(params, "bounce", errmsg, 0, 2)) return NULL;
     if (! ParseOptionalParam(&speed, params, 0, "bounce speed", errmsg)) return NULL;
     if (! ParseOptionalParam(&bounceAfter, params, 1, "bounce after", errmsg)) return NULL;
-    return new LRotateFilter(buffer, speed, bounceAfter);
+    return new LRotateFilter(speed, bounceAfter);
 }
 
 DEFINE_LBUFFER_FILTER_TYPE(bounce, LBounceFilterCreate, "bounce[:speed[,after]]",
@@ -113,19 +167,18 @@ DEFINE_LBUFFER_FILTER_TYPE(bounce, LBounceFilterCreate, "bounce[:speed[,after]]"
 class ReverseBuffer : public LFilter
 {
 public:
-    ReverseBuffer(LBuffer* buffer) : LFilter(buffer) {}
+    ReverseBuffer() : LFilter() {}
     virtual ~ReverseBuffer() {}
-
-    virtual string  GetDescriptor() const {return "flip:" + iBuffer->GetDescriptor();}
+    virtual string  GetDescriptor() const {return "flip";}
 
 protected:
   virtual RGBColor&   GetRawRGB(int idx) {idx = iBuffer->GetCount() - idx - 1; return iBuffer->GetRawRGB(idx);}
 };
 
-LBuffer* ReverseBufferCreate(cvsref params, LBuffer* buffer, string* errmsg)
+LFilter* ReverseBufferCreate(cvsref params, string* errmsg)
 {
     if (! ParamListCheck(params, "reverse", errmsg, 0)) return NULL;
-    return new ReverseBuffer(buffer);
+    return new ReverseBuffer();
 }
 
 DEFINE_LBUFFER_FILTER_TYPE(flip, ReverseBufferCreate, "flip",
@@ -138,59 +191,69 @@ DEFINE_LBUFFER_FILTER_TYPE(flip, ReverseBufferCreate, "flip",
 class RandomizedBuffer : public LMapFilter
 {
 public:
-    RandomizedBuffer(LBuffer* buffer) : LMapFilter(buffer) {RandomizeMap();}
+    RandomizedBuffer() : LMapFilter() {}
     virtual ~RandomizedBuffer() {}
-    virtual string  GetDescriptor() const {return "random:" + iBuffer->GetDescriptor();}
+    virtual string  GetDescriptor() const {return "random";}
 
-    void RandomizeMap();
+    virtual void InitializeMap();
 
 };
 
-void RandomizedBuffer::RandomizeMap()
+void RandomizedBuffer::InitializeMap()
 {
+    LMapFilter::InitializeMap();
     random_shuffle(iMap.begin(), iMap.end());
 }
 
 
-LBuffer* RandomizedBufferCreate(cvsref params, LBuffer* buffer, string* errmsg)
+LFilter* RandomizedBufferCreate(cvsref params, string* errmsg)
 {
    if (! ParamListCheck(params, "random", errmsg, 0)) return NULL;
-   return new RandomizedBuffer(buffer);
+   return new RandomizedBuffer();
 }
 
 DEFINE_LBUFFER_FILTER_TYPE(random, RandomizedBufferCreate, "random",
                     "Randomizes the order of pixels in the device.");
 
 //-----------------------------------------------------------------------------
-// Skip2Buffer
+// SkipBuffer
 //-----------------------------------------------------------------------------
-// Interleaves the pixel (e.g., skips every other).  It would be nice to make this more generic (e.g., skip3, skip4, etc.)
-class Skip2Buffer : public LMapFilter
+const int kDefaultSkip = 2;
+
+// Interleaves the pixel (e.g., skips every other).
+class SkipBuffer : public LMapFilter
 {
 public:
-    Skip2Buffer(LBuffer* buffer);
-    virtual ~Skip2Buffer() {}
-    virtual string  GetDescriptor() const {return "skip2:" + iBuffer->GetDescriptor();}
+    SkipBuffer(int skipnum = kDefaultSkip) : LMapFilter(), iSkip(skipnum) {}
+    virtual ~SkipBuffer() {}
+    virtual int GetCount() {int count = LMapFilter::GetCount(); return count - (count % max(iSkip,1));}
+    virtual string  GetDescriptor() const {return iSkip == kDefaultSkip ? "skip" : ("skip:" + IntToStr(iSkip));}
+    virtual void InitializeMap();
+  private:
+    int iSkip;
 };
 
-Skip2Buffer::Skip2Buffer(LBuffer* buffer) : LMapFilter(buffer)
-{
-    int len = buffer->GetCount();
+void SkipBuffer::InitializeMap() {
+    int len = GetCount();
     int idx = 0;
-    for (int i = 0; i < len; i += 2)
-        iMap[idx++] = i;
-    for (int i = 1; i < len; i += 2)
-        iMap[idx++] = i;
-}
+    int startIndex = 0;
+    for (int i = 0; i < len; ++i) {
+      iMap[i] = idx;
+      idx += iSkip;
+      if (idx >= len) {++startIndex; idx = startIndex;}
+    }
+ }
 
 
-LBuffer* Skip2BufferCreate(cvsref params, LBuffer* buffer, string* errmsg)
+LFilter* SkipBufferCreate(cvsref params, string* errmsg)
 {
-    if (! ParamListCheck(params, "skip", errmsg, 0)) return NULL;
-    return new Skip2Buffer(buffer);
+    if (! ParamListCheck(params, "skip", errmsg, 0, 1)) return NULL;
+    int skipnum = 2;
+    if (! ParseOptionalParam(&skipnum, params, 0, "skip amount", errmsg, 1)) return NULL;
+    return new SkipBuffer(skipnum);
 }
 
-DEFINE_LBUFFER_FILTER_TYPE(skip2, Skip2BufferCreate, "skip2",
+DEFINE_LBUFFER_FILTER_TYPE(skip, SkipBufferCreate, "skip[:amount]",
                     "Interleaves the order of pixels.");
 
 //-----------------------------------------------------------------------------
@@ -203,11 +266,11 @@ const int gDefaultPlaneNavigationWidth = 9;
 class PlaneNavigationBuffer : public LFilter
 {
 public:
-  PlaneNavigationBuffer(LBuffer* buffer, int pixelWidth = gDefaultPlaneNavigationWidth) 
-    : LFilter(buffer), iNumPixels(pixelWidth) {}
+  PlaneNavigationBuffer(int pixelWidth = gDefaultPlaneNavigationWidth) 
+    : LFilter(), iNumPixels(pixelWidth) {}
   virtual ~PlaneNavigationBuffer() {}
 
-  virtual int     GetCount() const {return max(iBuffer->GetCount() - 2 * iNumPixels, 0);}
+  virtual int     GetCount() const;
   virtual string  GetDescriptor() const;
   virtual bool    Update();
 
@@ -218,11 +281,15 @@ private:
   int 	     iNumPixels;
 };
 
+int PlaneNavigationBuffer::GetCount() const {
+  int len = LFilter::GetCount();
+  return max(len - 2 * iNumPixels, 0);
+}
+
 string PlaneNavigationBuffer::GetDescriptor() const
 {
   string desc = "plane";
   if (iNumPixels != gDefaultPlaneNavigationWidth) desc += "(" + IntToStr(iNumPixels) + ")";
-  desc += "|" + iBuffer->GetDescriptor();
   return desc;
 }
 
@@ -249,13 +316,13 @@ RGBColor& PlaneNavigationBuffer::GetRawRGB(int idx)
   else return LFilter::GetRawRGB(idx);
 }
 
-LBuffer* PlaneNavigationBufferCreate(cvsref params, LBuffer* buffer, string* errmsg)
+LFilter* PlaneNavigationBufferCreate(cvsref params, string* errmsg)
 {
   if (! ParamListCheck(params, "plane", errmsg, 0, 1)) return NULL;
 
   int numPixels = gDefaultPlaneNavigationWidth;
   if (! ParseOptionalParam(&numPixels, params, 0, "plane pixel width", errmsg, 0)) return NULL;
-  return new PlaneNavigationBuffer(buffer, numPixels);
+  return new PlaneNavigationBuffer(numPixels);
 }
 
 DEFINE_LBUFFER_FILTER_TYPE(plane, PlaneNavigationBufferCreate, "plane(N)",
@@ -276,35 +343,36 @@ const float kDefaultSparkleDuration = 0.02; // Sparkles generally turn on for ju
 class SparkleBuffer : public LFilter
 {
 public:
-  SparkleBuffer(LBuffer* buffer, csref params);
+  SparkleBuffer();
   virtual ~SparkleBuffer() {
      if (iState) delete[] iState; iState = NULL; 
      if (iTimeToChange) delete[] iTimeToChange; iTimeToChange = NULL;
   }
 
+  virtual void    SetBuffer(LBuffer* buffer) {LFilter::SetBuffer(buffer); InitializeArrays();}
   virtual string  GetDescriptor() const;
   virtual bool    Update();
   void SetColor(Color* color) {color->ToRGBColor(&iColor);}
   void SetParameters(float fraction, float onDuration, float sigma);
 
 private:
-  string     iParamString;
   RGBColor   iColor;          // Should eventually be a ColorMode
-  float      iOnDuration;     // Fraction of pixels that are sparkling at any one time
+  float      iOnFraction;       // Fraction of pixels that are sparkling at any one time
+  float      iOnDuration;     // Time that a pixel should be on
   float      iOffDuration;    // Time between a single pixel's sparkle
   float      iSigma;          // Std. deviation of the on/off time (scale by duration)
   bool       iPixelsNeedInit; // true when iState needs initialization
   bool*      iState;
   Milli_t*   iTimeToChange;
   Milli_t    GetSparkleDuration(bool newState);
+  void       InitializeArrays();
   void       InitializePixels();
 };
 
 string SparkleBuffer::GetDescriptor() const
 {
   string desc = "sparkle";
-  if (! iParamString.empty()) desc += "(" + iParamString + ")";
-  desc += ":" + iBuffer->GetDescriptor();
+  // TODO: Need to create the string
   return desc;
 }
 
@@ -312,14 +380,14 @@ void SparkleBuffer::SetParameters(float onFraction, float onDuration, float sigm
 {
   iOnDuration = onDuration;
   if (onFraction < .001) onFraction = .001;
-  iOffDuration = onDuration / onFraction - onDuration;
+  iOnFraction = onFraction;
+  iOffDuration = iOnDuration / iOnFraction - onDuration;
   iSigma = sigma;
   iPixelsNeedInit = true;
 }
 
 Milli_t SparkleBuffer::GetSparkleDuration(bool newState)
 {
-
   float avDur = newState ? iOnDuration : iOffDuration;
   float sigma = avDur * iSigma * 2;
   float duration = RandomNormalBounded(avDur, sigma, 0.0, avDur * 100);
@@ -327,12 +395,15 @@ Milli_t SparkleBuffer::GetSparkleDuration(bool newState)
   return (Milli_t) duration;
 }
 
-SparkleBuffer::SparkleBuffer(LBuffer* buffer, csref paramString)
-  : LFilter(buffer), iColor(WHITE), iParamString(paramString), iPixelsNeedInit(true)
-{
+void SparkleBuffer::InitializeArrays() {
   int     count = GetCount();
-  iState 	= new bool[count];
+  iState  = new bool[count];
   iTimeToChange = new Milli_t[count];
+  iPixelsNeedInit = true;
+}
+
+SparkleBuffer::SparkleBuffer() : LFilter(), iColor(WHITE), iPixelsNeedInit(true)
+{
   SetParameters(kDefaultSparkleFraction, kDefaultSparkleDuration, kDefaultSparkleSigma);
 }
 
@@ -367,7 +438,7 @@ bool SparkleBuffer::Update()
   return iBuffer->Update();
 }
 
-LBuffer* SparkleBufferCreate(cvsref params, LBuffer* buffer, string* errmsg)
+LFilter* SparkleBufferCreate(cvsref params, string* errmsg)
 {
   if (! ParamListCheck(params, "sparkle", errmsg, 0, 4)) return NULL;
 
@@ -385,7 +456,7 @@ LBuffer* SparkleBufferCreate(cvsref params, LBuffer* buffer, string* errmsg)
   if (!ParseOptionalParam(&sigma,    params, 3, "sparkle sigma",    errmsg, 0, 10)) return NULL;
   
   // Create the buffer
-  SparkleBuffer* newbuf =  new SparkleBuffer(buffer, ParamListToString(params));
+  SparkleBuffer* newbuf =  new SparkleBuffer();
   newbuf->SetParameters(fraction, duration, sigma);
   if (color) {
     newbuf->SetColor(color);

@@ -62,7 +62,7 @@ void LtoolCallback(Lobj* obj)
 {
     // Do the bounary stuff
     Lxy minBound(-.5,0);
-    Lxy maxBound(L::gOutputBuffer->GetCount()-.5, 0);
+    Lxy maxBound(L::gOutput.GetCount()-.5, 0);
     switch (gMode)
     {
     case kRotate:
@@ -114,7 +114,7 @@ string ParseCommand(int argc, char** argv)
       if (L::gRate >= 0)
         gIndex = 0;
       else // start at right side if negative rate
-        gIndex = L::gOutputBuffer->GetCount() - 1;
+        gIndex = L::gOutput.GetCount() - 1;
       gMode = (command == "bounce") ? kBounce : kRotate;
     }
     else if (command == "wash" || command == "rotwash" || command == "bouncewash") {
@@ -189,7 +189,7 @@ int main(int argc, char** argv)
     }
     else if (command == "plane") {
         // Plane colors (Left side red, Right side green)
-        int numLights = L::gOutputBuffer->GetCount();;
+        int numLights = L::gOutput.GetCount();;
         for (int i = 0; i < numLights; ++i) {
           Lobj* obj = new Lobj();
           obj->pos.x = i;
@@ -202,7 +202,7 @@ int main(int argc, char** argv)
         HSVColorRange range;
         if (gColor2) range = HSVColorRange(*gColor, *gColor2);
 
-        int numLights = L::gOutputBuffer->GetCount();;
+        int numLights = L::gOutput.GetCount();;
         for (int i = 0; i < numLights; ++i) {
             Lobj* obj = new Lobj();
             obj->pos.x = i;

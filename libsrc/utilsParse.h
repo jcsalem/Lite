@@ -22,7 +22,7 @@ vector<string> ParseParamList(csref paramString, csref contextName = "", string*
 // Helper functions
 //  Checks the number of parameters. 
 bool ParamListCheck(cvsref paramList, csref contextName, string* errmsg, int minArgs, int maxArgs = -1); 
-bool ParamListHasValue(cvsref paramList, int paramListIndex, csref paramName, string* errmsg);
+bool ParamListHasValue(cvsref paramList, int paramListIndex, csref paramName, string* errmsg = NULL);
 
 //  Creates a string with a comma-separated list of the parameters
 string ParamListToString(cvsref params);
@@ -50,7 +50,7 @@ template<typename T>
   }
 template<typename T>
   bool ParseOptionalParam(T* out, cvsref paramList, int paramListIndex, csref paramName, string* errmsg = NULL) {
-  	if (! ParamListHasValue(paramList, paramListIndex, paramName, errmsg)) return true;
+  	if (! ParamListHasValue(paramList, paramListIndex, paramName)) return true;
   	else return ParseParam(out, paramList[paramListIndex], paramName, errmsg);
 }
 
@@ -64,7 +64,7 @@ template<typename T>
   }
 template<typename T>  
   bool ParseOptionalParam(T* out, cvsref paramList, int paramListIndex, csref paramName, string* errmsg, double lowBound, double highBound = numeric_limits<T>::max()) { // Used doubles rather than T because the implicit conversion for templates sucks
-  	if (! ParamListHasValue(paramList, paramListIndex, paramName, errmsg)) return true;
+  	if (! ParamListHasValue(paramList, paramListIndex, paramName)) return true;
   	else return ParseParam(out, paramList[paramListIndex], paramName, errmsg, lowBound, highBound);
 }
 

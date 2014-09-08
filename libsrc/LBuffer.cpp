@@ -4,6 +4,7 @@
 #include "Lproc.h"
 #include "ComboBuffer.h"
 #include "utilsParse.h"
+#include "LFilter.h"
 #include <vector>
 
 RGBColor LBuffer::kNullColor = BLACK; // note that this is used by functions returning references to colors
@@ -69,7 +70,7 @@ const LBufferType* LBufferType::Find(csref nameArg)
     return NULL;
 }
 
-LBuffer* CreateError(string* errmsgptr, csref msg) {
+static LBuffer* CreateError(string* errmsgptr, csref msg) {
     if (errmsgptr) *errmsgptr = msg;
     return NULL;
     }
@@ -121,13 +122,18 @@ LBuffer* LBuffer::Create(csref descArg, string* errmsg) {
     }
     
     if (isFilter) {
+        // Expecting a filter
         if (! type->iIsFilter) return CreateError(errmsg, "Device type \"" + desc + "\" found when filter name expected: " + descArg);
         if (nextdev.empty()) return CreateError(errmsg, "Missing device after pipe: " + descArg);
+        LFilter* filter = type->iFilterCreateFcn(params, errmsg);
+        if (! filter) return NULL;
+        // Now get the next component
         LBuffer* buffer = LBuffer::Create(nextdev,errmsg);
         if (! buffer) return NULL;
-        return type->iFilterCreateFcn(params, buffer, errmsg);
+        filter->SetBuffer(buffer);
+        return filter;
     } else {
-        // Output device}
+        // Expecting output device
         if (type->iIsFilter) return CreateError(errmsg, "Filter name \"" + desc + "\" found when device type expected: " + descArg);
         return type->iDeviceCreateFcn(params, errmsg);
     }
@@ -148,17 +154,15 @@ string LBufferType::GetDocumentation(bool isFilterType) {
 }
 
 //-----------------------------------------------------------------------------------------------------
-// This section forces the linking of required modules (otherwise, CKlib, etc. are never loaded!)
+// This section forces the linking of required devices (otherwise, CKlib, etc. are never loaded!)
 //-----------------------------------------------------------------------------------------------------
 #include "CKbuffer.h"
 #include "CursesBuffer.h"
 #include "StripBuffer.h"
-#include "FilterBuffers.h"
 #include "WinBuffer.h"
 void ForceLinking() {
     ForceLinkCK();
     ForceLinkCurses(); // This actually does nothing on Windows
     ForceLinkStrip(); // This actually does nothing on Windows
     ForceLinkWin();
-    ForceLinkFilters();
 };

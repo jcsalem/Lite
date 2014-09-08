@@ -1,3 +1,0 @@
-Libfreenect seems to be the preferred RPi Kinect library
-https://github.com/OpenKinect/libfreenect
-http://raspberrypi.stackexchange.com/questions/737/hooking-up-a-kinect

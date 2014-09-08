@@ -4,8 +4,8 @@ CKdevice.cpp
 Color.cpp
 ComboBuffer.cpp
 CursesBuffer.cpp
-FilterBuffers.cpp
 LBuffer.cpp
+LFilter.cpp
 LFramework.cpp
 Lobj.cpp
 Lproc.cpp

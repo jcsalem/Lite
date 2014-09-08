@@ -102,7 +102,7 @@ int main(int argc, char** argv)
 
     // Allocate objects
     Lgroup objects;
-    objects.Add(L::gOutputBuffer->GetCount(), FlashAlloc, NULL);
+    objects.Add(L::gOutput.GetCount(), FlashAlloc, NULL);
 
     // Perform
     L::Run(objects, FlashCallback, FlashGroupCallback);

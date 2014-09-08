@@ -186,10 +186,10 @@ void LpovGroup::Callback(Lgroup* group)
       }
       return;
     }
-    int w = L::gOutputBuffer->GetCount();
+    int w = L::gOutput.GetCount();
     if (w > povGroup->Image.GetWidth()) w = povGroup->Image.GetWidth();
     for (int x = 0; x < w; ++x)
-        L::gOutputBuffer->SetColor(x, povGroup->Image.GetPixel(x,povGroup->ImageRow));
+        L::gOutput.SetColor(x, povGroup->Image.GetPixel(x,povGroup->ImageRow));
     // Setup for next frame
     if (povGroup->FrameCount == povGroup->NumOnFrames) 
       povGroup->ImageRow = (povGroup->ImageRow + 1) % povGroup->Image.GetHeight();

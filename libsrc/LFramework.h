@@ -7,15 +7,29 @@
 #include "Config.h"
 #include "utilsTime.h"
 #include "utilsOptions.h"
+#include <deque>
+#include "LFilter.h"
 #include "Lproc.h"
 
-class LBuffer;
 class Lgroup;
 class Lobj;
 
 namespace L {
-// --dev
-extern LBuffer*     gOutputBuffer;
+// Rendering pipeline
+
+class Pipeline : public LFilter
+{
+public:
+	Pipeline(LBuffer* buffer = NULL) : LFilter(buffer) {}
+	virtual ~Pipeline() {}
+	virtual string GetDescrition() const {return GetDescriptor() + "> " + (iBuffer ? iBuffer->GetDescription() : string("(no output buffer)"));}
+	virtual string GetDescriptor() const {return "OutputPipeline";}
+};
+
+extern Pipeline gOutput;
+
+// Option specific variables
+// --dev  // Output device
 // --verbose
 extern bool         gVerbose;
 // --time
@@ -27,10 +41,18 @@ extern float        gRate;
 typedef enum {kRatePositive = 0, kRateNonZero = 1, kRateAny = 2} RateMode_t;    // Default is kRatePositive
 void SetRateMode(RateMode_t mode); //Call this to allow different types of values for --rate
 void SetRateDoc(csref docString);  // Used to customize the rate help string
-// --fade
-extern float        gFade;  // Fade in/out time in seconds
-// --filter   Output filters (used in creating the output buffer)
-extern string       gGlobalFilters; // Output mapping
+// --fade     Fade in/out time in seconds
+extern float        gFade; // May be set for a default fade of other than 0
+// --fadein   Fade in time in seconds
+// --fadeout  Fade out time in seconds
+// Implemented using a filter
+// --filter   Adds an output filter
+// Returns true on success. Sets errmsg on error
+bool AddFilter(csref filterDescription, string* errmsg);
+bool PrependFilter(csref filterDescription, string* errmsg);
+void AddFilter(LFilter* filter);
+void PrependFilter(LFilter* filter);
+
 // --proc   Object operations to be applied
 extern LprocList    gProcList;
 
@@ -50,7 +72,6 @@ typedef void (*GroupCallback_t) (Lgroup* obj);  // Called once for the group at 
 // This handles all of the startup functions. minPositionalArgs may be kVariable if any number of positional args are allowed or you can specify a range. 
 // If maxPositionalArgs is not specified is defaulted to the value of minPositionalArgs
 void Startup(int *argc, char** argv, int minPositionalArgs = 0, int maxPositionalArgs = -1);
-//void Startup(); // Must have already initialized gOutputBuffer to call this one
 void Run(Lgroup& objgroup, ObjCallback_t fcn = NULL, GroupCallback_t gfcn = NULL); // Delay between renders is based on gFrameDuration
 void RunOnce(Lgroup& objgroup, GroupCallback_t gfcn = NULL);                // No delays built in
 void Cleanup(bool eraseAtEnd = false);

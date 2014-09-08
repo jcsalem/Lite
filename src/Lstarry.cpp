@@ -54,7 +54,7 @@ Lobj* SparkleAlloc(int idx, const void* ignore) {
 Lgroup gObjs;
 
 void InitializeStars() {
-    int numLights = L::gOutputBuffer->GetCount();
+    int numLights = L::gOutput.GetCount();
     gObjs.Add(numLights, SparkleAlloc, NULL);
     }
 

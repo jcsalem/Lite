@@ -12,7 +12,7 @@
 
 LobjSparkle* SparkleAlloc(void) {
     LobjSparkle* lobj = new LobjSparkle();
-    lobj->pos.x = RandomInt(L::gOutputBuffer->GetCount());
+    lobj->pos.x = RandomInt(L::gOutput.GetCount());
     lobj->color = RandomColor();
     lobj->sparkle = LSparkle::MakeRandomSparkle(L::gTime, L::gSparkleMode, L::gSparkleRate);
     return lobj;
@@ -31,7 +31,7 @@ bool IsTimeToAlloc() {
 
     // Default probability is that every light has a 50% chance to flash every 10 seconds
     float lightProb = (millisSinceLast / 20000.0F);
-    lightProb *= L::gOutputBuffer->GetCount();
+    lightProb *= L::gOutput.GetCount();
     lightProb *= L::gRate;
 
     switch (L::gSparkleMode) {

@@ -1,7 +1,8 @@
 // Generic Light Processor routines
+// LProcs are applied to objects before they are rendered
 
-#ifndef _lfilter_h
-#define _lfilter_h
+#ifndef LPROC_H_INCLUDED
+#define LPROC_H_INCLUDED
 
 #include "Config.h"
 #include "utilsTime.h"

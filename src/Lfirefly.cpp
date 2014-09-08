@@ -23,24 +23,24 @@ void SetupNextCycle(LobjOld* lobj, Milli_t startTime);
 
 void TestLights()
 {
-    int count = L::gOutputBuffer->GetCount();
+    int count = L::gOutput.GetCount();
 
     for (int i = count-1; i >= 0; --i)
     {
-        L::gOutputBuffer->Clear();
+        L::gOutput.Clear();
         for (int j = 0; j < count; ++j)
         {
             RGBColor c = WHITE;
             c *= ((float) j) / count;
             int pos = (i + j) % count;
-            L::gOutputBuffer->SetRGB(pos, c);
+            L::gOutput.SetRGB(pos, c);
         }
-        L::gOutputBuffer->Update();
+        L::gOutput.Update();
         SleepMilli(10);
     }
     SleepMilli(250);
-    L::gOutputBuffer->Clear();
-    L::gOutputBuffer->Update();
+    L::gOutput.Clear();
+    L::gOutput.Update();
 }
 
 //----------------------------------------------------------------
@@ -49,7 +49,7 @@ void TestLights()
 Milli_t gTime;
 
 int MaxFireflies () {
-    return max(1, L::gOutputBuffer->GetCount() / 20);
+    return max(1, L::gOutput.GetCount() / 20);
 }
 
 // fwd decls
@@ -74,7 +74,7 @@ float RandomSpeed() {
 LobjOld* FireflyAlloc(void) {
   LobjOld* lobj = LobjOld::Alloc();
   if (! lobj) return NULL;
-  lobj->pos = RandomFloat(L::gOutputBuffer->GetCount());
+  lobj->pos = RandomFloat(L::gOutput.GetCount());
   lobj->speed = RandomSpeed();
   lobj->velocity = RandomFloat(-lobj->speed, lobj->speed);
   lobj->maxColor = RandomColor();
@@ -96,7 +96,7 @@ void FireflyMove(void) {
 void FireflyClip(void) {
   for (short i = 0; i < LobjOld::GetNum();) {
     LobjOld* lobj = LobjOld::GetNth(i);
-    if (lobj->pos <= -2 || lobj->pos >= L::gOutputBuffer->GetCount() + 1)
+    if (lobj->pos <= -2 || lobj->pos >= L::gOutput.GetCount() + 1)
      LobjOld::Free(lobj);
     else
      ++i;
@@ -188,9 +188,9 @@ void FireflyLoop()
           FireflyAlloc();
         FireflyDim();
         // Render
-        L::gOutputBuffer->Clear();
-        LobjOld::RenderAll(L::gOutputBuffer);
-        L::gOutputBuffer->Update();
+        L::gOutput.Clear();
+        LobjOld::RenderAll(&L::gOutput);
+        L::gOutput.Update();
         // Exit if out of time, else delay until next frame
         Milli_t currentTime = Milliseconds();
         if (runTimeMilli != 0 && runTimeMilli < MilliDiff(currentTime, startTime))

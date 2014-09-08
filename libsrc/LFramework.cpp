@@ -6,7 +6,7 @@
 #include "utilsOptions.h"
 #include "Lobj.h"
 #include "utilsStats.h"
-#include "FilterBuffers.h"
+#include "LFilter.h"
 #include <iostream>
 
 namespace L {
@@ -20,18 +20,33 @@ Milli_t     gTime;                   // Current time
 Milli_t     gStartTime;              // Loop start time
 Milli_t     gEndTime;                // Ending time (set to gTime to end prematurely)
 bool        gTerminateNow;           // Set to exit asap
-
-// Not externally setable
 Milli_t     gFrameDuration  = 40;    // duration of each frame of animation (in MS)
-LprocList   gProcs;
 
-// Force gOutputBuffer to be deleted at exit
-struct UninitAtExit {
-    UninitAtExit() {}
-    ~UninitAtExit() {if (gOutputBuffer) {delete gOutputBuffer; gOutputBuffer = NULL;}}
+// Public list of procs
+LprocList       gProcs;
+
+// Publically visible output pipeline
+Pipeline        gOutput;
+
+// Not externally Accessible
+LBuffer*        gOutputBuffer   = NULL;
+deque<LFilter*> gFilters; // This is organized in the order they are applied to the output
+
+// Force things to be deleted at exit
+struct UninitializeAtExit {
+    UninitializeAtExit() {}
+    ~UninitializeAtExit();
 };
 
-UninitAtExit _gUninitAtExit;
+UninitializeAtExit _gUninitAtExit;
+
+UninitializeAtExit::~UninitializeAtExit() {
+    if (gOutputBuffer) {delete gOutputBuffer; gOutputBuffer = NULL;}
+    for (size_t i = 0; i < gFilters.size(); ++i)
+        delete gFilters[i];
+    gFilters.clear();
+    gOutput.SetBuffer(NULL);
+}
 
 //---------------------------------------------------------------
 // Trap Ctrl-C to set terminate flag
@@ -52,9 +67,8 @@ bool CtrlCHandler()
 class StatsBuffer : public LFilter
 {
 public:
-  StatsBuffer(LBuffer* buffer) : 
-    LFilter(buffer), iIsFirstTime(true),iLastFrameTime(0) {}
-  string GetDescriptor() const {return "StatsInternal";}
+  StatsBuffer() : LFilter(), iIsFirstTime(true), iLastFrameTime(0) {}
+  string GetDescriptor() const {return "VerboseStats";}
   virtual bool Update();
   const StatsCollector<long>& GetCollector() {return iCollector;}
 private:
@@ -81,7 +95,6 @@ bool  StatsBuffer::Update()
 // Output Device Parsing
 //---------------------------------------------------------------
 
-LBuffer* gOutputBuffer   = NULL;
 string gOutputDeviceArg;
 
 LBuffer* CreateOutputBuffer(csref devstr, string* errmsg) {
@@ -128,9 +141,48 @@ string GetDevHelp() {
 
 ProgramHelp PHDevHelp(GetDevHelp);
 
+//---------------------------------------------------------------
+// Filters
+//---------------------------------------------------------------
+
+
+bool AddFilter(csref filterDescription, string* errmsg) {
+    LFilter* filter = LFilter::Create(filterDescription, errmsg);
+    if (! filter) return false;
+    AddFilter(filter);
+    return true;
+}
+
+void AddFilter(LFilter* filter) {
+    gFilters.push_back(filter);
+}
+
+bool PrependFilter(csref filterDescription, string* errmsg) {
+    LFilter* filter = LFilter::Create(filterDescription, errmsg);
+    if (! filter) return false;
+    PrependFilter(filter);
+    return true;
+}
+
+void PrependFilter(LFilter* filter) {
+    gFilters.push_front(filter);
+}
 
 //---------------------------------------------------------------
-// Other command line options
+// Output pipeline
+//---------------------------------------------------------------
+
+void InitializeOutputPipeline() { 
+    LBuffer* lastBuffer = gOutputBuffer;
+    for (int i = ((int) gFilters.size()) - 1; i >= 0; --i) {
+        gFilters[i]->SetBuffer(lastBuffer);
+        lastBuffer = gFilters[i];
+    }
+    gOutput.SetBuffer(lastBuffer);
+}
+
+//---------------------------------------------------------------
+// Various command line options
 //---------------------------------------------------------------
 
 bool        gVerbose        = false;
@@ -142,14 +194,13 @@ string VerboseCallback(csref name, csref val) {
 DefOptionBool(verbose, VerboseCallback, "enables verbose status messages");
 
 //------------
-string gGlobalFilters;
 
 string FilterCallback(csref name, csref valarg) {
     string value = TrimWhitespace(valarg);
     if (value.empty()) return "";
-    if (value[value.size()-1] != '|') value += "|";
-    gGlobalFilters = gGlobalFilters + value;
-    return "";
+    string errmsg;
+    AddFilter(valarg, &errmsg);
+    return errmsg;
 }
 
 DefOption(filter, FilterCallback, "filterInfo", "adds post-rendering filters.", NULL);
@@ -263,23 +314,24 @@ void ErrorExit(csref msg) {
         ErrorExit("No output device was specified via --dev or the LDEV environment variable.");
 
     string errmsg;
-    string devstr = gOutputDeviceArg;
-    if (!gGlobalFilters.empty())
-        devstr = gGlobalFilters + "[" + gOutputDeviceArg + "]";
-    gOutputBuffer = CreateOutputBuffer(devstr, &errmsg);
-    if (!gOutputBuffer) ErrorExit("Error creating output pipeline: " + errmsg);
-
+    gOutputBuffer = CreateOutputBuffer("[" + gOutputDeviceArg + "]", &errmsg);
+    if (!gOutputBuffer) ErrorExit("Error initializing output device: " + errmsg);
     if (gOutputBuffer->HasError())
         ErrorExit(gOutputBuffer->GetLastError());
-
     if (gOutputBuffer->GetCount() == 0)
         ErrorExit("Empty output device.");
 
+    // Add StatsBuffer if desired
+    if (gVerbose) {
+        gStatsBuffer = new StatsBuffer();
+        PrependFilter(gStatsBuffer);
+    }
+
+    // Now create the output pipeline (gOutput)
+    InitializeOutputPipeline();
+
     if (gVerbose)
-      {
-	   cout << gOutputBuffer->GetDescription() << endl;
-	   gOutputBuffer = gStatsBuffer = new StatsBuffer(gOutputBuffer);
-      }	
+	    cout << "Output Pipeline: " << gOutput.GetDescription() << endl;
 
     CtrlCHandler::Add(CtrlCHandler);
 }
@@ -290,9 +342,10 @@ void Cleanup(bool eraseAtEnd)
     if (eraseAtEnd)
       {
         // Clear the lights
-        gOutputBuffer->Clear();
-        gOutputBuffer->Update();
+        gOutput.Clear();
+        gOutput.Update();
       }
+
     if (gVerbose)
       {
 	   cout << "Framerate Statistics" << endl;
@@ -305,10 +358,10 @@ void Cleanup(bool eraseAtEnd)
 void RunOnce(Lgroup& objGroup, GroupCallback_t groupfcn)
 {
   gTime = Milliseconds();
-  gOutputBuffer->Clear();
+  gOutput.Clear();
   if (groupfcn) groupfcn(&objGroup);
-  objGroup.RenderAll(gTime, gProcs, gOutputBuffer);
-  gOutputBuffer->Update();
+  objGroup.RenderAll(gTime, gProcs, &gOutput);
+  gOutput.Update();
 }
 
 void Run(Lgroup& objGroup, L::ObjCallback_t objfcn, L::GroupCallback_t groupfcn)

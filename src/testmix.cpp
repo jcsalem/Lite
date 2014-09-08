@@ -123,7 +123,7 @@ void MoveOne(Lobj* obj, int incr){
 
 
 void InitializeObjects() {
-    int numLights = L::gOutputBuffer->GetCount();
+    int numLights = L::gOutput.GetCount();
 
     gLeft  = new Lobj();
     gRight = new Lobj();
