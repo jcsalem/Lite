@@ -134,7 +134,7 @@ LBuffer* LBuffer::Create(csref descArg, string* errmsg) {
         return filter;
     } else {
         // Expecting output device
-        if (type->iIsFilter) return CreateError(errmsg, "Filter name \"" + desc + "\" found when device type expected: " + descArg);
+        if (type->iIsFilter) return CreateError(errmsg, "LFilter name \"" + desc + "\" found when device type expected: " + descArg);
         return type->iDeviceCreateFcn(params, errmsg);
     }
 }

@@ -2,6 +2,8 @@
 #include "Color.h"
 #include "utilsTime.h"
 #include "LFramework.h"
+#include "MapFilters.h"
+#include "EffectFilters.h"
 #include "Lobj.h"
 #include <iostream>
 #include <cmath>
@@ -128,8 +130,13 @@ string ParseCommand(int argc, char** argv)
          if (!gColor)  gColor2 = NULL;
          if (!gColor2) gColor  = NULL;
         }
-      if (command != "wash") 
-        gMode = (command == "bouncewash") ? kBounce : kRotate;
+      
+      LFilter* movementFilter = NULL;
+      if (command == "rotwash") 
+        movementFilter = new RotateFilter(L::gRate);
+      if (command == "bouncewash") 
+        movementFilter = new BounceFilter(L::gRate);
+      L::PrependFilter(movementFilter);
     }
     else if (command == "plane") {
       ValidateNumArgs(command, 0, 0, argc, argp);
@@ -197,22 +204,13 @@ int main(int argc, char** argv)
           objs.Add(obj);
         }
     }        
+    else if (gColor2) {
+      LFilter* filter = new GradientColorFilter(gColor, gColor2);
+      L::PrependFilter(filter);
+    }
     else {
-        // One light for each pixel
-        HSVColorRange range;
-        if (gColor2) range = HSVColorRange(*gColor, *gColor2);
-
-        int numLights = L::gOutput.GetCount();;
-        for (int i = 0; i < numLights; ++i) {
-            Lobj* obj = new Lobj();
-            obj->pos.x = i;
-            if (gColor2)
-                obj->color = range.GetColor((float) i / (float) numLights);
-            else
-                obj->color = *gColor;
-            obj->speed.x = speed;
-            objs.Add(obj);
-        }
+      LFilter* filter = new SolidColorFilter(gColor);
+      L::PrependFilter(filter);
     }
 
     L::Run(objs, LtoolCallback);

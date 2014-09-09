@@ -6,97 +6,113 @@
 #include <cmath>
 #include "utilsParse.h"
 
-void ForceLinkMapFilters() {} // This is reference in LFilters.cpp to force the link of this file into all binaries
+void ForceLinkMapFilters() {} // LFilters.cpp refers to this to force linking of this file into all binaries
 
 //-----------------------------------------------------------------------------
-// LMapFilter -- Abstract class for any type that uses a map
+// MapFilter -- Abstract class for any type that uses a map
 //-----------------------------------------------------------------------------
 
 // Default 1 to 1 map
-void LMapFilter::InitializeMap() {
+void MapFilter::InitializeMap() {
   for (int i = 0; i < iMap.size(); ++i) 
     iMap[i] = i;
 }
 
 //-----------------------------------------------------------------------------
-// LShiftFilter -- Rotates the output a fixed amount
+// ShiftFilter -- Rotates the output a fixed amount
 //-----------------------------------------------------------------------------
 
-string LShiftFilter::GetDescriptor() const {
+string ShiftFilter::GetDescriptor() const {
   return "shift:" + IntToStr(iOffset);
 }
 
-void LShiftFilter::InitializeMap() {
+void ShiftFilter::InitializeMap() {
   int len = iMap.size();
   for (int i = 0; i < len; ++i) {
     iMap[i] = (i + iOffset) % len;
     }
 }
 
-LFilter* LShiftFilterCreate(cvsref params, string* errmsg) {
+LFilter* ShiftFilterCreate(cvsref params, string* errmsg) {
     int offset = 0;
     if (! ParamListCheck(params, "shift", errmsg, 0, 1)) return NULL;
     if (! ParseOptionalParam(&offset, params, 0, "shift offset", errmsg)) return NULL;
-    return new LShiftFilter(offset);
+    return new ShiftFilter(offset);
 }
 
-DEFINE_LBUFFER_FILTER_TYPE(shift, LShiftFilterCreate, "shift[:amount]",
+DEFINE_LBUFFER_FILTER_TYPE(shift, ShiftFilterCreate, "shift[:amount]",
         "Rotates the order of the pixels by the specified amount (which should be an integer)");
 
 //-----------------------------------------------------------------------------
-// LRotateFilter -- Rotates the output an amount that changes over time
+// RotateFilter -- Rotates the output an amount that changes over time
 //-----------------------------------------------------------------------------
 
-const float LRotateFilter::gDefaultSpeed = 2.0;
+const float RotateFilter::kDefaultSpeed = 1.0;
 
-string LRotateFilter::GetDescriptor() const {
-  if (iBounceAfter == 0) 
-    return "rotate:" + FltToStr(iSpeed); 
-  else 
-    return "bounce(" + FltToStr(iSpeed) + "," + FltToStr(iBounceAfter) + ")";
+string RotateFilter::GetDescriptor() const {
+  return "rotate:" + FltToStr(iSpeed); 
 }
 
-bool LRotateFilter::Update() {
+bool RotateFilter::Update() {
   // This effectively updates the offset AFTER the update has been done
   double timeDiff = MilliDiff(L::gTime, L::gStartTime);
   double len = GetCount();
   double doffset = (timeDiff / 1000.0) * len * iSpeed; 
-  int offset;
-  if (iBounceAfter == 0.0) 
-    offset = fmod((doffset + .5), (double) len);
-  else {
-    double bounceLen = len * iBounceAfter * 2 - 1;
-    int midPoint = (bounceLen + 1.0) / 2.0;
-    offset = fmod((doffset + .5), bounceLen);
-    if (offset >= midPoint) offset = bounceLen - offset;
-  }
+  int offset = fmod((doffset + .5), (double) len);
   SetOffset(offset);
   return iBuffer->Update();
 }
 
-LFilter* LRotateFilterCreate(cvsref params, string* errmsg)
+LFilter* RotateFilterCreate(cvsref params, string* errmsg)
 {
-    float speed = LRotateFilter::gDefaultSpeed;
+    float speed = RotateFilter::kDefaultSpeed;
     if (! ParamListCheck(params, "rotate", errmsg, 0, 1)) return NULL;
     if (! ParseOptionalParam(&speed, params, 0, "rotate speed", errmsg)) return NULL;
-    return new LRotateFilter(speed);
+    return new RotateFilter(speed);
 }
 
-DEFINE_LBUFFER_FILTER_TYPE(rotate, LRotateFilterCreate, "rotate[:speed]",
-        "Rotates the display over time. Speed is the number of full rotations per second (default is 1)");
+DEFINE_LBUFFER_FILTER_TYPE(rotate, RotateFilterCreate, "rotate[:speed]",
+        "Rotates the display over time. Speed is the number of full rotations per second (default is " + FltToStr(RotateFilter::kDefaultSpeed) + ")");
 
-LFilter* LBounceFilterCreate(cvsref params, string* errmsg)
+//-----------------------------------------------------------------------------
+// BounceFilter -- Rotates the output an amount that changes over time
+//-----------------------------------------------------------------------------
+
+const float BounceFilter::kDefaultSpeed = 1.0;
+
+string BounceFilter::GetDescriptor() const {
+  return "bounce(" + FltToStr(iSpeed) + "," + FltToStr(iBounceAfter) + "," + FltToStr(iBounceIncr) + ")";
+}
+
+LFilter* BounceFilterCreate(cvsref params, string* errmsg)
 {
-    float speed = LRotateFilter::gDefaultSpeed;
+    float speed = BounceFilter::kDefaultSpeed;
     float bounceAfter = 1;
-    if (! ParamListCheck(params, "bounce", errmsg, 0, 2)) return NULL;
-    if (! ParseOptionalParam(&speed, params, 0, "bounce speed", errmsg)) return NULL;
+    float bounceIncr = 0;
+    if (! ParamListCheck(params, "bounce", errmsg, 0, 3)) return NULL;
+    if (! ParseOptionalParam(&speed,       params, 0, "bounce speed", errmsg)) return NULL;
     if (! ParseOptionalParam(&bounceAfter, params, 1, "bounce after", errmsg)) return NULL;
-    return new LRotateFilter(speed, bounceAfter);
+    if (! ParseOptionalParam(&bounceIncr,  params, 2, "bounce increment", errmsg)) return NULL;
+    return new BounceFilter(speed, bounceAfter, bounceIncr);
 }
 
-DEFINE_LBUFFER_FILTER_TYPE(bounce, LBounceFilterCreate, "bounce[:speed[,after]]",
-        "Bounces the display back-and-forth over time. Speed is the number of bounces per second (default is 1). After is when to bounce.");
+bool BounceFilter::Update() {
+  // This effectively updates the offset AFTER the update has been done
+  double timeDiff = MilliDiff(L::gTime, L::gStartTime);
+  double len = GetCount();
+  double doffset = (timeDiff / 1000.0) * len * iSpeed; 
+  double bounceLen = len * iBounceAfter * 2 - 1;
+  int midPoint = (bounceLen + 1.0) / 2.0;
+  int offset = fmod((doffset + .5), bounceLen);
+  if (offset >= midPoint) offset = bounceLen - offset;
+  SetOffset(offset);
+  return iBuffer->Update();
+}
+
+
+DEFINE_LBUFFER_FILTER_TYPE(bounce, BounceFilterCreate, "bounce(speed,after,jitter)",
+        "Bounces the display back-and-forth over time. Speed is bounces per second (default is " + FltToStr(RotateFilter::kDefaultSpeed) + 
+          "). After is in lengths (default 1). Jitter is in lenghts (default 0).");
 
 //-----------------------------------------------------------------------------
 // ReverseBuffer
@@ -119,7 +135,7 @@ DEFINE_LBUFFER_FILTER_TYPE(flip, ReverseBufferCreate, "flip",
 
 void RandomizedBuffer::InitializeMap()
 {
-    LMapFilter::InitializeMap();
+    MapFilter::InitializeMap();
     random_shuffle(iMap.begin(), iMap.end());
 }
 

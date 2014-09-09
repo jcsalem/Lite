@@ -28,6 +28,8 @@ public:
 	virtual unsigned char gAsChar(void) const;
 	virtual unsigned char bAsChar(void) const;
     virtual void ToRGBColor(RGBColor*) const = 0; // Must be implemented by all classes
+    // Allocates and returns a copy of the color
+    virtual Color* AllocateCopy() const = 0;
     };
 
 class RGBColor : public Color
@@ -60,6 +62,7 @@ public:
 	virtual unsigned char bAsChar(void) const;
     virtual void ToRGBColor(RGBColor* colorptr) const {*colorptr = *this;}
     virtual string ToString() const;
+    virtual Color* AllocateCopy() const {return new RGBColor(*this);}
   };
 
 class HSVColor : public Color
@@ -86,6 +89,8 @@ public:
     virtual void ToRGBColor(RGBColor*) const;
     virtual string ToString() const;
     RGBColor ToRGBColor() const {RGBColor rgb; ToRGBColor(&rgb); return rgb;}
+    virtual Color* AllocateCopy() const {return new HSVColor(*this);}
+
 private:
     void SetFromRGB(const RGBColor& rgb);
   };

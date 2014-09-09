@@ -6,7 +6,7 @@
 #include "utilsParse.h"
 #include "utilsRandom.h"
 
-void ForceLinkEffectFilters() {} // This is reference in LFilters.cpp to force the link of this file into all binaries
+void ForceLinkEffectFilters() {} // This is referenced in LFilters.cpp to force the link of this file into all binaries
 
 //-----------------------------------------------------------------------------
 // PlaneNavigationFilter
@@ -175,4 +175,57 @@ LFilter* SparkleFilterCreate(cvsref params, string* errmsg)
 DEFINE_LBUFFER_FILTER_TYPE(sparkle, SparkleFilterCreate, "sparkle([color],[frac],[ontime],[sigma])",
         "Sparkles the output. Frac is the fraction of time that should be spent sparkling");
 
+//-----------------------------------------------------------------------------
+// GradientColorFilter
+//-----------------------------------------------------------------------------
+// This filter just writes a color wash to iBuffer when Update is called
+const RGBColor GradientColorFilter::kDefaultColor(RED);
 
+void GradientColorFilter::SetColors(const Color* color1, const Color* color2) {
+  if (color1) iColor1 = color1->AllocateCopy(); else iColor1 = kDefaultColor.AllocateCopy();
+  if (color2) iColor2 = color2->AllocateCopy(); else iColor2 = kDefaultColor.AllocateCopy();
+}
+
+string GradientColorFilter::GetDescriptor() const {
+  return "color_gradient(" + iColor1->ToString() + ", " + iColor2->ToString() + ")";
+}
+
+void GradientColorFilter::SetBuffer(LBuffer* buffer) {
+  int len = buffer->GetCount();
+  iColorBuffer.resize(len);
+  HSVColorRange range(*iColor1, *iColor2);
+  
+  for (int i = 0; i < len; ++i) 
+    iColorBuffer[i] = range.GetColor((float) i / (float) len);
+  LFilter::SetBuffer(buffer);
+}
+
+bool GradientColorFilter::Update() {
+  int len = GetCount();
+  for (int i = 0; i < len; ++i) 
+    iBuffer->SetRGB(i, iColorBuffer[i]);
+  return iBuffer->Update();
+}
+
+//-----------------------------------------------------------------------------
+// SolidColorFilter
+//-----------------------------------------------------------------------------
+// This filter just writes a color wash to iBuffer when Update is called
+
+const RGBColor SolidColorFilter::kDefaultColor(WHITE);
+
+void SolidColorFilter::SetColor(const Color* color) {
+  if (color) iColor = color->AllocateCopy(); 
+  else       iColor = kDefaultColor.AllocateCopy();
+  }
+
+string SolidColorFilter::GetDescriptor() const {
+  return "color_solid(" + iColor->ToString() + ")";
+}
+
+bool SolidColorFilter::Update() {
+  int len = GetCount();
+  for (int i = 0; i < len; ++i) 
+    iBuffer->SetRGB(i, *iColor);
+  return iBuffer->Update();
+}

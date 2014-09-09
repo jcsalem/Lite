@@ -332,15 +332,6 @@ void ErrorExit(csref msg) {
         gStatsBuffer = new StatsBuffer();
         PrependFilter(gStatsBuffer);
     }
-
-    // Now create the output pipeline (gOutput)
-    InitializeOutputPipeline();
-    if (gOutput.GetCount() == 0) ErrorExit("Zero length output pipeline: " + gOutput.GetDescription());
-
-    if (gVerbose)
-	    cout << "Output Pipeline: " << gOutput.GetDescription() << endl;
-
-    CtrlCHandler::Add(CtrlCHandler);
 }
 
 void Cleanup(bool eraseAtEnd)
@@ -373,6 +364,13 @@ void RunOnce(Lgroup& objGroup, GroupCallback_t groupfcn)
 
 void Run(Lgroup& objGroup, L::ObjCallback_t objfcn, L::GroupCallback_t groupfcn)
 {
+    // Now create the output pipeline (gOutput)
+    InitializeOutputPipeline();
+    if (gOutput.GetCount() == 0) ErrorExit("Zero length output pipeline: " + gOutput.GetDescription());
+
+    if (gVerbose)
+        cout << "Output Pipeline: " << gOutput.GetDescription() << endl;
+
     // Set up end time variables
     gEndTime = 0; // Runs forever
     if (gRunTime >= 0)
@@ -391,10 +389,12 @@ void Run(Lgroup& objGroup, L::ObjCallback_t objfcn, L::GroupCallback_t groupfcn)
         gProcs.PrependProc(proc);
     }
 
-    // Main loop
-    while (true) {
-      if (gTerminateNow) break;  // Exit if we're done
+    // From now on, only terminate using gTerminateNow flag
+    CtrlCHandler::Add(CtrlCHandler);
 
+    // Main loop
+    while (! gTerminateNow) {
+ 
 	  RunOnce(objGroup, groupfcn);
 
 	  Milli_t currentTime = Milliseconds();

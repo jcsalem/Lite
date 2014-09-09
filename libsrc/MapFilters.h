@@ -9,14 +9,14 @@
 #include "LFilter.h"
 
 //-----------------------------------------------------------------------------
-// Abstract LMapFilter type
+// Abstract MapFilter type
 //-----------------------------------------------------------------------------
 // Building block class.  Remaps locations in the buffer using a map.
-class LMapFilter : public LFilter
+class MapFilter : public LFilter
 {
 public:
-    LMapFilter(LBuffer* buffer = NULL) : LFilter(buffer) {if (buffer) {AllocateMap(); InitializeMap();}}
-    virtual ~LMapFilter() {}
+    MapFilter(LBuffer* buffer = NULL) : LFilter(buffer) {if (buffer) {AllocateMap(); InitializeMap();}}
+    virtual ~MapFilter() {}
     virtual int GetCount() const {return iBuffer ? iMap.size() : 0;}
     virtual void SetBuffer(LBuffer* buffer) {LFilter::SetBuffer(buffer); AllocateMap(); InitializeMap();}
     virtual void InitializeMap();
@@ -33,11 +33,11 @@ private:
 // Static Shift/Rotate
 //-----------------------------------------------------------------------------
 
-class LShiftFilter : public LMapFilter
+class ShiftFilter : public MapFilter
 {
 public:
-    LShiftFilter(int offset = 0) : iOffset(offset), LMapFilter() {} // Note that it's important to set iOffset first, so it will be set for the call to InitializeMap
-    virtual ~LShiftFilter() {}
+    ShiftFilter(int offset = 0) : iOffset(offset), MapFilter() {} // Note that it's important to set iOffset first, so it will be set for the call to InitializeMap
+    virtual ~ShiftFilter() {}
     virtual string GetDescriptor() const;
     void SetOffset(int offset) {iOffset = offset; InitializeMap();}
     int GetOffset() const {return iOffset;}
@@ -48,25 +48,46 @@ private:
 };
 
 //-----------------------------------------------------------------------------
-// LRotateFilter -- Rotates the output an amount that changes over time
+// RotateFilter -- Rotates the output an amount that changes over time
 //-----------------------------------------------------------------------------
 
-class LRotateFilter : public LShiftFilter
+class RotateFilter : public ShiftFilter
 {
 public:
-    static const float gDefaultSpeed; 
-    LRotateFilter(float speed = gDefaultSpeed, float bounceAfter = 0.0) : LShiftFilter(0), iSpeed(speed), iBounceAfter(bounceAfter) {}
-    virtual ~LRotateFilter() {}
+    static const float kDefaultSpeed; 
+    RotateFilter(float speed = kDefaultSpeed) : ShiftFilter(0), iSpeed(speed) {}
+    virtual ~RotateFilter() {}
     virtual string GetDescriptor() const;
     virtual bool Update();
     void  SetSpeed(float speed) {iSpeed = speed;}
     float GetSpeed() const {return iSpeed;}
-    void  EnableBounce() {iBounceAfter = 1.0;}
-    void  SetBounceAfter(float bounceAfter) {iBounceAfter = bounceAfter;}
 
 private:
     float iSpeed;    // Speed of rotation in full buffer lengths per second
-    float iBounceAfter; // Number of rotations after which we should rotate back the other way.  Set to 0 for no bound or 1 for bouncing after one full rotation
+};
+
+//-----------------------------------------------------------------------------
+// BounceFilter -- Rotates the output an amount that changes over time
+//-----------------------------------------------------------------------------
+
+class BounceFilter : public ShiftFilter
+{
+public:
+    static const float kDefaultSpeed; 
+    BounceFilter(float speed = kDefaultSpeed, float bounceAfter = 1.0, float bounceIncr = 0.0) 
+        : ShiftFilter(0), iSpeed(speed), iBounceAfter(bounceAfter), iBounceIncr(bounceIncr) {}
+    virtual ~BounceFilter() {}
+    virtual string GetDescriptor() const;
+    virtual bool Update();
+    void  SetSpeed(float speed) {iSpeed = speed;}
+    float GetSpeed() const {return iSpeed;}
+    void  SetBounceAfter(float bounceAfter) {iBounceAfter = bounceAfter;}
+    void  SetBounceIncr(float bounceIncr) {iBounceIncr = bounceIncr;}
+
+private:
+    float iSpeed;       // Speed of rotation in full buffer lengths per second
+    float iBounceAfter; // Number of rotations after which we should rotate back the other way.  Set to 0 for no bounce or 1 for bouncing after one full rotation
+    float iBounceIncr;  // Amount the bounce should get off kilter. In units 
 };
 
 //-----------------------------------------------------------------------------
@@ -88,10 +109,10 @@ protected:
 // RandomizedBuffer
 //-----------------------------------------------------------------------------
 // Randomizes the order of a buffer.
-class RandomizedBuffer : public LMapFilter
+class RandomizedBuffer : public MapFilter
 {
 public:
-    RandomizedBuffer() : LMapFilter() {}
+    RandomizedBuffer() : MapFilter() {}
     virtual ~RandomizedBuffer() {}
     virtual string  GetDescriptor() const {return "random";}
 
@@ -103,12 +124,12 @@ public:
 // SkipBuffer
 //-----------------------------------------------------------------------------
 // Interleaves the pixels (e.g., skips every other).
-class SkipBuffer : public LMapFilter
+class SkipBuffer : public MapFilter
 {
 public:
-    SkipBuffer(int skipnum = 2) : LMapFilter(), iSkip(skipnum) {}
+    SkipBuffer(int skipnum = 2) : MapFilter(), iSkip(skipnum) {}
     virtual ~SkipBuffer() {}
-    virtual int GetCount() {int count = LMapFilter::GetCount(); return count - (count % max(iSkip,1));}
+    virtual int GetCount() {int count = MapFilter::GetCount(); return count - (count % max(iSkip,1));}
     virtual string  GetDescriptor() const {return "skip:" + IntToStr(iSkip);}
     virtual void InitializeMap();
   private:
