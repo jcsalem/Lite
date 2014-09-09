@@ -3,9 +3,6 @@
 #include "ComboBuffer.h"
 #include "utilsParse.h"
 
-// Dummy function to force this file to be linked in.
-void ForceLinkMeta() {}
-
 //-----------------------------------------------------------------------------
 // ComboBuffer
 //-----------------------------------------------------------------------------

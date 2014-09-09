@@ -36,31 +36,6 @@ protected:
     virtual RGBColor& GetRawRGB(int idx) {return iBuffer->GetRawRGB(idx);} // Don't need to check if iBuffer exists on this one
     LBuffer* iBuffer;
 };
-  
-
-//-----------------------------------------------------------------------------
-// Abstract LMapFilter type
-//-----------------------------------------------------------------------------
-// Building block class.  Remaps locations in the buffer using a map.
-class LMapFilter : public LFilter
-{
-public:
-    LMapFilter(LBuffer* buffer = NULL) : LFilter(buffer) {if (buffer) {AllocateMap(); InitializeMap();}}
-    virtual ~LMapFilter() {}
-    virtual int GetCount() const {return iBuffer ? iMap.size() : 0;}
-    virtual void SetBuffer(LBuffer* buffer) {LFilter::SetBuffer(buffer); AllocateMap(); InitializeMap();}
-    virtual void InitializeMap();
-    // Note that the derived class requires GetDescriptor
-
-protected:
-    virtual RGBColor&   GetRawRGB(int idx) {return iBuffer->GetRawRGB(iMap[idx]);}
-    vector<int> iMap;
-private:
-    void AllocateMap() {if (iBuffer) iMap.resize(iBuffer->GetCount());}
-};
-
-// This function is defined only so LFramework can reference it and force the FilterBuffers.cpp to be linked in.
-void ForceLinkFilters();
 
 #endif // !LFILTER_H_INCLUDED
 

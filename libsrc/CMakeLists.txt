@@ -4,12 +4,14 @@ CKdevice.cpp
 Color.cpp
 ComboBuffer.cpp
 CursesBuffer.cpp
+EffectFilters.cpp
 LBuffer.cpp
 LFilter.cpp
 LFramework.cpp
 Lobj.cpp
 Lproc.cpp
 LSparkle.cpp
+MapFilters.cpp
 StripBuffer.cpp
 utils.cpp
 utilsFile.cpp

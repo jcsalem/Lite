@@ -126,7 +126,7 @@ string GetDevHelp() {
     string r, tmp;
     r = "Environment variable LDEV is used if --dev is missing.\n"
         "\nfilterInfo is pipe-separated list of filter_type:parameters\n"
-        "   Examples: random, skip2|flip\n"
+        "   Examples: random, skip|flip\n"
         "The supported filter types are: \n  ";
     tmp = LBufferType::GetDocumentation(true);
     r += StrReplace(tmp, "\n", "\n  ") + "\n";

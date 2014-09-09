@@ -154,13 +154,15 @@ string LBufferType::GetDocumentation(bool isFilterType) {
 }
 
 //-----------------------------------------------------------------------------------------------------
-// This section forces the linking of required devices (otherwise, CKlib, etc. are never loaded!)
+// This section forces the linking of all devices (otherwise, CKlib, etc. are never loaded!)
 //-----------------------------------------------------------------------------------------------------
-#include "CKbuffer.h"
-#include "CursesBuffer.h"
-#include "StripBuffer.h"
-#include "WinBuffer.h"
-void ForceLinking() {
+
+extern void ForceLinkCK();
+extern void ForceLinkCurses();
+extern void ForceLinkStrip();
+extern void ForceLinkWin();
+
+void ForceBufferLinking() {
     ForceLinkCK();
     ForceLinkCurses(); // This actually does nothing on Windows
     ForceLinkStrip(); // This actually does nothing on Windows
