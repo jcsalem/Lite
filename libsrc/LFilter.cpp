@@ -37,7 +37,7 @@ LFilter* LFilter::Create(csref desc, string* errmsg) {
         }
         // Parse the parameters
         string errmsg2;
-        params = ParseParamList(paramsString, name, &errmsg2);
+        params = ParamListFromString(paramsString, name, &errmsg2);
         if (params.empty() && !errmsg2.empty()) return CreateError(errmsg, errmsg2);
     }
     return type->iFilterCreateFcn(params, errmsg);

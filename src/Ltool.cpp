@@ -5,6 +5,7 @@
 #include "MapFilters.h"
 #include "EffectFilters.h"
 #include "Lobj.h"
+#include "utilsParse.h"
 #include <iostream>
 #include <cmath>
 
@@ -12,27 +13,13 @@
 // Options
 //----------------------------------------------------------------------------
 
-void ValidateNumArgs(csref command, int minArgs, int maxArgs, int argc, int argp)
+void ValidateNumArgs(csref command, cvsref params, int minArgs, int maxArgs, bool disallowJustOne = false)
 {
-    if (argc >= argp + minArgs && argc <= argp + maxArgs)
-        // Everything is correct
-        return;
-    string msg = command + " expected ";
-    if (minArgs == maxArgs)
-      msg += IntToStr(minArgs);
-    else 
-      msg += "between " + IntToStr(minArgs) + " and " + IntToStr(maxArgs);
-    msg += " parameters but got " + IntToStr(argc - 2);
-    L::ErrorExit(msg);
-}
-
-void ValidateZeroOrTwoArgs(csref command, int argc, int argp)
-{
-    if (argc == argp || argc == argp + 2)
-        // Everything is correct
-        return;
-    string msg = command + " expected either zero or two parameters but got " + IntToStr(argc - 2);
-    L::ErrorExit(msg);
+  string errmsg;
+  if (! ParamListCheck(params, command, &errmsg, minArgs, maxArgs))
+    L::ErrorExit(errmsg);
+  if (disallowJustOne && params.size() == 1)
+    L::ErrorExit(command + " can't have just one argument");
 }
 
 DefProgramHelp(kPHprogram, "Ltool");
@@ -52,122 +39,112 @@ DefProgramHelp(kPHhelp, "command is one of:\n"
 	             "  color arguments are optional and default to white for single color commands and red-to-red for wash commands"
               );
 
-typedef enum {kStatic, kRotate, kBounce} Mode_t;
-Mode_t gMode = kStatic;
-Color* gColor;      // Always set
-Color* gColor2;     // Only set if we're doing a color wash
-int    gIndex = -1; // Index of the light to set. -1 if all lights are set.
+//----------------------------------------------
+// Setting up the light pattern
+//----------------------------------------------
+Color* gColor  = new WHITE;  // Always set
+Color* gColor2 = NULL;     // Only set if we're doing a color wash
+const int kOneLight  = 0;
+const int kAll       = -1;
+const int kWash      = -2;
+const int kLastLight = -3;
+const int kPlane     = -4;
+int    gIndex  = kAll;   // Index of the light to set. -1 if all lights are set.
 
-const float kSpeedFactor = 20;  // Amount to multiply rate by
-
-void LtoolCallback(Lobj* obj)
-{
-    // Do the bounary stuff
-    Lxy minBound(-.5,0);
-    Lxy maxBound(L::gOutput.GetCount()-.5, 0);
-    switch (gMode)
-    {
-    case kRotate:
-        obj->Wrap(minBound, maxBound);
-        break;
-    case kBounce:
-        obj->Bounce(minBound, maxBound);
-        break;
-    case kStatic:
-    default:
-        break;
+void LtoolCallback(Lgroup* group) {
+  int count = L::gOutput.GetCount();
+  switch (gIndex) {
+    case kAll:
+      for (int i = 0; i < L::gOutput.GetCount(); ++i)
+        L::gOutput.SetRGB(i, *gColor);
+      break;
+    case kWash: {
+      HSVColorRange range(*gColor, *gColor2);
+      WriteColorRangeToSequence(range, L::gOutput.begin(), L::gOutput.end());
+      break; 
     }
+    case kLastLight: 
+      L::gOutput.SetRGB(count-1, *gColor);
+      break;
+    case kPlane:
+      for (int i = 0; i < count; ++i)
+        L::gOutput.SetRGB(i, (i < count / 2) ? *gColor : *gColor2);
+      break;
+    default:
+      // Just one pixel
+      L::gOutput.SetRGB(gIndex, *gColor);
+  }
 }
 
-string ParseCommand(int argc, char** argv)
-{
-    if (argc <= 1) L::ErrorExit("Missing command");
+void ToolSetup(csref command, cvsref params) {
+  string errmsg;
 
-    int argp = 1;
+  // *** Check the number of parameters and set up the colors ***
+  if (command == "clear") {
+    ValidateNumArgs(command, params, 0, 0);
+    gColor = new BLACK;
+    gIndex = kAll;
+  } 
+  else if (command == "set") {
+    ValidateNumArgs(command, params, 1, 2);
+    if (! ParseRequiredParam(&gIndex, params, 0, "index", &errmsg, 0)) L::ErrorExit(errmsg);
+    if (! ParseOptionalParam(&gColor, params, 1, "color", &errmsg)) L::ErrorExit(errmsg);
+  }
+  else if (command == "all" || command == "rotate" || command == "bounce") {
+    ValidateNumArgs(command, params, 0, 1);
+    if (! ParseOptionalParam(&gColor, params, 0, "color", &errmsg)) L::ErrorExit(errmsg);
+    // If rotating bouncing backwards, start at end
+    gIndex = (command == "all") ? kAll : (L::gRate < 0 ? kLastLight : kOneLight);
+  }
+  else if (command == "wash" || command == "rotwash" || command == "bouncewash") {
+    int maxArgs = (command == "bouncewash") ? 4 : 2;
+    ValidateNumArgs(command, params, 0, maxArgs, true);
+    gColor = new RED; 
+    if (! ParseOptionalParam(&gColor, params, 0, "color1", &errmsg)) L::ErrorExit(errmsg);
+    gColor2 = gColor;
+    if (! ParseOptionalParam(&gColor2, params, 1, "color1", &errmsg)) L::ErrorExit(errmsg);
+    gIndex = kWash;
+  } 
+  else if (command == "plane") {
+    ValidateNumArgs(command, params, 0, 0);
+    gColor  = new RED;
+    gColor2 = new GREEN;
+    gIndex = kPlane;
+  }
+  else 
+    L::ErrorExit("Unknown command \"" + command + "\"");
 
-    string command = StrToLower(argv[argp++]);
-    string errmsg;
+  // *** Now set up any needed movement
+  LFilter* movementFilter = NULL;
 
-    if (command == "clear") {
-      ValidateNumArgs(command, 0, 0, argc, argp);
-      gColor = new BLACK;
-    } 
-    else if (command == "set") {
-      ValidateNumArgs(command, 1, 2, argc, argp);
-      gIndex   = atoi(argv[argp++]);
-      if (argp > argc)
-        gColor = new WHITE;
-      else
-        gColor = Color::AllocFromString(argv[argp++], &errmsg);
-    }
-    else if (command == "all") {
-      ValidateNumArgs(command, 0, 1, argc, argp);
-      if (argp >= argc)
-        gColor = new WHITE;
-      else
-        gColor = Color::AllocFromString(argv[argp++], &errmsg);
-    }
-    else if (command == "rotate" || command == "bounce") {
-      ValidateNumArgs(command, 0, 1, argc, argp);
-      if (argp >= argc)
-        gColor = new WHITE;
-      else
-        gColor = Color::AllocFromString(argv[argp++], &errmsg);
-      if (L::gRate >= 0)
-        gIndex = 0;
-      else // start at right side if negative rate
-        gIndex = L::gOutput.GetCount() - 1;
-      gMode = (command == "bounce") ? kBounce : kRotate;
-    }
-    else if (command == "wash" || command == "rotwash" || command == "bouncewash") {
-      ValidateZeroOrTwoArgs(command, argc, argp);
-      if (argp >=  argc) {
-         gColor  = new RED;
-         gColor2 = new RED;
-        } else {
-         gColor  = Color::AllocFromString(argv[argp++], &errmsg);
-         gColor2 = Color::AllocFromString(argv[argp++], &errmsg);
-         if (!gColor)  gColor2 = NULL;
-         if (!gColor2) gColor  = NULL;
-        }
-      
-      LFilter* movementFilter = NULL;
-      if (command == "rotwash") 
-        movementFilter = new RotateFilter(L::gRate);
-      if (command == "bouncewash") 
-        movementFilter = new BounceFilter(L::gRate);
-      L::PrependFilter(movementFilter);
-    }
-    else if (command == "plane") {
-      ValidateNumArgs(command, 0, 0, argc, argp);
-      gColor  = new RED;
-      gColor2 = new GREEN;
-    }
-    else {
-      L::ErrorExit("Unknown command \"" + command + "\"");
-    }
+  if (command == "rotate" || command == "rotwash")
+    movementFilter = new RotateFilter(L::gRate * .5);
+  else if (command == "bounce")
+    movementFilter = new BounceFilter(L::gRate * .5);
+  else if (command == "bouncewash") {
+    float bounceWidth = 2.0;
+    float bounceIncr = 0.0;
+    if (! ParseOptionalParam(&bounceWidth, params, 2, "bounce width", &errmsg, 0)) L::ErrorExit(errmsg);
+    if (! ParseOptionalParam(&bounceIncr, params, 3, "bounce increment", &errmsg)) L::ErrorExit(errmsg);
+    movementFilter = new BounceFilter(L::gRate * .5, bounceWidth, bounceIncr);
+  }
 
-    // Validate the colors
-    if (! gColor) L::ErrorExit(errmsg);
+  if (movementFilter) 
+    L::PrependFilter(movementFilter);
+  else if (L::gRunTime < 0) 
+    // If no movement and no runtime specified, return immediately
+    L::gRunTime = 0; 
+}
 
-    // If static and no time specified, make sure we return immediately
-    if (gMode == kStatic && L::gRunTime < 0) L::gRunTime = 0;  
-
-    // Print summary
-    if (L::gVerbose) {
-        cout << "Cmd: " << command << "   Color: " << gColor->ToString();
-        if (gColor2)
-            cout << " Color2: " << gColor2->ToString();
-        if (gIndex != -1)
-            cout << "  Index: " << gIndex;
-        if (L::gRunTime >= 0)
-            cout << "  Time: " << L::gRunTime << " seconds";
-        if (gMode != kStatic && L::gRate != 1)
-            cout << "  Rate: " << L::gRate;
-        cout << endl;
-    }
-
-    return command;
+void OutputSummary(csref command) {
+  cout << "Cmd: " << command << "   Color: " << gColor->ToString();
+  if (gColor2)
+      cout << " Color2: " << gColor2->ToString();
+  cout << "  Index: " << gIndex;
+  cout << "  Rate: " << L::gRate;
+  if (L::gRunTime >= 0)
+      cout << "  Time: " << L::gRunTime << " seconds";
+  cout << endl;
 }
 
 
@@ -178,42 +155,19 @@ int main(int argc, char** argv)
     Option::DeleteOption("color");
     L::Startup(&argc, argv, Option::kVariable);
 
-    // Parse Command
-    string command = ParseCommand(argc, argv);
-    float speed = 0;
-    if (gMode != kStatic) speed = L::gRate * kSpeedFactor;
+    // Get the Command
+    if (argc <= 1) L::ErrorExit("Missing command");
+    string command = StrToLower(argv[1]);
+    // Get the parameters
+    vector<string> params = ParamListFromArgv(argc-2, argv+2);
+
+    // Initialize
+    ToolSetup(command, params);
+    if (L::gVerbose) OutputSummary(command);
 
     // Allocate objects and set colors    
-    Lgroup objs;
-    if (gIndex != -1)
-    {
-        // Just one light
-        Lobj* obj = new Lobj();
-        obj->pos.x = gIndex;
-        obj->color = *gColor;
-        obj->speed.x = speed;
-        objs.Add(obj);
-    }
-    else if (command == "plane") {
-        // Plane colors (Left side red, Right side green)
-        int numLights = L::gOutput.GetCount();;
-        for (int i = 0; i < numLights; ++i) {
-          Lobj* obj = new Lobj();
-          obj->pos.x = i;
-          obj->color = i < numLights/2 ? *gColor : *gColor2;
-          objs.Add(obj);
-        }
-    }        
-    else if (gColor2) {
-      LFilter* filter = new GradientColorFilter(gColor, gColor2);
-      L::PrependFilter(filter);
-    }
-    else {
-      LFilter* filter = new SolidColorFilter(gColor);
-      L::PrependFilter(filter);
-    }
-
-    L::Run(objs, LtoolCallback);
+    Lgroup group;
+    L::Run(group, NULL, LtoolCallback);
     L::Cleanup();
 
     exit(EXIT_SUCCESS);

@@ -67,7 +67,7 @@ extern bool         gTerminateNow;
 
 // Standard loop functions
 typedef void (*ObjCallback_t)   (Lobj* obj);    // Called for each object during L::Run
-typedef void (*GroupCallback_t) (Lgroup* obj);  // Called once for the group at the end of L::Run
+typedef void (*GroupCallback_t) (Lgroup* group);  // Called once for the group after the output is clear but before any of the objects are run
 
 // This handles all of the startup functions. minPositionalArgs may be kVariable if any number of positional args are allowed or you can specify a range. 
 // If maxPositionalArgs is not specified is defaulted to the value of minPositionalArgs

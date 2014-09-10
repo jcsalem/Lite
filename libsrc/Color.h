@@ -127,6 +127,19 @@ public:
 
 };
 
+template <class iterator_type>
+  void WriteColorRangeToSequence(const HSVColorRange& range, iterator_type beg, iterator_type end) {
+    iterator_type iter = beg;
+    int count = 0;
+    while (iter++ != end) ++count;
+    iter = beg;
+    float len = count;
+    float idx = 0;
+    while (iter != end) {
+        *iter++ = range.GetColor(idx++/len);
+    }
+}
+
 // Random color utilities (really part of LFramework.h)
 // --color option
 namespace L {

@@ -194,9 +194,7 @@ void GradientColorFilter::SetBuffer(LBuffer* buffer) {
   int len = buffer->GetCount();
   iColorBuffer.resize(len);
   HSVColorRange range(*iColor1, *iColor2);
-  
-  for (int i = 0; i < len; ++i) 
-    iColorBuffer[i] = range.GetColor((float) i / (float) len);
+  WriteColorRangeToSequence(range, iColorBuffer.begin(), iColorBuffer.end());
   LFilter::SetBuffer(buffer);
 }
 

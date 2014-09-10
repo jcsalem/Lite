@@ -145,7 +145,7 @@ LBuffer* ComboBuffer::Create(const vector<string>& descStrings, string* errmsg) 
 }
 
 LBuffer* ComboBuffer::Create(csref descStr, string* errmsg) {
-    vector<string> descStrings = ParseParamList(descStr, "devices", errmsg);
+    vector<string> descStrings = ParamListFromString(descStr, "devices", errmsg);
     if (descStrings.size() == 0) {
         if (errmsg && errmsg->empty()) *errmsg = "Empty list of devices.";
         return NULL;

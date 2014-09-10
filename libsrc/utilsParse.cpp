@@ -56,6 +56,13 @@ bool ParamErrmsgSet(string* errmsg, csref contextName, csref msg, csref value)
 //----------------------------------------------------------------------------------------------------------------
 // Parameter list parsing
 //----------------------------------------------------------------------------------------------------------------
+vector<string> ParamListFromArgv(int argc, char** argv) {
+    vector<string> val;
+    for (int i = 0; i < argc; ++i)
+        val.push_back(argv[i]);
+    return val;
+}
+
 
 vector<string> PPLerror(string* errmsg, csref contextName, csref msg)
 {
@@ -109,7 +116,7 @@ char MatchingChar(char c)
     }
 }
 
-vector<string> ParseParamList(csref paramString, csref context, string* errmsg)
+vector<string> ParamListFromString(csref paramString, csref context, string* errmsg)
 {
     // Special case zero length strings
     if (TrimWhitespace(paramString).empty()) {
@@ -189,7 +196,7 @@ template<>
         }
         out->push_back(paramString[pos]);
     }
-    if (pos >= paramString.size()) return ParamErrmsgSet(errmsg, paramName, "Mismatched " + CharName(endChar)); // This should never happen with strins parsed using ParseParamList
+    if (pos >= paramString.size()) return ParamErrmsgSet(errmsg, paramName, "Mismatched " + CharName(endChar)); // This should never happen with strins parsed using ParamListFromString
     if (pos < paramString.size()-1) return ParamErrmsgSet(errmsg, paramName, "Unexpected characters after " + CharName(endChar));
     return true;
 }

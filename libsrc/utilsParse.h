@@ -17,7 +17,10 @@ typedef const vector<string>& cvsref;  // Convenience type for passing around pa
 //   '' escapes everything but \
 //   "" escapes everything but \
 // If parsing errors occur, an empty vector is returned and errmsg is set to an error message.
-vector<string> ParseParamList(csref paramString, csref contextName = "", string* errmsg = NULL);
+vector<string> ParamListFromString(csref paramString, csref contextName = "", string* errmsg = NULL);
+
+// Parses argc and argv into a vector of strings
+vector<string> ParamListFromArgv(int argc, char** argv);
 
 // Helper functions
 //  Checks the number of parameters. 
@@ -31,7 +34,7 @@ bool ParamErrmsgSet(string* errmsg, csref contextName, csref msg);
 bool ParamErrmsgSet(string* errmsg, csref contextName, csref msg, csref value);
 
 // Parses a single parameter.
-// Assumes the strings have been trimmed of whitespace (which ParseParamList does)
+// Assumes the strings have been trimmed of whitespace (which ParamListFromString does)
 // Returns true on success or false on error.  An empty string is always an error
 // out: value
 // paramString: input
