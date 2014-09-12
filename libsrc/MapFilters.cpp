@@ -4,6 +4,7 @@
 #include "MapFilters.h"
 #include "LFramework.h"
 #include <cmath>
+#include <algorithm>  // random_shuffle
 #include "utilsParse.h"
 
 void ForceLinkMapFilters() {} // LFilters.cpp refers to this to force linking of this file into all binaries
