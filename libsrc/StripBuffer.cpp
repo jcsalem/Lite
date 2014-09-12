@@ -1,18 +1,40 @@
 // Implements an LBuffer variant using the SparkFun addressable LED Strip
-//    http://www.sparkfun.com/products/10312
-//  Only supported on Raspberry Pi
+//    This is based on the WS2801 chip and other WS2801 devices should similarly.
+//  Only supported on Raspberry Pi (both v1 and v2)
+// More doc here:
+//   https://docs.google.com/document/d/1gNWRNP_ibS9p0BvzpeZA4dg787PQppPVYeafXvptNWk
 //
+// WS2801 Strip versions:
+//   V3   NooElec (RGB order)
+//   V2   http://www.sparkfun.com/products/10312 (RGB order)
+//   V1   http://www.sparkfun.com/products/10312 (BGR order)
+
 // Pin Assignments
-//  Pin    OldStrips  NewStrips  Connector  Cable  RPi Pin    BCM GPIO#  WiringPi
-//  5v      Red         Red        Blue     Blue      4
-//  CLK     Green       Blue       Green    Red     16/11      23/17       4/0
-//  SDI     Red         Green      Yellow   Green   18/15      24/22       5/6
-//  Gnd     Blue        Yellow     Red      Black  6 or 14
-// This is compatible with both revision 1 and revision 2 boards/
+//  Pin  V1orig  V1jim   V2     PlaneConn  OldCable?  
+//  5v   Red     Blue    Red      Blue      Blue
+//  CLK  Green   Green   Blue     Green     Red 
+//  SDI  Red     Yellow  Green    Yellow    Green
+//  Gnd  Blue    Red     Yellow   Red       Black
+
+//  Pin   V3     V1jim   Cable  
+//  5v   Red     Blue    Blue
+//  SDI  Yellow  Green   Red
+//  CLK  Green   Yellow  Green
+//  Gnd  Blue    Red     Black
+
+// GPIO Pins assignments
+// Pin   RPi Pin  BCM GPIO#  WiringPi 
+// ACLK   16         23        4
+// ASDI   18         24        5
+// BCLK   11         17        0
+// BSDI   15         22        6
+// +5v     4
+// Gnd  6 or 15
+
+
 // Two standard strips are supported and labeled with A and B.
 // Strip A pins are list before the slash and strip B pins are listed after.
 //
-// On the new strips, the blue color comes first. On the old strips, red came first.
 
 // URLish naming is: strip:[<stripInfo>][X][(size)]
 //  Where:
