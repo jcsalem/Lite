@@ -36,9 +36,11 @@ class Socket
 
 		// Status
 		bool            IsOpen()        const   {return iIsOpen;}
+		SOCKET          GetSocket()     const   {return iSocket;}
+
 		bool            HasError()      const   {return !iLastError.empty();}
 		string			GetLastError()	const	{return iLastError;}
-		SOCKET          GetSocket()     const   {return iSocket;}
+		void			ClearError()			{iLastError.clear();}
 
 		// Constants
 		static const int kInfinite = -1;

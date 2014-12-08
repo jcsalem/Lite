@@ -124,10 +124,11 @@ void Socket::Reset()
 	if (iIsOpen)
         Close();
 	iSocket			= INVALID_SOCKET;
-	iLastError = "";
+	ClearError();
 	}
 
 bool Socket::setsockopt_bool(int level, int optname, bool value) {
+    ClearError();
     int bvalue = value ? 1 : 0;
     int retval = setsockopt(iSocket, level, optname, (char*) &bvalue, sizeof (int));
     if (retval == 0) return true;
@@ -140,7 +141,8 @@ bool Socket::setsockopt_bool(int level, int optname, bool value) {
 //--------------------------------------------------------------------------
 
 bool SocketIP::SetSockAddr(const SockAddr& sa) {
-	if (! sa.IsValid())
+	ClearError();
+    if (! sa.IsValid())
 		{
 		if (iIsOpen) Close();
 		iLastError = "Invalid socket address: " + sa.GetString();
@@ -149,7 +151,7 @@ bool SocketIP::SetSockAddr(const SockAddr& sa) {
 
     // Set address
     iSockAddr = sa;
-
+    
 	// Create socket (if needed)
 	if (! iIsOpen)
         {
@@ -171,6 +173,7 @@ bool SocketIP::Read(char* buffer, int buflen, int* bytesRead)
 }
 
 bool SocketIP::Read(char* buffer, int buflen, SockAddr* srcAddr, int* bytesRead) {
+    ClearError();
     if (! iIsOpen)
         {
         iLastError = "Socket wasn't open";
@@ -197,6 +200,7 @@ bool SocketIP::Read(char* buffer, int buflen, SockAddr* srcAddr, int* bytesRead)
 }
 
 bool SocketIP::HasData(int timeoutInMS) {
+    ClearError();
     if (! iIsOpen)
         {
         iLastError = "Socket wasn't open";
@@ -239,6 +243,7 @@ bool SocketIP::Discard()
 
 bool SocketIP::Write(const char* source, int len)
 	{
+    ClearError();
 	if (! source && len > 0)
 		{
 		iLastError = "Socket::Write was not given a source string";
@@ -256,6 +261,7 @@ const int kSocketMaxWriteBuffers = 16;
 
 bool SocketIP::MultiWrite(const Buffer* buffers, int count)
 	{
+    ClearError();
     if (! iIsOpen)
         {
         iLastError = "Socket wasn't open";
